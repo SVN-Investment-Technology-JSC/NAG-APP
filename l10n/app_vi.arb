@@ -1,0 +1,63 @@
+{
+  "@@locale": "vi",
+  "appTitle": "Quản lý xe",
+  "selectLanguage": "Ngôn ngữ / Language",
+  "fleetSelection": "Đăng Nhập",
+  "username": "Tên đăng nhập",
+  "password": "Mật khẩu",
+  "rememberMe": "Ghi nhớ thông tin đăng nhập",
+  "confirm": "XÁC NHẬN",
+  "pleaseEnterDetails": "Vui lòng nhập đầy đủ thông tin",
+  "logOut": "Đăng xuất",
+  "selectHint": "Chọn {label}",
+  "@selectHint": {
+    "placeholders": {
+      "label": {}
+    }
+  },
+  "cancel": "Hủy",
+  "confirmLogoutTitle": "Đăng xuất",
+  "confirmLogoutContent": "Bạn có chắc chắn muốn đăng xuất không?",
+  "noData": "Chưa có dữ liệu",
+  "loginInvalidCredentials": "Sai tài khoản hoặc mật khẩu",
+  "loginServerUnavailable": "Không thể kết nối máy chủ",
+  "loginGenericError": "Có lỗi xảy ra, vui lòng thử lại",
+  "home": "Trang chủ",
+  "pendingOrders": "Chờ xử lý",
+  "noPendingOrders": "Không có đơn hàng chờ xử lý",
+  "changeStation": "Đổi trạm",
+  "selectStation": "Chọn trạm",
+  "orderUpdated": "Đã cập nhật đơn hàng",
+  "orderUpdateFailed": "Cập nhật đơn hàng thất bại",
+  "reorderSuccess": "Đã cập nhật vị trí đơn hàng",
+  "refreshing": "Đang tải lại...",
+  "sessionExpired": "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.",
+  "vehicleLabel": "Phương tiện",
+  "driverLabel": "Tài xế",
+  "stationLabel": "Trạm",
+  "orderPositionLabel": "Vị trí",
+  "dragToReorder": "Kéo để sắp xếp",
+  "collecting": "Đang lấy hàng",
+  "prioritize": "Ưu tiên",
+  "vehiclesAtStation": "xe tại trạm",
+  "moveToTop": "Đưa lên đầu",
+  "stationOverview": "Tổng quan trạm",
+  "vehicleCount": "{count} xe",
+  "@vehicleCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "todayOrders": "Đơn hôm nay",
+  "initStatus": "Khởi tạo",
+  "completedTrips": "Hoàn thành",
+  "activeTrips": "Đang chạy",
+  "completedStatus": "Hoàn thành",
+  "noTripsForVehicle": "Không có chuyến cho xe này hôm nay",
+  "running": "Đang chạy",
+  "vehicleManagement": "Quản lý chuyến",
+  "selectDate": "Chọn ngày",
+  "noVehicles": "Không có xe bồn",
+  "tripsOnDate": "Chuyến trong ngày",
+  "stopCountLabel": "lần dừng"
+}

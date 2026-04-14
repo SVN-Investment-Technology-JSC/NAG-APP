@@ -1,0 +1,590 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart' as intl;
+
+import 'app_localizations_en.dart';
+import 'app_localizations_vi.dart';
+
+// ignore_for_file: type=lint
+
+/// Callers can lookup localized strings with an instance of AppLocalizations
+/// returned by `AppLocalizations.of(context)`.
+///
+/// Applications need to include `AppLocalizations.delegate()` in their app's
+/// `localizationDelegates` list, and the locales they support in the app's
+/// `supportedLocales` list. For example:
+///
+/// ```dart
+/// import 'l10n/app_localizations.dart';
+///
+/// return MaterialApp(
+///   localizationsDelegates: AppLocalizations.localizationsDelegates,
+///   supportedLocales: AppLocalizations.supportedLocales,
+///   home: MyApplicationHome(),
+/// );
+/// ```
+///
+/// ## Update pubspec.yaml
+///
+/// Please make sure to update your pubspec.yaml to include the following
+/// packages:
+///
+/// ```yaml
+/// dependencies:
+///   # Internationalization support.
+///   flutter_localizations:
+///     sdk: flutter
+///   intl: any # Use the pinned version from flutter_localizations
+///
+///   # Rest of dependencies
+/// ```
+///
+/// ## iOS Applications
+///
+/// iOS applications define key application metadata, including supported
+/// locales, in an Info.plist file that is built into the application bundle.
+/// To configure the locales supported by your app, you’ll need to edit this
+/// file.
+///
+/// First, open your project’s ios/Runner.xcworkspace Xcode workspace file.
+/// Then, in the Project Navigator, open the Info.plist file under the Runner
+/// project’s Runner folder.
+///
+/// Next, select the Information Property List item, select Add Item from the
+/// Editor menu, then select Localizations from the pop-up menu.
+///
+/// Select and expand the newly-created Localizations item then, for each
+/// locale your application supports, add a new item and select the locale
+/// you wish to add from the pop-up menu in the Value field. This list should
+/// be consistent with the languages listed in the AppLocalizations.supportedLocales
+/// property.
+abstract class AppLocalizations {
+  AppLocalizations(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+
+  final String localeName;
+
+  static AppLocalizations? of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations);
+  }
+
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
+
+  /// A list of this localizations delegate along with the default localizations
+  /// delegates.
+  ///
+  /// Returns a list of localizations delegates containing this delegate along with
+  /// GlobalMaterialLocalizations.delegate, GlobalCupertinoLocalizations.delegate,
+  /// and GlobalWidgetsLocalizations.delegate.
+  ///
+  /// Additional delegates can be added by appending to this list in
+  /// MaterialApp. This list does not have to be used at all if a custom list
+  /// of delegates is preferred or required.
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
+
+  /// A list of this localizations delegate's supported locales.
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('vi'),
+  ];
+
+  /// No description provided for @appTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle Management'**
+  String get appTitle;
+
+  /// No description provided for @selectLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language / Ngôn ngữ'**
+  String get selectLanguage;
+
+  /// No description provided for @fleetSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Login'**
+  String get fleetSelection;
+
+  /// No description provided for @username.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get username;
+
+  /// No description provided for @password.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get password;
+
+  /// No description provided for @rememberMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember login information'**
+  String get rememberMe;
+
+  /// No description provided for @confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'CONFIRM'**
+  String get confirm;
+
+  /// No description provided for @pleaseEnterDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter all details'**
+  String get pleaseEnterDetails;
+
+  /// No description provided for @logOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Logout'**
+  String get logOut;
+
+  /// No description provided for @selectHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Select {label}'**
+  String selectHint(Object label);
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @confirmLogoutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Logout'**
+  String get confirmLogoutTitle;
+
+  /// No description provided for @confirmLogoutContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to logout?'**
+  String get confirmLogoutContent;
+
+  /// No description provided for @noData.
+  ///
+  /// In en, this message translates to:
+  /// **'No data available'**
+  String get noData;
+
+  /// No description provided for @loginInvalidCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Incorrect username or password'**
+  String get loginInvalidCredentials;
+
+  /// No description provided for @loginServerUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot connect to server'**
+  String get loginServerUnavailable;
+
+  /// No description provided for @loginGenericError.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get loginGenericError;
+
+  /// No description provided for @home.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get home;
+
+  /// No description provided for @pendingOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending Orders'**
+  String get pendingOrders;
+
+  /// No description provided for @noPendingOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'No pending orders'**
+  String get noPendingOrders;
+
+  /// No description provided for @changeStation.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get changeStation;
+
+  /// No description provided for @selectStation.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Station'**
+  String get selectStation;
+
+  /// No description provided for @orderUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Order updated successfully'**
+  String get orderUpdated;
+
+  /// No description provided for @orderUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update order'**
+  String get orderUpdateFailed;
+
+  /// No description provided for @reorderSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Order positions updated'**
+  String get reorderSuccess;
+
+  /// No description provided for @refreshing.
+  ///
+  /// In en, this message translates to:
+  /// **'Refreshing...'**
+  String get refreshing;
+
+  /// No description provided for @sessionExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Session expired. Please login again.'**
+  String get sessionExpired;
+
+  /// No description provided for @vehicleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle'**
+  String get vehicleLabel;
+
+  /// No description provided for @driverLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver'**
+  String get driverLabel;
+
+  /// No description provided for @stationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Station'**
+  String get stationLabel;
+
+  /// No description provided for @orderPositionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Position'**
+  String get orderPositionLabel;
+
+  /// No description provided for @dragToReorder.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to reorder'**
+  String get dragToReorder;
+
+  /// No description provided for @collecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Collecting'**
+  String get collecting;
+
+  /// No description provided for @prioritize.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to top'**
+  String get prioritize;
+
+  /// No description provided for @vehiclesAtStation.
+  ///
+  /// In en, this message translates to:
+  /// **'vehicles at station'**
+  String get vehiclesAtStation;
+
+  /// No description provided for @moveToTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to top'**
+  String get moveToTop;
+
+  /// No description provided for @stationOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Station Overview'**
+  String get stationOverview;
+
+  /// No description provided for @vehicleCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} vehicles'**
+  String vehicleCount(Object count);
+
+  /// No description provided for @todayOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Orders'**
+  String get todayOrders;
+
+  /// No description provided for @initStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Init'**
+  String get initStatus;
+
+  /// No description provided for @vehicleRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get vehicleRunning;
+
+  /// No description provided for @vehicleParked.
+  ///
+  /// In en, this message translates to:
+  /// **'Parked'**
+  String get vehicleParked;
+
+  /// No description provided for @vehicleOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get vehicleOffline;
+
+  /// No description provided for @speedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Speed'**
+  String get speedLabel;
+
+  /// No description provided for @distanceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance'**
+  String get distanceLabel;
+
+  /// No description provided for @locationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get locationLabel;
+
+  /// No description provided for @completedTrips.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get completedTrips;
+
+  /// No description provided for @activeTrips.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get activeTrips;
+
+  /// No description provided for @completedStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get completedStatus;
+
+  /// No description provided for @noTripsForVehicle.
+  ///
+  /// In en, this message translates to:
+  /// **'No trips for this vehicle today'**
+  String get noTripsForVehicle;
+
+  /// No description provided for @running.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get running;
+
+  /// No description provided for @vehicleManagement.
+  ///
+  /// In en, this message translates to:
+  /// **'Trips'**
+  String get vehicleManagement;
+
+  /// No description provided for @selectDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select date'**
+  String get selectDate;
+
+  /// No description provided for @noVehicles.
+  ///
+  /// In en, this message translates to:
+  /// **'No mixer trucks'**
+  String get noVehicles;
+
+  /// No description provided for @tripsOnDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Trips on date'**
+  String get tripsOnDate;
+
+  /// No description provided for @stopCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'stops'**
+  String get stopCountLabel;
+
+  /// No description provided for @attendance.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance'**
+  String get attendance;
+
+  /// No description provided for @attendanceWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'Working'**
+  String get attendanceWorking;
+
+  /// No description provided for @attendanceOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get attendanceOff;
+
+  /// No description provided for @attendanceHalf.
+  ///
+  /// In en, this message translates to:
+  /// **'Half day'**
+  String get attendanceHalf;
+
+  /// No description provided for @attendanceTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get attendanceTotal;
+
+  /// No description provided for @noAttendanceData.
+  ///
+  /// In en, this message translates to:
+  /// **'No attendance data'**
+  String get noAttendanceData;
+
+  /// No description provided for @shiftClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close Shift'**
+  String get shiftClose;
+
+  /// No description provided for @shiftCloseConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Close Shift'**
+  String get shiftCloseConfirmTitle;
+
+  /// No description provided for @shiftCloseConfirmContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to close today\'s shift? All pending orders will be canceled.'**
+  String get shiftCloseConfirmContent;
+
+  /// No description provided for @shiftCloseSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Shift closed successfully'**
+  String get shiftCloseSuccess;
+
+  /// No description provided for @shiftCloseFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to close shift'**
+  String get shiftCloseFailed;
+
+  /// No description provided for @shiftPendingWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} pending orders remaining'**
+  String shiftPendingWarning(Object count);
+
+  /// No description provided for @mealCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Meal Check'**
+  String get mealCheck;
+
+  /// No description provided for @mealCheckRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get mealCheckRefresh;
+
+  /// No description provided for @mealCheckLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking meals...'**
+  String get mealCheckLoading;
+
+  /// No description provided for @mealCheckNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'No meal data'**
+  String get mealCheckNoData;
+
+  /// No description provided for @mealCheckTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get mealCheckTotal;
+
+  /// No description provided for @mealCheckMorning.
+  ///
+  /// In en, this message translates to:
+  /// **'Morning'**
+  String get mealCheckMorning;
+
+  /// No description provided for @mealCheckLunch.
+  ///
+  /// In en, this message translates to:
+  /// **'Lunch'**
+  String get mealCheckLunch;
+
+  /// No description provided for @mealCheckDinner.
+  ///
+  /// In en, this message translates to:
+  /// **'Dinner'**
+  String get mealCheckDinner;
+}
+
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
+  const _AppLocalizationsDelegate();
+
+  @override
+  Future<AppLocalizations> load(Locale locale) {
+    return SynchronousFuture<AppLocalizations>(lookupAppLocalizations(locale));
+  }
+
+  @override
+  bool isSupported(Locale locale) =>
+      <String>['en', 'vi'].contains(locale.languageCode);
+
+  @override
+  bool shouldReload(_AppLocalizationsDelegate old) => false;
+}
+
+AppLocalizations lookupAppLocalizations(Locale locale) {
+  // Lookup logic when only language code is specified.
+  switch (locale.languageCode) {
+    case 'en':
+      return AppLocalizationsEn();
+    case 'vi':
+      return AppLocalizationsVi();
+  }
+
+  throw FlutterError(
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
+}
