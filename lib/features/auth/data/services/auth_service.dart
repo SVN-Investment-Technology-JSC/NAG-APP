@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import '../models/login_response_model.dart';
+import 'package:vehicle_management/features/auth/data/models/login_response_model.dart';
 
 class AuthService {
   final Dio dio;

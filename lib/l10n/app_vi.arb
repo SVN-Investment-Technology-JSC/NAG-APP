@@ -48,7 +48,8 @@
       "count": {}
     }
   },
-  "todayOrders": "Đơn hôm nay",
+  "todayOrders": "Thứ tự lốt xe",
+  "today": "Hôm nay",
   "initStatus": "Khởi tạo",
   "vehicleRunning": "Đang chạy",
   "vehicleParked": "Đang dừng",
@@ -61,7 +62,7 @@
   "completedStatus": "Hoàn thành",
   "noTripsForVehicle": "Không có chuyến cho xe này hôm nay",
   "running": "Đang chạy",
-  "vehicleManagement": "Quản lý chuyến",
+  "vehicleManagement": "Chuyến trong ngày",
   "selectDate": "Chọn ngày",
   "noVehicles": "Không có xe bồn",
   "tripsOnDate": "Chuyến trong ngày",
@@ -90,5 +91,9 @@
   "mealCheckTotal": "Tổng",
   "mealCheckMorning": "Sáng",
   "mealCheckLunch": "Trưa",
-  "mealCheckDinner": "Tối"
+  "mealCheckDinner": "Tối",
+  "notifications": "Thông báo",
+  "notificationsEmpty": "Không có thông báo",
+  "notificationRead": "Đã xem",
+  "notificationUnread": "Mới"
 }

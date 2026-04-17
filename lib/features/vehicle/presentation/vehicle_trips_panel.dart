@@ -93,40 +93,46 @@ class VehicleTripsPanel extends StatelessWidget {
             ),
           ),
           if (activeOrders.isNotEmpty)
-            Container(
-              margin: EdgeInsets.only(right: 6.w),
+            Flexible(
+              child: Container(
+                margin: EdgeInsets.only(right: 6.w),
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0EA5E9).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10.r),
+                  border: Border.all(
+                    color: const Color(0xFF0EA5E9).withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Text(
+                  '${activeOrders.length} ${l10n.activeTrips}',
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF0EA5E9),
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          Flexible(
+            child: Container(
               padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
               decoration: BoxDecoration(
-                color: const Color(0xFF0EA5E9).withValues(alpha: 0.12),
+                color: const Color(0xFF10B981).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10.r),
                 border: Border.all(
-                  color: const Color(0xFF0EA5E9).withValues(alpha: 0.3),
+                  color: const Color(0xFF10B981).withValues(alpha: 0.3),
                 ),
               ),
               child: Text(
-                '${activeOrders.length} ${l10n.activeTrips}',
+                '${completedOrders.length} ${l10n.completedTrips}',
                 style: TextStyle(
                   fontSize: 10.sp,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF0EA5E9),
+                  color: const Color(0xFF10B981),
                 ),
-              ),
-            ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-            decoration: BoxDecoration(
-              color: const Color(0xFF10B981).withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10.r),
-              border: Border.all(
-                color: const Color(0xFF10B981).withValues(alpha: 0.3),
-              ),
-            ),
-            child: Text(
-              '${completedOrders.length} ${l10n.completedTrips}',
-              style: TextStyle(
-                fontSize: 10.sp,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF10B981),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ),
@@ -296,12 +302,15 @@ class VehicleTripsPanel extends StatelessWidget {
                           color: accentColor,
                         ),
                         SizedBox(width: 3.w),
-                        Text(
-                          durationText,
-                          style: TextStyle(
-                            fontSize: 10.sp,
-                            fontWeight: FontWeight.w700,
-                            color: accentColor,
+                        Flexible(
+                          child: Text(
+                            durationText,
+                            style: TextStyle(
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w700,
+                              color: accentColor,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],

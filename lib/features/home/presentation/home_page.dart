@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:vehicle_management/core/l10n/language_provider.dart';
 import 'package:vehicle_management/core/network/device_socket_service.dart';
+import 'package:vehicle_management/core/network/notification_socket_service.dart';
 import 'package:vehicle_management/core/network/socket_service.dart';
 import 'package:vehicle_management/core/theme/app_spacing.dart';
 import 'package:vehicle_management/core/theme/theme_toggle_button.dart';
@@ -16,17 +17,19 @@ import 'package:vehicle_management/features/order/data/models/order_model.dart';
 import 'package:vehicle_management/features/stations/data/models/station_model.dart';
 import 'package:vehicle_management/features/vtracking/data/models/vtracking_vehicle.dart';
 import 'package:vehicle_management/features/setup/presentation/selection_page.dart';
+import 'package:vehicle_management/features/shell/presentation/main_shell.dart';
 import 'package:vehicle_management/features/vehicle/data/models/vehicle_model.dart';
 import 'package:vehicle_management/l10n/app_localizations.dart';
 
 class HomePage extends StatefulWidget {
   final List<OrderModel> orders;
-  final List<OrderModel> allTodayOrders;
+  final List<OrderModel> collectingOrders;
   final List<Station> stations;
   final List<VtrackingVehicle> vtrackingVehicles;
   final List<VehicleModel> vehicles;
   final SocketService socketService;
   final DeviceSocketService deviceSocketService;
+  final NotificationSocketService notificationService;
   final bool isLoading;
   final String? error;
   final Future<void> Function() onRefresh;
@@ -34,12 +37,13 @@ class HomePage extends StatefulWidget {
   const HomePage({
     super.key,
     required this.orders,
-    required this.allTodayOrders,
+    required this.collectingOrders,
     required this.stations,
     required this.vtrackingVehicles,
     required this.vehicles,
     required this.socketService,
     required this.deviceSocketService,
+    required this.notificationService,
     required this.isLoading,
     this.error,
     required this.onRefresh,
@@ -72,15 +76,12 @@ class _HomePageState extends State<HomePage> {
       widget.stations.where((s) => s.stationTypeId == 1).toList();
 
   List<OrderModel> _collectingAtStation(int stationId) {
-    return widget.allTodayOrders
-        .where((o) =>
-            o.orderStatus == 'collecting' &&
-            o.stations?.stationId == stationId)
+    return widget.collectingOrders
+        .where((o) => o.stations?.stationId == stationId)
         .toList();
   }
 
-  List<OrderModel> get _collectingOrders =>
-      widget.allTodayOrders.where((o) => o.orderStatus == 'collecting').toList();
+  List<OrderModel> get _collectingOrders => widget.collectingOrders;
 
   List<OrderModel> get _sortedOrders {
     final sorted = List<OrderModel>.from(widget.orders)
@@ -196,11 +197,16 @@ class _HomePageState extends State<HomePage> {
         ),
         automaticallyImplyLeading: false,
         leading: IconButton(
-          onPressed: _showLanguagePicker,
-          icon: Icon(Icons.language_rounded, color: colorScheme.primary),
-          tooltip: l10n.selectLanguage,
+          onPressed: () => mainShellScaffoldKey.currentState?.openDrawer(),
+          icon: Icon(Icons.menu_rounded, color: colorScheme.primary),
+          tooltip: 'Menu',
         ),
         actions: [
+          IconButton(
+            onPressed: _showLanguagePicker,
+            icon: Icon(Icons.language_rounded, color: colorScheme.primary),
+            tooltip: l10n.selectLanguage,
+          ),
           const ThemeToggleButton(),
           IconButton(
             onPressed: _logout,
@@ -267,7 +273,7 @@ class _HomePageState extends State<HomePage> {
         child: HomeStationCard(
           station: station,
           collectingVehicles: _collectingAtStation(station.stationId),
-          isRfidConnected: deviceStatus?.deviceStatus == 'connected',
+          isCameraConnected: deviceStatus?.deviceStatus == 'connected',
         ),
       );
     }).toList();
@@ -310,7 +316,7 @@ class _HomePageState extends State<HomePage> {
         (context, index) {
           return HomeOrderItem(
             order: sorted[index],
-            orderNumber: sorted[index].orderNumber,
+            orderNumber: index + 1,
             vehicles: widget.vehicles,
           );
         },

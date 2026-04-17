@@ -10,13 +10,13 @@ import 'package:vehicle_management/l10n/app_localizations.dart';
 class HomeStationCard extends StatelessWidget {
   final Station station;
   final List<OrderModel> collectingVehicles;
-  final bool isRfidConnected;
+  final bool isCameraConnected;
 
   const HomeStationCard({
     super.key,
     required this.station,
     required this.collectingVehicles,
-    required this.isRfidConnected,
+    required this.isCameraConnected,
   });
 
   bool get _hasCollecting => collectingVehicles.isNotEmpty;
@@ -45,7 +45,7 @@ class HomeStationCard extends StatelessWidget {
           _StationHeader(
             stationName: station.stationName,
             hasCollecting: _hasCollecting,
-            isRfidConnected: isRfidConnected,
+            isCameraConnected: isCameraConnected,
             collectingCount: collectingVehicles.length,
             collectingLabel: l10n.collecting,
           ),
@@ -73,14 +73,14 @@ class HomeStationCard extends StatelessWidget {
 class _StationHeader extends StatelessWidget {
   final String stationName;
   final bool hasCollecting;
-  final bool isRfidConnected;
+  final bool isCameraConnected;
   final int collectingCount;
   final String collectingLabel;
 
   const _StationHeader({
     required this.stationName,
     required this.hasCollecting,
-    required this.isRfidConnected,
+    required this.isCameraConnected,
     required this.collectingCount,
     required this.collectingLabel,
   });
@@ -90,7 +90,7 @@ class _StationHeader extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final ext = theme.extension<AppColorsExtension>()!;
-    final rfidColor = isRfidConnected ? ext.success : colorScheme.error;
+    final cameraColor = isCameraConnected ? ext.success : colorScheme.error;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 0),
@@ -113,7 +113,7 @@ class _StationHeader extends StatelessWidget {
               ),
             ),
           ),
-          _RfidBadge(color: rfidColor),
+          _CameraBadge(color: cameraColor),
           SizedBox(width: 6.w),
           if (hasCollecting)
             Container(
@@ -136,10 +136,10 @@ class _StationHeader extends StatelessWidget {
   }
 }
 
-class _RfidBadge extends StatelessWidget {
+class _CameraBadge extends StatelessWidget {
   final Color color;
 
-  const _RfidBadge({required this.color});
+  const _CameraBadge({required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -165,7 +165,7 @@ class _RfidBadge extends StatelessWidget {
           ),
           SizedBox(width: 3.w),
           Text(
-            'RFID',
+            'CAM',
             style: theme.textTheme.labelSmall?.copyWith(
               fontSize: 8.sp,
               fontWeight: FontWeight.w700,

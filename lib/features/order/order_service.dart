@@ -37,14 +37,16 @@ class OrderService {
     }
   }
 
-  /// Fetch orders by init date (same as Next.js dashboard endpoint)
+  /// Fetch orders by start date
   Future<List<OrderModel>> getOrdersByDate(String date) async {
     try {
-      final String fullUrl = '${AppEndpoints.apiBaseUrl}orders/order-init=$date';
+      final String fullUrl = '${AppEndpoints.apiBaseUrl}orders/order-start=$date';
 
       final response = await dio.get(
         fullUrl,
-        queryParameters: {'limit': 1000},
+        queryParameters: {
+          'limit': 1000,
+        },
       );
 
       if (response.statusCode == 200 && response.data['data'] != null) {
@@ -62,7 +64,7 @@ class OrderService {
     }
   }
 
-  /// Fetch today's orders (all statuses)
+  /// Fetch all orders for today by order_start date
   Future<List<OrderModel>> getTodayOrders() async {
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     return getOrdersByDate(today);

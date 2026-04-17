@@ -12,7 +12,7 @@ class AttendanceService {
   Future<AttendanceResponse> getAttendance({DateTime? date}) async {
     try {
       final dateStr = DateFormat('dd/MM/yyyy').format(date ?? DateTime.now());
-      final url = '${AppEndpoints.webBaseUrl}/api/google-sheets/attendance';
+      final url = 'https://nguyenanhdonghoi.com/api/google-sheets/attendance';
 
       final response = await dio.get(
         url,

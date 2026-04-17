@@ -46,9 +46,11 @@ class HomeOrderItem extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _TitleRow(label: _vehicleLabel, status: status),
+                  _StnRow(orderNumber: orderNumber, status: status),
                   SizedBox(height: AppSpacing.xsH),
-                  _MetaRow(order: order, orderNumber: orderNumber, status: status),
+                  _PlateRow(label: _vehicleLabel),
+                  SizedBox(height: AppSpacing.xsH),
+                  _MetaRow(order: order, status: status),
                   if (order.orderStatus == 'completed') _DistanceRow(order: order),
                 ],
               ),
@@ -113,11 +115,11 @@ class _AccentBar extends StatelessWidget {
   }
 }
 
-class _TitleRow extends StatelessWidget {
-  final String label;
+class _StnRow extends StatelessWidget {
+  final int orderNumber;
   final _OrderStatus status;
 
-  const _TitleRow({required this.label, required this.status});
+  const _StnRow({required this.orderNumber, required this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -125,15 +127,15 @@ class _TitleRow extends StatelessWidget {
 
     return Row(
       children: [
-        Expanded(
-          child: Text(
-            label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-            overflow: TextOverflow.ellipsis,
+        Text(
+          '#$orderNumber',
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w900,
+            color: status.color,
+            fontSize: 14.sp,
           ),
         ),
+        const Spacer(),
         Container(
           padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
           decoration: BoxDecoration(
@@ -154,14 +156,31 @@ class _TitleRow extends StatelessWidget {
   }
 }
 
+class _PlateRow extends StatelessWidget {
+  final String label;
+
+  const _PlateRow({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Text(
+      label,
+      style: theme.textTheme.bodySmall?.copyWith(
+        fontWeight: FontWeight.w800,
+      ),
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+}
+
 class _MetaRow extends StatelessWidget {
   final OrderModel order;
-  final int orderNumber;
   final _OrderStatus status;
 
   const _MetaRow({
     required this.order,
-    required this.orderNumber,
     required this.status,
   });
 
@@ -175,15 +194,7 @@ class _MetaRow extends StatelessWidget {
 
     return Row(
       children: [
-        Text(
-          '#$orderNumber',
-          style: theme.textTheme.labelSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ),
         if (initTime != null) ...[
-          SizedBox(width: AppSpacing.sm),
           Icon(Icons.access_time_rounded, size: 11.sp, color: colorScheme.onSurfaceVariant),
           SizedBox(width: 2.w),
           Text(

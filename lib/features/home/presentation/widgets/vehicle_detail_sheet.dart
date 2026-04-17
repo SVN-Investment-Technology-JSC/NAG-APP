@@ -22,6 +22,8 @@ class VehicleDetailSheet extends StatelessWidget {
       BuildContext context, VtrackingVehicle v, List<Station> stations) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
@@ -168,27 +170,33 @@ class _VehicleHeaderRow extends StatelessWidget {
       children: [
         Icon(Icons.local_shipping_rounded, color: status.color, size: 24.sp),
         SizedBox(width: 10.w),
-        Text(
-          vehicle.licensePlate.isNotEmpty
-              ? vehicle.licensePlate
-              : vehicle.vehicleName,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w800,
+        Expanded(
+          child: Text(
+            vehicle.licensePlate.isNotEmpty
+                ? vehicle.licensePlate
+                : vehicle.vehicleName,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
-        const Spacer(),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-          decoration: BoxDecoration(
-            color: status.color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: status.color.withValues(alpha: 0.3)),
-          ),
-          child: Text(
-            status.text,
-            style: theme.textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: status.color,
+        SizedBox(width: 8.w),
+        Flexible(
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+            decoration: BoxDecoration(
+              color: status.color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: status.color.withValues(alpha: 0.3)),
+            ),
+            child: Text(
+              status.text,
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: status.color,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ),
@@ -218,14 +226,16 @@ class _DetailRow extends StatelessWidget {
       children: [
         Icon(icon, size: 16.sp, color: colorScheme.onSurfaceVariant),
         SizedBox(width: 10.w),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13.sp,
-            color: colorScheme.onSurfaceVariant,
+        Flexible(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13.sp,
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
-        const Spacer(),
+        SizedBox(width: 8.w),
         Flexible(
           child: Text(
             value,

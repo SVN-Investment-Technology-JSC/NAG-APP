@@ -9,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 
 import 'package:vehicle_management/features/meal/data/models/meal_model.dart';
 import 'package:vehicle_management/features/meal/data/services/meal_service.dart';
+import 'package:vehicle_management/features/shell/presentation/main_shell.dart';
 import 'package:vehicle_management/l10n/app_localizations.dart';
 
 class MealCheckPage extends StatefulWidget {
@@ -432,6 +433,11 @@ class _MealCheckPageState extends State<MealCheckPage> {
               theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
         ),
         automaticallyImplyLeading: false,
+        leading: IconButton(
+          onPressed: () => mainShellScaffoldKey.currentState?.openDrawer(),
+          icon: Icon(Icons.menu_rounded, color: colorScheme.primary),
+          tooltip: 'Menu',
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.share_rounded, color: colorScheme.primary),

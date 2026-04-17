@@ -27,17 +27,19 @@ class SocketService {
 
     _socket?.dispose();
 
+    final opts = io.OptionBuilder()
+        .setTransports(['websocket'])
+        .setAuth({'token': 'Bearer $token'})
+        .enableReconnection()
+        .setReconnectionAttempts(double.infinity)
+        .setReconnectionDelay(1000)
+        .setReconnectionDelayMax(5000)
+        .enableAutoConnect()
+        .build();
+
     _socket = io.io(
       '${AppEndpoints.socketUrl}/updates',
-      io.OptionBuilder()
-          .setTransports(['websocket'])
-          .setAuth({'token': 'Bearer $token'})
-          .enableReconnection()
-          .setReconnectionAttempts(double.infinity)
-          .setReconnectionDelay(1000)
-          .setReconnectionDelayMax(5000)
-          .enableAutoConnect()
-          .build(),
+      opts,
     );
 
     _socket!.onConnect((_) {

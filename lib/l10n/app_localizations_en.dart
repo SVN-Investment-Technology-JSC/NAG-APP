@@ -127,7 +127,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get todayOrders => 'Today\'s Orders';
+  String get todayOrders => 'Vehicle Queue Order';
+
+  @override
+  String get today => 'Today';
 
   @override
   String get initStatus => 'Init';
@@ -166,7 +169,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get running => 'Running';
 
   @override
-  String get vehicleManagement => 'Trips';
+  String get vehicleManagement => 'Today\'s Trips';
 
   @override
   String get selectDate => 'Select date';
@@ -205,8 +208,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shiftCloseConfirmTitle => 'Confirm Close Shift';
 
   @override
-  String get shiftCloseConfirmContent =>
-      'Are you sure you want to close today\'s shift? All pending orders will be canceled.';
+  String get shiftCloseConfirmContent => 'Are you sure you want to close today\'s shift? All pending orders will be canceled.';
 
   @override
   String get shiftCloseSuccess => 'Shift closed successfully';
@@ -242,4 +244,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mealCheckDinner => 'Dinner';
+
+  @override
+  String get notifications => 'Notifications';
+
+  @override
+  String get notificationsEmpty => 'No notifications';
+
+  @override
+  String get notificationRead => 'Read';
+
+  @override
+  String get notificationUnread => 'New';
 }

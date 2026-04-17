@@ -12,6 +12,7 @@ import 'package:vehicle_management/core/network/api_client.dart';
 import 'package:vehicle_management/core/network/app_endpoints.dart';
 import 'package:vehicle_management/features/attendance/data/models/attendance_model.dart';
 import 'package:vehicle_management/features/attendance/data/services/attendance_service.dart';
+import 'package:vehicle_management/features/shell/presentation/main_shell.dart';
 import 'package:vehicle_management/l10n/app_localizations.dart';
 
 class AttendancePage extends StatefulWidget {
@@ -179,6 +180,11 @@ class _AttendancePageState extends State<AttendancePage> {
           style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
         ),
         automaticallyImplyLeading: false,
+        leading: IconButton(
+          onPressed: () => mainShellScaffoldKey.currentState?.openDrawer(),
+          icon: Icon(Icons.menu_rounded, color: colorScheme.primary),
+          tooltip: 'Menu',
+        ),
         actions: [
           IconButton(
             onPressed: (_data == null || _data!.results.isEmpty) ? null : _exportExcel,

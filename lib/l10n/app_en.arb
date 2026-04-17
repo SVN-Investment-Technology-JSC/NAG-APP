@@ -48,7 +48,8 @@
       "count": {}
     }
   },
-  "todayOrders": "Today's Orders",
+  "todayOrders": "Vehicle Queue Order",
+  "today": "Today",
   "initStatus": "Init",
   "vehicleRunning": "Running",
   "vehicleParked": "Parked",
@@ -61,7 +62,7 @@
   "completedStatus": "Completed",
   "noTripsForVehicle": "No trips for this vehicle today",
   "running": "Running",
-  "vehicleManagement": "Trips",
+  "vehicleManagement": "Today's Trips",
   "selectDate": "Select date",
   "noVehicles": "No mixer trucks",
   "tripsOnDate": "Trips on date",
@@ -90,5 +91,9 @@
   "mealCheckTotal": "Total",
   "mealCheckMorning": "Morning",
   "mealCheckLunch": "Lunch",
-  "mealCheckDinner": "Dinner"
+  "mealCheckDinner": "Dinner",
+  "notifications": "Notifications",
+  "notificationsEmpty": "No notifications",
+  "notificationRead": "Read",
+  "notificationUnread": "New"
 }

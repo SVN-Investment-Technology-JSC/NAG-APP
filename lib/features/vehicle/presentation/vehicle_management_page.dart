@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:vehicle_management/core/network/api_client.dart';
 import 'package:vehicle_management/features/order/data/models/order_model.dart';
 import 'package:vehicle_management/features/order/order_service.dart';
+import 'package:vehicle_management/features/shell/presentation/main_shell.dart';
 import 'package:vehicle_management/features/stations/data/models/station_model.dart';
 import 'package:vehicle_management/features/vehicle/data/models/vehicle_model.dart';
 import 'package:vehicle_management/features/vtracking/data/models/vtracking_vehicle.dart';
@@ -288,177 +289,164 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
     final l10n = AppLocalizations.of(context)!;
     final vtracking = _findVtracking(vehicle);
     final vehicleOrders = _ordersForVehicle(vehicle.vehicleId);
+    final iconColor = colorScheme.primary;
 
-    Color statusColor;
-    String statusText;
-    if (vtracking != null) {
-      if (vtracking.status == 'run') {
-        statusColor = const Color(0xFF10B981);
-        statusText = l10n.vehicleRunning;
-      } else if (vtracking.status == 'park') {
-        statusColor = const Color(0xFFF59E0B);
-        statusText = l10n.vehicleParked;
-      } else {
-        statusColor = colorScheme.error;
-        statusText = l10n.vehicleOffline;
-      }
-    } else {
-      statusColor = colorScheme.error;
-      statusText = l10n.vehicleOffline;
-    }
+    final sortedOrders = List<OrderModel>.from(vehicleOrders)
+      ..sort((a, b) {
+        final aTime = DateTime.tryParse(a.updatedAt ?? '') ?? DateTime(2000);
+        final bTime = DateTime.tryParse(b.updatedAt ?? '') ?? DateTime(2000);
+        return bTime.compareTo(aTime);
+      });
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
       builder: (ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: EdgeInsets.all(20.w),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(2.r),
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.85,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) {
+            return Padding(
+              padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 8.h),
+              child: Column(
+                children: [
+                  // Drag handle
+                  Container(
+                    width: 40.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: colorScheme.outlineVariant,
+                      borderRadius: BorderRadius.circular(2.r),
+                    ),
                   ),
-                ),
-                SizedBox(height: 16.h),
-                Row(
-                  children: [
-                    Icon(Icons.local_shipping_rounded,
-                        color: statusColor, size: 24.sp),
-                    SizedBox(width: 10.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            vehicle.vehicleLicensePlate,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          if (vehicle.vehicleName.isNotEmpty &&
-                              vehicle.vehicleName != vehicle.vehicleLicensePlate)
+                  SizedBox(height: 16.h),
+                  // Header
+                  Row(
+                    children: [
+                      Icon(Icons.local_shipping_rounded,
+                          color: iconColor, size: 24.sp),
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                             Text(
-                              vehicle.vehicleName,
+                              vehicle.vehicleLicensePlate,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            if (vehicle.vehicleName.isNotEmpty &&
+                                vehicle.vehicleName !=
+                                    vehicle.vehicleLicensePlate)
+                              Text(
+                                vehicle.vehicleName,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 12.h),
+                  // Scrollable body
+                  Expanded(
+                    child: ListView(
+                      controller: scrollController,
+                      padding: EdgeInsets.zero,
+                      children: [
+                        Divider(color: colorScheme.outlineVariant),
+                        SizedBox(height: 8.h),
+                        if (vtracking != null && vtracking.hasPosition) ...[
+                          _infoRow(
+                            Icons.speed_rounded,
+                            l10n.speedLabel,
+                            '${vtracking.speed.toStringAsFixed(0)} km/h',
+                            colorScheme,
+                            theme,
+                          ),
+                          SizedBox(height: 10.h),
+                          _infoRow(
+                            Icons.radar_rounded,
+                            l10n.distanceLabel,
+                            _distanceToNearestStation(vtracking),
+                            colorScheme,
+                            theme,
+                          ),
+                          if (vtracking.geocoding.isNotEmpty) ...[
+                            SizedBox(height: 10.h),
+                            _infoRow(
+                              Icons.location_on_outlined,
+                              l10n.locationLabel,
+                              vtracking.geocoding,
+                              colorScheme,
+                              theme,
+                            ),
+                          ],
+                          SizedBox(height: 12.h),
+                          Divider(color: colorScheme.outlineVariant),
+                          SizedBox(height: 8.h),
+                        ],
+                        Row(
+                          children: [
+                            Icon(Icons.route_rounded,
+                                size: 16.sp, color: colorScheme.primary),
+                            SizedBox(width: 8.w),
+                            Text(
+                              l10n.tripsOnDate,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const Spacer(),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 8.w, vertical: 3.h),
+                              decoration: BoxDecoration(
+                                color: colorScheme.primaryContainer,
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
+                              child: Text(
+                                '${vehicleOrders.length}',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: colorScheme.onPrimaryContainer,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 8.h),
+                        if (sortedOrders.isEmpty)
+                          Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16.h),
+                            child: Text(
+                              l10n.noTripsForVehicle,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: colorScheme.onSurfaceVariant,
                               ),
                             ),
-                        ],
-                      ),
+                          )
+                        else
+                          ...sortedOrders.map(
+                              (order) => _tripItem(order, theme, colorScheme, l10n)),
+                        SizedBox(height: 8.h),
+                      ],
                     ),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 10.w, vertical: 4.h),
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(
-                            color: statusColor.withValues(alpha: 0.3)),
-                      ),
-                      child: Text(
-                        statusText,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: statusColor,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 16.h),
-                Divider(color: colorScheme.outlineVariant),
-                SizedBox(height: 8.h),
-                if (vtracking != null && vtracking.hasPosition) ...[
-                  _infoRow(
-                    Icons.speed_rounded,
-                    l10n.speedLabel,
-                    '${vtracking.speed.toStringAsFixed(0)} km/h',
-                    colorScheme,
-                    theme,
                   ),
-                  SizedBox(height: 10.h),
-                  _infoRow(
-                    Icons.radar_rounded,
-                    l10n.distanceLabel,
-                    _distanceToNearestStation(vtracking),
-                    colorScheme,
-                    theme,
-                  ),
-                  if (vtracking.geocoding.isNotEmpty) ...[
-                    SizedBox(height: 10.h),
-                    _infoRow(
-                      Icons.location_on_outlined,
-                      l10n.locationLabel,
-                      vtracking.geocoding,
-                      colorScheme,
-                      theme,
-                    ),
-                  ],
-                  SizedBox(height: 12.h),
-                  Divider(color: colorScheme.outlineVariant),
-                  SizedBox(height: 8.h),
                 ],
-                Row(
-                  children: [
-                    Icon(Icons.route_rounded,
-                        size: 16.sp, color: colorScheme.primary),
-                    SizedBox(width: 8.w),
-                    Text(
-                      l10n.tripsOnDate,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 8.w, vertical: 3.h),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(10.r),
-                      ),
-                      child: Text(
-                        '${vehicleOrders.length}',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: colorScheme.onPrimaryContainer,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 8.h),
-                if (vehicleOrders.isEmpty)
-                  Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16.h),
-                    child: Text(
-                      l10n.noTripsForVehicle,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  )
-                else
-                  ...(List<OrderModel>.from(vehicleOrders)
-                    ..sort((a, b) {
-                      final aTime = DateTime.tryParse(a.updatedAt ?? '') ?? DateTime(2000);
-                      final bTime = DateTime.tryParse(b.updatedAt ?? '') ?? DateTime(2000);
-                      return bTime.compareTo(aTime);
-                    }))
-                      .map((order) => _tripItem(order, theme, colorScheme, l10n)),
-                SizedBox(height: 8.h),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
@@ -606,14 +594,36 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Row 1: #N + init time + status badge
+                // Row 1: Station tag + init time + status badge
                 Row(
                   children: [
-                    Text(
-                      '#${order.orderNumber}',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: accentColor,
+                    Flexible(
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 6.w, vertical: 2.h),
+                        decoration: BoxDecoration(
+                          color: accentColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6.r),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.factory_rounded,
+                                size: 11.sp, color: accentColor),
+                            SizedBox(width: 3.w),
+                            Flexible(
+                              child: Text(
+                                order.stations?.stationName ?? '---',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: accentColor,
+                                  fontSize: 10.sp,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     if (initTimeText != null) ...[
@@ -621,29 +631,36 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
                       Icon(Icons.access_time_rounded,
                           size: 11.sp, color: colorScheme.onSurfaceVariant),
                       SizedBox(width: 2.w),
-                      Text(
-                        initTimeText,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.onSurfaceVariant,
-                          fontSize: 10.sp,
+                      Flexible(
+                        child: Text(
+                          initTimeText,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 10.sp,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
-                    const Spacer(),
-                    Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                      decoration: BoxDecoration(
-                        color: accentColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6.r),
-                      ),
-                      child: Text(
-                        statusText,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: accentColor,
-                          fontSize: 9.sp,
+                    SizedBox(width: 6.w),
+                    Flexible(
+                      child: Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                        decoration: BoxDecoration(
+                          color: accentColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6.r),
+                        ),
+                        child: Text(
+                          statusText,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: accentColor,
+                            fontSize: 9.sp,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                       ),
                     ),
@@ -652,117 +669,131 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
                 // Row 2: Start → End + running duration
                 if (startTimeText != null || runDurationText != null) ...[
                   SizedBox(height: 4.h),
-                  Row(
+                  Wrap(
+                    spacing: 8.w,
+                    runSpacing: 4.h,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      if (startTimeText != null) ...[
-                        Icon(Icons.play_circle_outline_rounded,
-                            size: 11.sp, color: const Color(0xFF0EA5E9)),
-                        SizedBox(width: 2.w),
-                        Text(
-                          startTimeText,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 10.sp,
-                          ),
-                        ),
-                        if (endTimeText != null) ...[
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 3.w),
-                            child: Text('→',
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
-                                  fontSize: 10.sp,
-                                )),
-                          ),
-                          Text(
-                            endTimeText,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 10.sp,
+                      if (startTimeText != null)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.play_circle_outline_rounded,
+                                size: 11.sp, color: const Color(0xFF0EA5E9)),
+                            SizedBox(width: 2.w),
+                            Text(
+                              startTimeText,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 10.sp,
+                              ),
                             ),
-                          ),
-                        ] else ...[
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 3.w),
-                            child: Text('→',
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
-                                  fontSize: 10.sp,
-                                )),
-                          ),
-                          SizedBox(
-                            width: 10.w,
-                            height: 10.w,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 1.5,
-                              color: const Color(0xFF0EA5E9),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 3.w),
+                              child: Text('→',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontSize: 10.sp,
+                                  )),
                             ),
-                          ),
-                        ],
-                      ],
-                      if (runDurationText != null) ...[
-                        SizedBox(width: 8.w),
-                        Icon(Icons.schedule_rounded,
-                            size: 11.sp, color: const Color(0xFFF59E0B)),
-                        SizedBox(width: 2.w),
-                        Text(
-                          runDurationText,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFFF59E0B),
-                            fontSize: 10.sp,
-                          ),
+                            if (endTimeText != null)
+                              Text(
+                                endTimeText,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 10.sp,
+                                ),
+                              )
+                            else
+                              SizedBox(
+                                width: 10.w,
+                                height: 10.w,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 1.5,
+                                  color: const Color(0xFF0EA5E9),
+                                ),
+                              ),
+                          ],
                         ),
-                      ],
+                      if (runDurationText != null)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.schedule_rounded,
+                                size: 11.sp, color: const Color(0xFFF59E0B)),
+                            SizedBox(width: 2.w),
+                            Text(
+                              runDurationText,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFFF59E0B),
+                                fontSize: 10.sp,
+                              ),
+                            ),
+                          ],
+                        ),
                     ],
                   ),
                 ],
                 // Row 3: Mixing duration + distance + stops
                 if (mixDurationText != null || distanceText != null || stopsText != null) ...[
                   SizedBox(height: 4.h),
-                  Row(
+                  Wrap(
+                    spacing: 8.w,
+                    runSpacing: 4.h,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      if (mixDurationText != null) ...[
-                        Icon(Icons.blender_rounded,
-                            size: 11.sp, color: const Color(0xFF8B5CF6)),
-                        SizedBox(width: 2.w),
-                        Text(
-                          'Trộn: $mixDurationText',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF8B5CF6),
-                            fontSize: 10.sp,
-                          ),
+                      if (mixDurationText != null)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.blender_rounded,
+                                size: 11.sp, color: const Color(0xFF8B5CF6)),
+                            SizedBox(width: 2.w),
+                            Text(
+                              'Trộn: $mixDurationText',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF8B5CF6),
+                                fontSize: 10.sp,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                      if (distanceText != null) ...[
-                        SizedBox(width: 8.w),
-                        Icon(Icons.straighten_rounded,
-                            size: 11.sp,
-                            color: colorScheme.onSurfaceVariant),
-                        SizedBox(width: 2.w),
-                        Text(
-                          distanceText,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                            fontSize: 10.sp,
-                          ),
+                      if (distanceText != null)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.straighten_rounded,
+                                size: 11.sp,
+                                color: colorScheme.onSurfaceVariant),
+                            SizedBox(width: 2.w),
+                            Text(
+                              distanceText,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                                fontSize: 10.sp,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                      if (stopsText != null) ...[
-                        SizedBox(width: 8.w),
-                        Icon(Icons.pause_circle_outline_rounded,
-                            size: 11.sp,
-                            color: colorScheme.onSurfaceVariant),
-                        SizedBox(width: 2.w),
-                        Text(
-                          stopsText,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                            fontSize: 10.sp,
-                          ),
+                      if (stopsText != null)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.pause_circle_outline_rounded,
+                                size: 11.sp,
+                                color: colorScheme.onSurfaceVariant),
+                            SizedBox(width: 2.w),
+                            Text(
+                              stopsText,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                                fontSize: 10.sp,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
                     ],
                   ),
                 ],
@@ -792,6 +823,11 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
           ),
         ),
         automaticallyImplyLeading: false,
+        leading: IconButton(
+          onPressed: () => mainShellScaffoldKey.currentState?.openDrawer(),
+          icon: Icon(Icons.menu_rounded, color: colorScheme.primary),
+          tooltip: 'Menu',
+        ),
         actions: [
           FilledButton.tonal(
             onPressed: _pickDate,
@@ -806,7 +842,7 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
                 SizedBox(width: 6.w),
                 Text(
                   isToday
-                      ? l10n.todayOrders
+                      ? l10n.today
                       : DateFormat('dd/MM').format(_selectedDate),
                   style: theme.textTheme.labelMedium?.copyWith(
                     fontWeight: FontWeight.w700,
@@ -859,7 +895,7 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
                     itemBuilder: (context, index) {
                       final vehicle = _sortedVehicles[index];
                       return _buildVehicleItem(
-                          vehicle, index, theme, colorScheme, l10n);
+                          vehicle, index, theme, colorScheme);
                     },
                   ),
                 ),
@@ -867,130 +903,68 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
   }
 
   Widget _buildVehicleItem(VehicleModel vehicle, int index, ThemeData theme,
-      ColorScheme colorScheme, AppLocalizations l10n) {
-    final vtracking = _findVtracking(vehicle);
-    final vehicleOrders = _ordersForVehicle(vehicle.vehicleId);
-    final completedCount =
-        vehicleOrders.where((o) => o.orderStatus == 'completed').length;
-    final activeCount =
-        vehicleOrders.where((o) => o.orderStatus == 'init').length;
-
-    Color statusColor;
-    String statusText;
-    if (vtracking != null && vtracking.status == 'run') {
-      statusColor = const Color(0xFF10B981);
-      statusText = l10n.vehicleRunning;
-    } else if (vtracking != null && vtracking.status == 'park') {
-      statusColor = const Color(0xFFF59E0B);
-      statusText = l10n.vehicleParked;
-    } else {
-      statusColor = colorScheme.error;
-      statusText = l10n.vehicleOffline;
-    }
+      ColorScheme colorScheme) {
+    final tripCount = _ordersForVehicle(vehicle.vehicleId).length;
+    final iconColor = colorScheme.primary;
 
     return Padding(
-      padding: EdgeInsets.only(bottom: 8.h),
+      padding: EdgeInsets.only(bottom: 6.h),
       child: Material(
         color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(14.r),
+        borderRadius: BorderRadius.circular(12.r),
         child: InkWell(
           onTap: () => _showVehiclePopup(vehicle),
-          borderRadius: BorderRadius.circular(14.r),
+          borderRadius: BorderRadius.circular(12.r),
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
             child: Row(
               children: [
                 Container(
-                  width: 40.w,
-                  height: 40.w,
+                  width: 32.w,
+                  height: 32.w,
                   decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12.r),
+                    color: iconColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10.r),
                   ),
                   child: Center(
                     child: Text(
                       vehicle.vehicleName.isNotEmpty
                           ? vehicle.vehicleName
                           : '${index + 1}',
-                      style: theme.textTheme.titleSmall?.copyWith(
+                      style: theme.textTheme.labelMedium?.copyWith(
                         fontWeight: FontWeight.w900,
-                        color: statusColor,
+                        color: iconColor,
                       ),
                     ),
                   ),
                 ),
-                SizedBox(width: 12.w),
+                SizedBox(width: 10.w),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        vehicle.vehicleLicensePlate,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      SizedBox(height: 2.h),
-                      Row(
-                        children: [
-                          Container(
-                            width: 6.w,
-                            height: 6.w,
-                            decoration: BoxDecoration(
-                              color: statusColor,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          SizedBox(width: 4.w),
-                          Text(
-                            statusText,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                  child: Text(
+                    vehicle.vehicleLicensePlate,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
-                if (vehicleOrders.isNotEmpty) ...[
-                  if (completedCount > 0)
-                    Container(
-                      margin: EdgeInsets.only(right: 4.w),
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 6.w, vertical: 2.h),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Text(
-                        '$completedCount ${l10n.completedStatus}',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF10B981),
-                          fontSize: 9.sp,
-                        ),
-                      ),
+                if (tripCount > 0) ...[
+                  Text(
+                    '$tripCount',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: colorScheme.primary,
                     ),
-                  if (activeCount > 0)
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 6.w, vertical: 2.h),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0EA5E9).withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Text(
-                        '$activeCount ${l10n.running}',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF0EA5E9),
-                          fontSize: 9.sp,
-                        ),
-                      ),
+                  ),
+                  SizedBox(width: 2.w),
+                  Text(
+                    'chuyến',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 10.sp,
                     ),
+                  ),
+                  SizedBox(width: 6.w),
                 ],
-                SizedBox(width: 4.w),
                 Icon(Icons.chevron_right_rounded,
                     size: 20.sp, color: colorScheme.outlineVariant),
               ],

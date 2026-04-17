@@ -2,8 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:vehicle_management/core/l10n/language_provider.dart';
 import 'package:vehicle_management/core/network/api_client.dart';
 import 'package:vehicle_management/core/theme/theme_toggle_button.dart';
@@ -78,11 +76,12 @@ class _SelectionPageState extends State<SelectionPage> {
         password: _passwordController.text.trim(),
       );
 
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('access_token', result.accessToken);
-      await prefs.setInt('user_id', result.userId);
-      await prefs.setString('user_full_name', result.fullName);
-      await prefs.setString('user_role', result.role);
+      await _authStorage.saveSession(
+        accessToken: result.accessToken,
+        userId: result.userId,
+        fullName: result.fullName,
+        role: result.role,
+      );
 
       await _savePreferences();
 

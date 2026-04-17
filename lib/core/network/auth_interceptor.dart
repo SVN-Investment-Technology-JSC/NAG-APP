@@ -1,74 +1,45 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vehicle_management/core/network/api_client.dart';
 import 'package:vehicle_management/features/setup/presentation/selection_page.dart';
 
 class AuthInterceptor extends Interceptor {
   final Dio dio;
+  final Dio refreshDio;
   final GlobalKey<NavigatorState> navigatorKey;
+  VoidCallback? onTokenRefreshed;
 
   bool _isRefreshing = false;
-  final List<_PendingRequest> _pendingRequests = [];
+  bool _isLoggingOut = false;
+  Completer<String?>? _refreshCompleter;
 
-  AuthInterceptor({required this.dio, required this.navigatorKey});
+  static const _retryKey = '_isRetry';
+
+  AuthInterceptor({
+    required this.dio,
+    required this.refreshDio,
+    required this.navigatorKey,
+    this.onTokenRefreshed,
+  });
 
   @override
   void onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    // Skip auth header for refresh endpoint itself
-    if (options.path.contains('/auth/refresh')) {
+    if (options.path.contains('/auth/refresh') ||
+        options.path.contains('/auth/login')) {
       handler.next(options);
       return;
     }
 
     final prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('access_token');
+    final token = prefs.getString('access_token');
 
     if (token != null && token.isNotEmpty) {
-      // Check if token is expired or about to expire (within 30s)
-      if (JwtDecoder.isExpired(token)) {
-        // Token expired, try to refresh
-        if (!_isRefreshing) {
-          _isRefreshing = true;
-          try {
-            final newToken = await _refreshToken(prefs);
-            if (newToken != null) {
-              token = newToken;
-            } else {
-              _forceLogout();
-              handler.reject(
-                DioException(
-                  requestOptions: options,
-                  error: 'Session expired',
-                ),
-              );
-              return;
-            }
-          } catch (e) {
-            _forceLogout();
-            handler.reject(
-              DioException(requestOptions: options, error: 'Refresh failed'),
-            );
-            return;
-          } finally {
-            _isRefreshing = false;
-            // Replay pending requests
-            for (final pending in _pendingRequests) {
-              pending.options.headers['Authorization'] = 'Bearer $token';
-              pending.handler.next(pending.options);
-            }
-            _pendingRequests.clear();
-          }
-        } else {
-          // Another refresh in progress, queue this request
-          _pendingRequests.add(_PendingRequest(options, handler));
-          return;
-        }
-      }
-
       options.headers['Authorization'] = 'Bearer $token';
     }
 
@@ -77,45 +48,95 @@ class AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    if (err.response?.statusCode == 401 &&
-        !err.requestOptions.path.contains('/auth/')) {
-      // Try refresh on 401
-      final prefs = await SharedPreferences.getInstance();
-      final newToken = await _refreshToken(prefs);
-
-      if (newToken != null) {
-        // Retry the failed request
-        final options = err.requestOptions;
-        options.headers['Authorization'] = 'Bearer $newToken';
-
-        try {
-          final response = await dio.fetch(options);
-          handler.resolve(response);
-          return;
-        } catch (e) {
-          handler.next(err);
-          return;
-        }
-      } else {
-        _forceLogout();
-      }
+    if (err.response?.statusCode != 401 ||
+        err.requestOptions.path.contains('/auth/login') ||
+        err.requestOptions.path.contains('/auth/refresh')) {
+      handler.next(err);
+      return;
     }
 
+    if (err.requestOptions.extra[_retryKey] == true) {
+      handler.next(err);
+      return;
+    }
+
+    try {
+      final newToken = await _handleTokenRefresh();
+
+      if (newToken != null) {
+        final original = err.requestOptions;
+
+        // Clone FormData to avoid "Stream already listened to" on retry
+        dynamic newData = original.data;
+        if (original.data is FormData) {
+          final old = original.data as FormData;
+          final cloned = FormData();
+          cloned.fields.addAll(old.fields);
+          for (final f in old.files) {
+            cloned.files.add(MapEntry(f.key, f.value.clone()));
+          }
+          newData = cloned;
+        }
+
+        final response = await dio.request(
+          original.path,
+          data: newData,
+          queryParameters: original.queryParameters,
+          options: Options(
+            method: original.method,
+            headers: {
+              ...original.headers,
+              'Authorization': 'Bearer $newToken',
+            },
+            contentType: original.contentType,
+            responseType: original.responseType,
+            extra: {...original.extra, _retryKey: true},
+          ),
+        );
+        handler.resolve(response);
+        return;
+      }
+    } catch (_) {}
+
+    _forceLogout();
     handler.next(err);
   }
 
-  Future<String?> _refreshToken(SharedPreferences prefs) async {
+  Future<String?> _handleTokenRefresh() async {
+    final inflight = _refreshCompleter;
+    if (_isRefreshing && inflight != null) {
+      return inflight.future;
+    }
+
+    _isRefreshing = true;
+    final completer = Completer<String?>();
+    _refreshCompleter = completer;
+
     try {
-      final response = await dio.get('/auth/refresh');
+      final newToken = await _refreshToken();
+      completer.complete(newToken);
+      return newToken;
+    } catch (e) {
+      if (!completer.isCompleted) completer.complete(null);
+      return null;
+    } finally {
+      _isRefreshing = false;
+      _refreshCompleter = null;
+    }
+  }
+
+  Future<String?> _refreshToken() async {
+    try {
+      final response = await refreshDio.get('/auth/refresh');
 
       if (response.statusCode == 200) {
         final data = response.data;
         final newToken = data['accessToken'] as String?;
 
         if (newToken != null && newToken.isNotEmpty) {
+          final prefs = await SharedPreferences.getInstance();
           await prefs.setString('access_token', newToken);
 
-          // Update user info if provided
           if (data['user_id'] != null) {
             await prefs.setInt('user_id', data['user_id']);
           }
@@ -125,6 +146,9 @@ class AuthInterceptor extends Interceptor {
           if (data['role'] != null) {
             await prefs.setString('user_role', data['role']);
           }
+          await prefs.setBool('is_logged_in', true);
+
+          onTokenRefreshed?.call();
 
           return newToken;
         }
@@ -137,23 +161,26 @@ class AuthInterceptor extends Interceptor {
   }
 
   void _forceLogout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('access_token');
-    await prefs.remove('user_id');
-    await prefs.remove('user_full_name');
-    await prefs.remove('user_role');
-    await prefs.setBool('is_logged_in', false);
+    if (_isLoggingOut) return;
+    _isLoggingOut = true;
 
-    navigatorKey.currentState?.pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const SelectionPage()),
-      (route) => false,
-    );
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('access_token');
+      await prefs.remove('user_id');
+      await prefs.remove('user_full_name');
+      await prefs.remove('user_role');
+      await prefs.setBool('is_logged_in', false);
+
+      ApiClient.cookieJar.deleteAll();
+
+      navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const SelectionPage()),
+        (route) => false,
+      );
+    } finally {
+      _isLoggingOut = false;
+    }
   }
 }
 
-class _PendingRequest {
-  final RequestOptions options;
-  final RequestInterceptorHandler handler;
-
-  _PendingRequest(this.options, this.handler);
-}

@@ -10,6 +10,7 @@ import 'package:vehicle_management/core/l10n/language_provider.dart';
 import 'package:vehicle_management/core/theme/app_theme.dart';
 import 'package:vehicle_management/core/theme/theme_provider.dart';
 import 'package:vehicle_management/core/network/api_client.dart';
+import 'package:vehicle_management/features/auth/data/services/auth_service.dart';
 
 class VehicleApp extends StatelessWidget {
   const VehicleApp({super.key});
@@ -62,20 +63,46 @@ class _RootHandlerState extends State<RootHandler> {
 
   Future<void> _handleStartUp() async {
     final prefs = await SharedPreferences.getInstance();
-    final String? token = prefs.getString('access_token');
+    final token = prefs.getString('access_token');
 
-    if (token != null && token.isNotEmpty) {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const MainShell()),
-        );
-      }
-    } else {
+    if (token == null || token.isEmpty) {
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const SelectionPage()),
         );
       }
+      return;
+    }
+
+    // Token exists — proactively refresh before entering app
+    try {
+      final authService = AuthService(ApiClient.refreshDio);
+      final result = await authService.refresh();
+
+      await prefs.setString('access_token', result.accessToken);
+      await prefs.setInt('user_id', result.userId);
+      await prefs.setString('user_full_name', result.fullName);
+      await prefs.setString('user_role', result.role);
+      await prefs.setBool('is_logged_in', true);
+
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const MainShell()),
+      );
+    } catch (e) {
+      debugPrint('[Startup] Refresh failed: $e');
+      // Refresh cookie expired or network error — clear session, go to login
+      await prefs.remove('access_token');
+      await prefs.remove('user_id');
+      await prefs.remove('user_full_name');
+      await prefs.remove('user_role');
+      await prefs.setBool('is_logged_in', false);
+      ApiClient.cookieJar.deleteAll();
+
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const SelectionPage()),
+      );
     }
   }
 

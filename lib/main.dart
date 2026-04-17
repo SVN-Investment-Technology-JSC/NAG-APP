@@ -11,7 +11,7 @@ void main() async {
 
   await initializeDateFormatting();
 
-  ApiClient.init();
+  await ApiClient.init();
 
   runApp(
     MultiProvider(

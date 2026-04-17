@@ -89,8 +89,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get refreshing => 'Đang tải lại...';
 
   @override
-  String get sessionExpired =>
-      'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.';
+  String get sessionExpired => 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.';
 
   @override
   String get vehicleLabel => 'Phương tiện';
@@ -128,7 +127,10 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get todayOrders => 'Đơn hôm nay';
+  String get todayOrders => 'Thứ tự lốt xe';
+
+  @override
+  String get today => 'Hôm nay';
 
   @override
   String get initStatus => 'Khởi tạo';
@@ -167,7 +169,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get running => 'Đang chạy';
 
   @override
-  String get vehicleManagement => 'Quản lý chuyến';
+  String get vehicleManagement => 'Chuyến trong ngày';
 
   @override
   String get selectDate => 'Chọn ngày';
@@ -206,8 +208,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get shiftCloseConfirmTitle => 'Xác nhận chốt ca';
 
   @override
-  String get shiftCloseConfirmContent =>
-      'Bạn có chắc chắn muốn chốt ca hôm nay? Tất cả đơn hàng pending sẽ chuyển thành canceled.';
+  String get shiftCloseConfirmContent => 'Bạn có chắc chắn muốn chốt ca hôm nay? Tất cả đơn hàng pending sẽ chuyển thành canceled.';
 
   @override
   String get shiftCloseSuccess => 'Đã chốt ca thành công';
@@ -243,4 +244,16 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get mealCheckDinner => 'Tối';
+
+  @override
+  String get notifications => 'Thông báo';
+
+  @override
+  String get notificationsEmpty => 'Không có thông báo';
+
+  @override
+  String get notificationRead => 'Đã xem';
+
+  @override
+  String get notificationUnread => 'Mới';
 }
