@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:vehicle_management/core/l10n/language_provider.dart';
-import 'package:vehicle_management/core/network/device_socket_service.dart';
 import 'package:vehicle_management/core/network/notification_socket_service.dart';
 import 'package:vehicle_management/core/network/socket_service.dart';
 import 'package:vehicle_management/core/theme/app_spacing.dart';
@@ -28,7 +27,6 @@ class HomePage extends StatefulWidget {
   final List<VtrackingVehicle> vtrackingVehicles;
   final List<VehicleModel> vehicles;
   final SocketService socketService;
-  final DeviceSocketService deviceSocketService;
   final NotificationSocketService notificationService;
   final bool isLoading;
   final String? error;
@@ -42,7 +40,6 @@ class HomePage extends StatefulWidget {
     required this.vtrackingVehicles,
     required this.vehicles,
     required this.socketService,
-    required this.deviceSocketService,
     required this.notificationService,
     required this.isLoading,
     this.error,
@@ -238,7 +235,6 @@ class _HomePageState extends State<HomePage> {
                 userRole: _userRole,
                 orderCount: widget.orders.length,
                 isSocketConnected: widget.socketService.isConnected,
-                isLedConnected: widget.deviceSocketService.isLedConnected,
               ),
             ),
             ..._buildStationSliver(),
@@ -267,13 +263,13 @@ class _HomePageState extends State<HomePage> {
 
   List<Widget> _buildStationSliver() {
     return _workingStations.map((station) {
-      final deviceStatus = widget.deviceSocketService
-          .stationStatusMap[station.stationId.toString()];
+      final cameraStatus =
+          widget.socketService.cameraStatusMap[station.stationId.toString()];
       return SliverToBoxAdapter(
         child: HomeStationCard(
           station: station,
           collectingVehicles: _collectingAtStation(station.stationId),
-          isCameraConnected: deviceStatus?.deviceStatus == 'connected',
+          isCameraConnected: cameraStatus == 'connected',
         ),
       );
     }).toList();

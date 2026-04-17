@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
@@ -7,6 +9,9 @@ class SocketService {
   io.Socket? _socket;
   VoidCallback? _onUpdate;
   VoidCallback? _onStatusChanged;
+
+  /// stationId (String) -> 'connected' | 'disconnected'
+  final Map<String, String> cameraStatusMap = {};
 
   bool get isConnected => _socket?.connected ?? false;
 
@@ -18,9 +23,7 @@ class SocketService {
 
   Future<void> _initSocket() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token');
-
-    if (token == null || token.isEmpty) {
+    if ((prefs.getString('access_token') ?? '').isEmpty) {
       debugPrint('[SOCKET] No token, skipping connection');
       return;
     }
@@ -29,13 +32,17 @@ class SocketService {
 
     final opts = io.OptionBuilder()
         .setTransports(['websocket'])
-        .setAuth({'token': 'Bearer $token'})
         .enableReconnection()
         .setReconnectionAttempts(double.infinity)
         .setReconnectionDelay(1000)
         .setReconnectionDelayMax(5000)
         .enableAutoConnect()
         .build();
+    opts['auth'] = (void Function(dynamic) cb) async {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('access_token') ?? '';
+      cb({'token': 'Bearer $token'});
+    };
 
     _socket = io.io(
       '${AppEndpoints.socketUrl}/updates',
@@ -47,8 +54,8 @@ class SocketService {
       _onStatusChanged?.call();
     });
 
-    _socket!.onDisconnect((_) {
-      debugPrint('[SOCKET] Disconnected');
+    _socket!.onDisconnect((reason) {
+      debugPrint('[SOCKET] Disconnected: $reason');
       _onStatusChanged?.call();
     });
 
@@ -66,6 +73,51 @@ class SocketService {
       debugPrint('[SOCKET] Received ping');
       _onUpdate?.call();
     });
+
+    _socket!.on('camera-status', _onCameraStatus);
+  }
+
+  void _onCameraStatus(dynamic raw) {
+    dynamic payload = raw;
+    if (payload is String) {
+      try {
+        payload = jsonDecode(payload);
+      } catch (e) {
+        debugPrint('[SOCKET] camera-status parse error: $e');
+        return;
+      }
+    }
+
+    List<dynamic> items = [];
+    if (payload is List) {
+      items = payload.isNotEmpty && payload.first is List
+          ? payload.first as List
+          : payload;
+    } else if (payload is Map) {
+      if (payload.containsKey('station_id') || payload.containsKey('id')) {
+        items = [payload];
+      } else {
+        final nested = payload.values.whereType<List>().cast<List>().firstOrNull;
+        if (nested != null) items = nested;
+      }
+    }
+
+    var updated = false;
+    for (final item in items) {
+      if (item is! Map) continue;
+      final stationId = (item['station_id'] ?? item['id'])?.toString();
+      if (stationId == null || stationId.isEmpty) continue;
+
+      final statusRaw = (item['status'] ?? item['device_status'] ?? '').toString().trim().toLowerCase();
+      final status = statusRaw == 'connected' ? 'connected' : 'disconnected';
+
+      if (cameraStatusMap[stationId] != status) {
+        cameraStatusMap[stationId] = status;
+        updated = true;
+      }
+    }
+
+    if (updated) _onStatusChanged?.call();
   }
 
   void dispose() {

@@ -26,12 +26,8 @@ class NotificationSocketService {
   Future<void> connect() async {
     _socket?.dispose();
 
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token');
-
     final opts = io.OptionBuilder()
         .setTransports(['websocket'])
-        .setAuth({'token': 'Bearer ${token ?? ''}'})
         .enableReconnection()
         .setReconnectionAttempts(double.infinity)
         .setReconnectionDelay(2000)
@@ -39,6 +35,11 @@ class NotificationSocketService {
         .enableAutoConnect()
         .build();
     opts['path'] = '/gateways';
+    opts['auth'] = (void Function(dynamic) cb) async {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('access_token') ?? '';
+      cb({'token': 'Bearer $token'});
+    };
 
     _socket = io.io(
       '${AppEndpoints.socketUrl}/notifications',
@@ -50,8 +51,8 @@ class NotificationSocketService {
       _socket!.emit('notification:get_all');
     });
 
-    _socket!.onDisconnect((_) {
-      debugPrint('[NOTIF] Disconnected');
+    _socket!.onDisconnect((reason) {
+      debugPrint('[NOTIF] Disconnected: $reason');
     });
 
     _socket!.onConnectError((err) {

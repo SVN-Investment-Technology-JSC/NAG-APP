@@ -137,14 +137,22 @@ class AuthInterceptor extends Interceptor {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('access_token', newToken);
 
-          if (data['user_id'] != null) {
-            await prefs.setInt('user_id', data['user_id']);
+          final userIdValue = data['user_id'];
+          if (userIdValue != null) {
+            final parsed = userIdValue is int
+                ? userIdValue
+                : userIdValue is num
+                    ? userIdValue.toInt()
+                    : int.tryParse(userIdValue.toString());
+            if (parsed != null) {
+              await prefs.setInt('user_id', parsed);
+            }
           }
           if (data['user_full_name'] != null) {
-            await prefs.setString('user_full_name', data['user_full_name']);
+            await prefs.setString('user_full_name', data['user_full_name'].toString());
           }
           if (data['role'] != null) {
-            await prefs.setString('user_role', data['role']);
+            await prefs.setString('user_role', data['role'].toString());
           }
           await prefs.setBool('is_logged_in', true);
 

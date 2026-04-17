@@ -15,11 +15,18 @@ class LoginResponseModel {
 
   factory LoginResponseModel.fromJson(Map<String, dynamic> json) {
     return LoginResponseModel(
-      userId: json['user_id'] ?? 0,
-      fullName: json['user_full_name'] ?? '',
-      roleId: json['role_id'] ?? 0,
-      role: json['role'] ?? '',
-      accessToken: json['accessToken'] ?? '',
+      userId: _parseInt(json['user_id']),
+      fullName: json['user_full_name']?.toString() ?? '',
+      roleId: _parseInt(json['role_id']),
+      role: json['role']?.toString() ?? '',
+      accessToken: json['accessToken']?.toString() ?? '',
     );
+  }
+
+  static int _parseInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
   }
 }

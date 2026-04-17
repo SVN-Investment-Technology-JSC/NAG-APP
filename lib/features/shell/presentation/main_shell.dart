@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:vehicle_management/core/network/api_client.dart';
 import 'package:vehicle_management/core/network/auth_interceptor.dart';
-import 'package:vehicle_management/core/network/device_socket_service.dart';
 import 'package:vehicle_management/core/network/notification_socket_service.dart';
 import 'package:vehicle_management/core/network/socket_service.dart';
 import 'package:vehicle_management/features/attendance/presentation/attendance_page.dart';
@@ -38,7 +37,6 @@ class _MainShellState extends State<MainShell> {
   final OrderService _orderService = OrderService(ApiClient.dio);
   final StationService _stationService = StationService(ApiClient.dio);
   final SocketService _socketService = SocketService();
-  final DeviceSocketService _deviceSocketService = DeviceSocketService();
   final NotificationSocketService _notificationService = NotificationSocketService();
   final VtrackingService _vtrackingService = VtrackingService();
   final VehicleService _vehicleService = VehicleService(ApiClient.dio);
@@ -58,11 +56,6 @@ class _MainShellState extends State<MainShell> {
     _setupTokenRefreshListener();
     _loadData();
     _connectSocket();
-    _deviceSocketService.connect(
-      onStatusChanged: () {
-        if (mounted) setState(() {});
-      },
-    );
     _notificationService.connect();
     _vtrackingTimer = Timer.periodic(
       const Duration(seconds: 30),
@@ -96,7 +89,6 @@ class _MainShellState extends State<MainShell> {
   void dispose() {
     _vtrackingTimer?.cancel();
     _socketService.dispose();
-    _deviceSocketService.dispose();
     _notificationService.dispose();
     super.dispose();
   } 
@@ -264,7 +256,6 @@ class _MainShellState extends State<MainShell> {
             vtrackingVehicles: _vtrackingVehicles,
             vehicles: _vehicles,
             socketService: _socketService,
-            deviceSocketService: _deviceSocketService,
             notificationService: _notificationService,
             isLoading: _isLoading,
             error: _error,

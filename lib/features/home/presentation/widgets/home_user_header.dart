@@ -9,7 +9,6 @@ class HomeUserHeader extends StatelessWidget {
   final String userRole;
   final int orderCount;
   final bool isSocketConnected;
-  final bool isLedConnected;
 
   const HomeUserHeader({
     super.key,
@@ -17,7 +16,6 @@ class HomeUserHeader extends StatelessWidget {
     required this.userRole,
     required this.orderCount,
     required this.isSocketConnected,
-    required this.isLedConnected,
   });
 
   @override
@@ -43,8 +41,6 @@ class HomeUserHeader extends StatelessWidget {
           Row(
             children: [
               _StatusChip(label: 'Cap nhat', isConnected: isSocketConnected),
-              SizedBox(width: AppSpacing.sm),
-              _StatusChip(label: 'Bang led', isConnected: isLedConnected),
             ],
           ),
         ],

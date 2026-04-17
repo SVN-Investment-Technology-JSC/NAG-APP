@@ -208,7 +208,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shiftCloseConfirmTitle => 'Confirm Close Shift';
 
   @override
-  String get shiftCloseConfirmContent => 'Are you sure you want to close today\'s shift? All pending orders will be canceled.';
+  String get shiftCloseConfirmContent =>
+      'Are you sure you want to close today\'s shift? All pending orders will be canceled.';
 
   @override
   String get shiftCloseSuccess => 'Shift closed successfully';

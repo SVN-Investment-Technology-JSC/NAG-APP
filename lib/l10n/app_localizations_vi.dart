@@ -89,7 +89,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get refreshing => 'Đang tải lại...';
 
   @override
-  String get sessionExpired => 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.';
+  String get sessionExpired =>
+      'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.';
 
   @override
   String get vehicleLabel => 'Phương tiện';
@@ -208,7 +209,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get shiftCloseConfirmTitle => 'Xác nhận chốt ca';
 
   @override
-  String get shiftCloseConfirmContent => 'Bạn có chắc chắn muốn chốt ca hôm nay? Tất cả đơn hàng pending sẽ chuyển thành canceled.';
+  String get shiftCloseConfirmContent =>
+      'Bạn có chắc chắn muốn chốt ca hôm nay? Tất cả đơn hàng pending sẽ chuyển thành canceled.';
 
   @override
   String get shiftCloseSuccess => 'Đã chốt ca thành công';
