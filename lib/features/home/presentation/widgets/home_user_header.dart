@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'package:vehicle_management/core/theme/app_colors.dart';
-import 'package:vehicle_management/core/theme/app_spacing.dart';
+import 'package:nguyenanh/core/theme/app_colors.dart';
+import 'package:nguyenanh/core/theme/app_spacing.dart';
 
 class HomeUserHeader extends StatelessWidget {
   final String userFullName;

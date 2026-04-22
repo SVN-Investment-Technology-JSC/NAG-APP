@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:vehicle_management/core/theme/app_colors.dart';
+import 'package:nguyenanh/core/theme/app_colors.dart';
 
 class AppTheme {
   static const Color primaryColor = Color(0xFF2563EB); // Modern Blue

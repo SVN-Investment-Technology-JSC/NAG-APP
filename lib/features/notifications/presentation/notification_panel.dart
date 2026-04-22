@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 
-import 'package:vehicle_management/core/network/notification_socket_service.dart';
-import 'package:vehicle_management/features/notifications/data/models/notification_model.dart';
-import 'package:vehicle_management/l10n/app_localizations.dart';
+import 'package:nguyenanh/core/network/notification_socket_service.dart';
+import 'package:nguyenanh/features/notifications/data/models/notification_model.dart';
+import 'package:nguyenanh/l10n/app_localizations.dart';
 
 /// Mở notification panel dưới dạng BottomSheet
 void showNotificationPanel(

@@ -11,6 +11,8 @@ class Station {
   final String? stationDescription;
   final int stationTypeId;
   final String? stationTypeName;
+  final String? stationIpAddress;
+  final String? stationPort;
 
   Station({
     required this.stationId,
@@ -24,6 +26,8 @@ class Station {
     this.stationDescription,
     required this.stationTypeId,
     this.stationTypeName,
+    this.stationIpAddress,
+    this.stationPort,
   });
 
   factory Station.fromJson(Map<String, dynamic> json) {
@@ -39,6 +43,8 @@ class Station {
       stationDescription: json['station_description'],
       stationTypeId: json['station_type_id'] ?? json['station_types']?['station_type_id'] ?? 1,
       stationTypeName: json['station_types'] != null ? json['station_types']['station_type_name'] : null,
+      stationIpAddress: json['station_ip_address'],
+      stationPort: json['station_port']?.toString(),
     );
   }
 

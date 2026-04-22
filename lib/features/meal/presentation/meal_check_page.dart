@@ -7,10 +7,10 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-import 'package:vehicle_management/features/meal/data/models/meal_model.dart';
-import 'package:vehicle_management/features/meal/data/services/meal_service.dart';
-import 'package:vehicle_management/features/shell/presentation/main_shell.dart';
-import 'package:vehicle_management/l10n/app_localizations.dart';
+import 'package:nguyenanh/features/meal/data/models/meal_model.dart';
+import 'package:nguyenanh/features/meal/data/services/meal_service.dart';
+import 'package:nguyenanh/features/shell/presentation/main_shell.dart';
+import 'package:nguyenanh/l10n/app_localizations.dart';
 
 class MealCheckPage extends StatefulWidget {
   const MealCheckPage({super.key});
@@ -431,12 +431,6 @@ class _MealCheckPageState extends State<MealCheckPage> {
           l10n.mealCheck,
           style:
               theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-        ),
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          onPressed: () => mainShellScaffoldKey.currentState?.openDrawer(),
-          icon: Icon(Icons.menu_rounded, color: colorScheme.primary),
-          tooltip: 'Menu',
         ),
         actions: [
           IconButton(

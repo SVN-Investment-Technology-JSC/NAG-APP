@@ -2,23 +2,24 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:vehicle_management/core/network/api_client.dart';
-import 'package:vehicle_management/core/network/auth_interceptor.dart';
-import 'package:vehicle_management/core/network/notification_socket_service.dart';
-import 'package:vehicle_management/core/network/socket_service.dart';
-import 'package:vehicle_management/features/attendance/presentation/attendance_page.dart';
-import 'package:vehicle_management/features/home/presentation/home_page.dart';
-import 'package:vehicle_management/features/meal/presentation/meal_check_page.dart';
-import 'package:vehicle_management/features/order/data/models/order_model.dart';
-import 'package:vehicle_management/features/order/order_service.dart';
-import 'package:vehicle_management/features/stations/data/models/station_model.dart';
-import 'package:vehicle_management/features/stations/data/services/station_service.dart';
-import 'package:vehicle_management/features/vehicle/data/models/vehicle_model.dart';
-import 'package:vehicle_management/features/vehicle/data/services/vehicle_service.dart';
-import 'package:vehicle_management/features/vehicle/presentation/vehicle_management_page.dart';
-import 'package:vehicle_management/features/vtracking/data/models/vtracking_vehicle.dart';
-import 'package:vehicle_management/features/vtracking/data/services/vtracking_service.dart';
-import 'package:vehicle_management/l10n/app_localizations.dart';
+import 'package:nguyenanh/core/network/api_client.dart';
+import 'package:nguyenanh/core/network/auth_interceptor.dart';
+import 'package:nguyenanh/core/network/notification_socket_service.dart';
+import 'package:nguyenanh/core/network/socket_service.dart';
+import 'package:nguyenanh/features/attendance/presentation/attendance_page.dart';
+import 'package:nguyenanh/features/home/presentation/home_page.dart';
+import 'package:nguyenanh/features/meal/presentation/meal_check_page.dart';
+import 'package:nguyenanh/features/profile/presentation/profile_page.dart';
+import 'package:nguyenanh/features/order/data/models/order_model.dart';
+import 'package:nguyenanh/features/order/order_service.dart';
+import 'package:nguyenanh/features/stations/data/models/station_model.dart';
+import 'package:nguyenanh/features/stations/data/services/station_service.dart';
+import 'package:nguyenanh/features/vehicle/data/models/vehicle_model.dart';
+import 'package:nguyenanh/features/vehicle/data/services/vehicle_service.dart';
+import 'package:nguyenanh/features/vehicle/presentation/vehicle_management_page.dart';
+import 'package:nguyenanh/features/vtracking/data/models/vtracking_vehicle.dart';
+import 'package:nguyenanh/features/vtracking/data/services/vtracking_service.dart';
+import 'package:nguyenanh/l10n/app_localizations.dart';
 
 /// Global key to open the main shell's side drawer from any page.
 final GlobalKey<ScaffoldState> mainShellScaffoldKey =
@@ -195,56 +196,51 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
       key: mainShellScaffoldKey,
-      drawer: NavigationDrawer(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (i) {
-          setState(() => _currentIndex = i);
-          Navigator.of(context).pop();
-        },
-        children: [
-          Padding(
-            padding: EdgeInsets.fromLTRB(24.w, 20.h, 16.w, 12.h),
-            child: Row(
-              children: [
-                Icon(Icons.apps_rounded,
-                    color: colorScheme.primary, size: 22.sp),
-                SizedBox(width: 10.w),
-                Text(
-                  'Menu',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
-              ],
+      backgroundColor: colorScheme.surface,
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: theme.navigationBarTheme.backgroundColor ?? colorScheme.surface,
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.shadow.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, -4),
             ),
+          ],
+        ),
+        child: SafeArea(
+          child: NavigationBar(
+            selectedIndex: _currentIndex,
+            onDestinationSelected: (i) {
+              setState(() => _currentIndex = i);
+            },
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            indicatorColor: colorScheme.primary.withOpacity(0.1),
+            destinations: [
+              NavigationDestination(
+                icon: const Icon(Icons.dashboard_outlined),
+                selectedIcon: const Icon(Icons.dashboard_rounded),
+                label: l10n.homeTab,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.local_shipping_outlined),
+                selectedIcon: const Icon(Icons.local_shipping_rounded),
+                label: l10n.tripsTab,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.person_outline_rounded),
+                selectedIcon: const Icon(Icons.person_rounded),
+                label: l10n.profileTab,
+              ),
+            ],
           ),
-          Divider(color: colorScheme.outlineVariant, height: 1),
-          SizedBox(height: 8.h),
-          NavigationDrawerDestination(
-            icon: const Icon(Icons.dashboard_outlined),
-            selectedIcon: const Icon(Icons.dashboard_rounded),
-            label: Text(l10n.home),
-          ),
-          NavigationDrawerDestination(
-            icon: const Icon(Icons.local_shipping_outlined),
-            selectedIcon: const Icon(Icons.local_shipping_rounded),
-            label: Text(l10n.vehicleManagement),
-          ),
-          NavigationDrawerDestination(
-            icon: const Icon(Icons.people_alt_outlined),
-            selectedIcon: const Icon(Icons.people_alt_rounded),
-            label: Text(l10n.attendance),
-          ),
-          NavigationDrawerDestination(
-            icon: const Icon(Icons.restaurant_outlined),
-            selectedIcon: const Icon(Icons.restaurant_rounded),
-            label: Text(l10n.mealCheck),
-          ),
-        ],
+        ),
       ),
       body: IndexedStack(
         index: _currentIndex,
@@ -262,12 +258,19 @@ class _MainShellState extends State<MainShell> {
             onRefresh: _loadData,
           ),
           VehicleManagementPage(
+            pendingOrders: _pendingOrders,
             vehicles: _vehicles,
             vtrackingVehicles: _vtrackingVehicles,
             stations: _stations,
           ),
-          const AttendancePage(),
-          const MealCheckPage(),
+          ProfilePage(
+            onNavigateHome: () => setState(() => _currentIndex = 0),
+            onNavigateTrips: () => setState(() => _currentIndex = 1),
+            onLogout: () {
+              _socketService.dispose();
+              _notificationService.dispose();
+            },
+          ),
         ],
       ),
     );

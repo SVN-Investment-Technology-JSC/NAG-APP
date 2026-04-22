@@ -258,4 +258,70 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get notificationUnread => 'Mới';
+
+  @override
+  String get appSettings => 'Cài đặt ứng dụng';
+
+  @override
+  String get themeMode => 'Giao diện (Sáng/Tối)';
+
+  @override
+  String get role => 'VAI TRÒ';
+
+  @override
+  String get region => 'KHU VỰC';
+
+  @override
+  String get dashboardDesc => 'Bảng điều khiển trung tâm';
+
+  @override
+  String get dailyTrips => 'Chuyến trong ngày';
+
+  @override
+  String get tripsDesc => 'Cập nhật lịch trình';
+
+  @override
+  String get attendanceDesc => 'Lịch sử làm việc';
+
+  @override
+  String get mealDesc => 'Đăng ký suất ăn';
+
+  @override
+  String get settings => 'Cài đặt';
+
+  @override
+  String get settingsDesc => 'Tài khoản & Ứng dụng';
+
+  @override
+  String get supportLegal => 'HỖ TRỢ & PHÁP LÝ';
+
+  @override
+  String get helpCenter => 'Trung tâm trợ giúp';
+
+  @override
+  String get privacyPolicy => 'Chính sách bảo mật';
+
+  @override
+  String get defaultUser => 'Người dùng';
+
+  @override
+  String get defaultRoleDesc => 'Quản lý Đội xe #42';
+
+  @override
+  String get defaultRegion => 'Hà Nội';
+
+  @override
+  String get tripManagement => 'Quản lý chuyến';
+
+  @override
+  String get vehicleQueue => 'Thứ tự lốt xe';
+
+  @override
+  String get homeTab => 'HOME';
+
+  @override
+  String get tripsTab => 'TRIPS';
+
+  @override
+  String get profileTab => 'PROFILE';
 }
