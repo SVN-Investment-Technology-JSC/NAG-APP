@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vehicle_management/core/network/api_client.dart';
-import 'package:vehicle_management/features/setup/presentation/selection_page.dart';
+import 'package:nguyenanh/core/network/api_client.dart';
+import 'package:nguyenanh/features/setup/presentation/selection_page.dart';
 
 class AuthInterceptor extends Interceptor {
   final Dio dio;

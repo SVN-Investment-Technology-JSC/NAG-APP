@@ -8,22 +8,25 @@ import 'package:latlong2/latlong.dart' hide Path;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-import 'package:vehicle_management/core/network/api_client.dart';
-import 'package:vehicle_management/features/order/data/models/order_model.dart';
-import 'package:vehicle_management/features/order/order_service.dart';
-import 'package:vehicle_management/features/shell/presentation/main_shell.dart';
-import 'package:vehicle_management/features/stations/data/models/station_model.dart';
-import 'package:vehicle_management/features/vehicle/data/models/vehicle_model.dart';
-import 'package:vehicle_management/features/vtracking/data/models/vtracking_vehicle.dart';
-import 'package:vehicle_management/l10n/app_localizations.dart';
+import 'package:nguyenanh/core/network/api_client.dart';
+import 'package:nguyenanh/features/home/presentation/widgets/home_order_item.dart';
+import 'package:nguyenanh/features/order/data/models/order_model.dart';
+import 'package:nguyenanh/features/order/order_service.dart';
+import 'package:nguyenanh/features/shell/presentation/main_shell.dart';
+import 'package:nguyenanh/features/stations/data/models/station_model.dart';
+import 'package:nguyenanh/features/vehicle/data/models/vehicle_model.dart';
+import 'package:nguyenanh/features/vtracking/data/models/vtracking_vehicle.dart';
+import 'package:nguyenanh/l10n/app_localizations.dart';
 
 class VehicleManagementPage extends StatefulWidget {
+  final List<OrderModel> pendingOrders;
   final List<VehicleModel> vehicles;
   final List<VtrackingVehicle> vtrackingVehicles;
   final List<Station> stations;
 
   const VehicleManagementPage({
     super.key,
+    required this.pendingOrders,
     required this.vehicles,
     required this.vtrackingVehicles,
     required this.stations,
@@ -813,92 +816,155 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
     final isToday = DateFormat('yyyy-MM-dd').format(_selectedDate) ==
         DateFormat('yyyy-MM-dd').format(DateTime.now());
 
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: Text(
-          l10n.vehicleManagement,
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          onPressed: () => mainShellScaffoldKey.currentState?.openDrawer(),
-          icon: Icon(Icons.menu_rounded, color: colorScheme.primary),
-          tooltip: 'Menu',
-        ),
-        actions: [
-          FilledButton.tonal(
-            onPressed: _pickDate,
-            style: FilledButton.styleFrom(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-              visualDensity: VisualDensity.compact,
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: colorScheme.surface,
+        appBar: AppBar(
+          title: Text(
+            l10n.tripManagement,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w800,
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.calendar_today_rounded, size: 14.sp),
-                SizedBox(width: 6.w),
-                Text(
-                  isToday
-                      ? l10n.today
-                      : DateFormat('dd/MM').format(_selectedDate),
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+          ),
+          bottom: TabBar(
+            labelColor: colorScheme.primary,
+            unselectedLabelColor: colorScheme.onSurfaceVariant,
+            indicatorColor: colorScheme.primary,
+            labelStyle: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+            tabs: [
+              Tab(text: l10n.vehicleQueue),
+              Tab(text: l10n.dailyTrips),
+            ],
+          ),
+          actions: [
+            FilledButton.tonal(
+              onPressed: _pickDate,
+              style: FilledButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                visualDensity: VisualDensity.compact,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.calendar_today_rounded, size: 14.sp),
+                  SizedBox(width: 6.w),
+                  Text(
+                    isToday
+                        ? l10n.today
+                        : DateFormat('dd/MM').format(_selectedDate),
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          SizedBox(width: 4.w),
-          IconButton(
-            onPressed: _orders.isEmpty ? null : _exportExcel,
-            icon: Icon(
-              Icons.table_chart_outlined,
-              size: 20.sp,
-              color: _orders.isEmpty
-                  ? colorScheme.outlineVariant
-                  : colorScheme.primary,
+            SizedBox(width: 4.w),
+            IconButton(
+              onPressed: _orders.isEmpty ? null : _exportExcel,
+              icon: Icon(
+                Icons.table_chart_outlined,
+                size: 20.sp,
+                color: _orders.isEmpty
+                    ? colorScheme.outlineVariant
+                    : colorScheme.primary,
+              ),
+              tooltip: 'Export Excel',
             ),
-            tooltip: 'Export Excel',
-          ),
-          SizedBox(width: 8.w),
-        ],
+            SizedBox(width: 8.w),
+          ],
+        ),
+        body: TabBarView(
+          children: [
+            _buildQueueTab(l10n, colorScheme, theme),
+            _buildDailyTripsTab(l10n, colorScheme, theme),
+          ],
+        ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : widget.vehicles.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.local_shipping_outlined,
-                          size: 48.sp,
-                          color: colorScheme.onSurface.withValues(alpha: 0.2)),
-                      SizedBox(height: 12.h),
-                      Text(
-                        l10n.noVehicles,
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : RefreshIndicator(
-                  onRefresh: _loadOrders,
-                  child: ListView.builder(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 16.w, vertical: 8.h),
-                    itemCount: _sortedVehicles.length,
-                    itemBuilder: (context, index) {
-                      final vehicle = _sortedVehicles[index];
-                      return _buildVehicleItem(
-                          vehicle, index, theme, colorScheme);
-                    },
-                  ),
+    );
+  }
+
+  Widget _buildQueueTab(AppLocalizations l10n, ColorScheme colorScheme, ThemeData theme) {
+    final sorted = List<OrderModel>.from(widget.pendingOrders)
+      ..sort((a, b) => a.orderNumber.compareTo(b.orderNumber));
+
+    if (sorted.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: 24.h),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.inbox_rounded,
+                size: 64.sp,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                l10n.noPendingOrders,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
                 ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: EdgeInsets.zero,
+      itemCount: sorted.length,
+      itemBuilder: (context, index) {
+        return HomeOrderItem(
+          order: sorted[index],
+          orderNumber: index + 1,
+          vehicles: widget.vehicles,
+        );
+      },
+    );
+  }
+
+  Widget _buildDailyTripsTab(AppLocalizations l10n, ColorScheme colorScheme, ThemeData theme) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (widget.vehicles.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.local_shipping_outlined,
+                size: 48.sp,
+                color: colorScheme.onSurface.withValues(alpha: 0.2)),
+            SizedBox(height: 12.h),
+            Text(
+              l10n.noVehicles,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadOrders,
+      child: ListView.builder(
+        padding: EdgeInsets.symmetric(
+            horizontal: 16.w, vertical: 8.h),
+        itemCount: _sortedVehicles.length,
+        itemBuilder: (context, index) {
+          final vehicle = _sortedVehicles[index];
+          return _buildVehicleItem(
+              vehicle, index, theme, colorScheme);
+        },
+      ),
     );
   }
 

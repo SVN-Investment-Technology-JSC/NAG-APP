@@ -257,4 +257,70 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationUnread => 'New';
+
+  @override
+  String get appSettings => 'App Settings';
+
+  @override
+  String get themeMode => 'Theme (Light/Dark)';
+
+  @override
+  String get role => 'ROLE';
+
+  @override
+  String get region => 'REGION';
+
+  @override
+  String get dashboardDesc => 'Central Dashboard';
+
+  @override
+  String get dailyTrips => 'Daily Trips';
+
+  @override
+  String get tripsDesc => 'Update schedules';
+
+  @override
+  String get attendanceDesc => 'Working history';
+
+  @override
+  String get mealDesc => 'Register meals';
+
+  @override
+  String get settings => 'Settings';
+
+  @override
+  String get settingsDesc => 'Account & App';
+
+  @override
+  String get supportLegal => 'SUPPORT & LEGAL';
+
+  @override
+  String get helpCenter => 'Help Center';
+
+  @override
+  String get privacyPolicy => 'Privacy Policy';
+
+  @override
+  String get defaultUser => 'User';
+
+  @override
+  String get defaultRoleDesc => 'Fleet Manager #42';
+
+  @override
+  String get defaultRegion => 'Hanoi';
+
+  @override
+  String get tripManagement => 'Trip Management';
+
+  @override
+  String get vehicleQueue => 'Vehicle Queue';
+
+  @override
+  String get homeTab => 'HOME';
+
+  @override
+  String get tripsTab => 'TRIPS';
+
+  @override
+  String get profileTab => 'PROFILE';
 }

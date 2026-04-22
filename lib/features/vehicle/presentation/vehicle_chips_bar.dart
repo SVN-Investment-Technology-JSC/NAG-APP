@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:vehicle_management/features/vehicle/data/models/vehicle_model.dart';
+import 'package:nguyenanh/features/vehicle/data/models/vehicle_model.dart';
 
 class VehicleChipsBar extends StatelessWidget {
   final List<VehicleModel> vehicles;

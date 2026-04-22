@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:vehicle_management/core/network/app_endpoints.dart';
-import 'package:vehicle_management/features/vtracking/data/models/vtracking_vehicle.dart';
+import 'package:nguyenanh/core/network/app_endpoints.dart';
+import 'package:nguyenanh/features/vtracking/data/models/vtracking_vehicle.dart';
 
 class VtrackingService {
   static final Dio _dio = Dio(BaseOptions(

@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:vehicle_management/core/network/app_endpoints.dart';
-import 'package:vehicle_management/features/vehicle/data/models/vehicle_model.dart';
+import 'package:nguyenanh/core/network/app_endpoints.dart';
+import 'package:nguyenanh/features/vehicle/data/models/vehicle_model.dart';
 
 class VehicleService {
   final Dio dio;

@@ -3,14 +3,14 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vehicle_management/features/setup/presentation/selection_page.dart';
-import 'package:vehicle_management/features/shell/presentation/main_shell.dart';
-import 'package:vehicle_management/l10n/app_localizations.dart';
-import 'package:vehicle_management/core/l10n/language_provider.dart';
-import 'package:vehicle_management/core/theme/app_theme.dart';
-import 'package:vehicle_management/core/theme/theme_provider.dart';
-import 'package:vehicle_management/core/network/api_client.dart';
-import 'package:vehicle_management/features/auth/data/services/auth_service.dart';
+import 'package:nguyenanh/features/setup/presentation/selection_page.dart';
+import 'package:nguyenanh/features/shell/presentation/main_shell.dart';
+import 'package:nguyenanh/l10n/app_localizations.dart';
+import 'package:nguyenanh/core/l10n/language_provider.dart';
+import 'package:nguyenanh/core/theme/app_theme.dart';
+import 'package:nguyenanh/core/theme/theme_provider.dart';
+import 'package:nguyenanh/core/network/api_client.dart';
+import 'package:nguyenanh/features/auth/data/services/auth_service.dart';
 
 class VehicleApp extends StatelessWidget {
   const VehicleApp({super.key});

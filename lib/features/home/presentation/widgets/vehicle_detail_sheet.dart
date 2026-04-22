@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 
-import 'package:vehicle_management/core/theme/app_colors.dart';
-import 'package:vehicle_management/core/theme/app_spacing.dart';
-import 'package:vehicle_management/features/stations/data/models/station_model.dart';
-import 'package:vehicle_management/features/vtracking/data/models/vtracking_vehicle.dart';
-import 'package:vehicle_management/l10n/app_localizations.dart';
+import 'package:nguyenanh/core/theme/app_colors.dart';
+import 'package:nguyenanh/core/theme/app_spacing.dart';
+import 'package:nguyenanh/features/stations/data/models/station_model.dart';
+import 'package:nguyenanh/features/vtracking/data/models/vtracking_vehicle.dart';
+import 'package:nguyenanh/l10n/app_localizations.dart';
 
 class VehicleDetailSheet extends StatelessWidget {
   final VtrackingVehicle vehicle;

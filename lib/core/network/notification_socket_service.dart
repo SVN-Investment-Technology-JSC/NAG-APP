@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
-import 'package:vehicle_management/core/network/app_endpoints.dart';
-import 'package:vehicle_management/features/notifications/data/models/notification_model.dart';
+import 'package:nguyenanh/core/network/app_endpoints.dart';
+import 'package:nguyenanh/features/notifications/data/models/notification_model.dart';
 
 class NotificationSocketService {
   io.Socket? _socket;

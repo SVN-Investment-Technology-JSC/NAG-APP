@@ -4,9 +4,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
-import 'package:vehicle_management/core/network/app_endpoints.dart';
-import 'package:vehicle_management/features/meal/data/models/meal_model.dart';
-import 'package:vehicle_management/features/vtracking/data/models/vtracking_vehicle.dart';
+import 'package:nguyenanh/core/network/app_endpoints.dart';
+import 'package:nguyenanh/features/meal/data/models/meal_model.dart';
+import 'package:nguyenanh/features/vtracking/data/models/vtracking_vehicle.dart';
 
 class MealService {
   static final Dio _webDio = Dio(BaseOptions(

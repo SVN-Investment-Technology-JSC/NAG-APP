@@ -8,12 +8,12 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:vehicle_management/core/network/api_client.dart';
-import 'package:vehicle_management/core/network/app_endpoints.dart';
-import 'package:vehicle_management/features/attendance/data/models/attendance_model.dart';
-import 'package:vehicle_management/features/attendance/data/services/attendance_service.dart';
-import 'package:vehicle_management/features/shell/presentation/main_shell.dart';
-import 'package:vehicle_management/l10n/app_localizations.dart';
+import 'package:nguyenanh/core/network/api_client.dart';
+import 'package:nguyenanh/core/network/app_endpoints.dart';
+import 'package:nguyenanh/features/attendance/data/models/attendance_model.dart';
+import 'package:nguyenanh/features/attendance/data/services/attendance_service.dart';
+import 'package:nguyenanh/features/shell/presentation/main_shell.dart';
+import 'package:nguyenanh/l10n/app_localizations.dart';
 
 class AttendancePage extends StatefulWidget {
   const AttendancePage({super.key});
@@ -178,12 +178,6 @@ class _AttendancePageState extends State<AttendancePage> {
         title: Text(
           l10n.attendance,
           style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-        ),
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          onPressed: () => mainShellScaffoldKey.currentState?.openDrawer(),
-          icon: Icon(Icons.menu_rounded, color: colorScheme.primary),
-          tooltip: 'Menu',
         ),
         actions: [
           IconButton(

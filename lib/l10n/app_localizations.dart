@@ -583,6 +583,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New'**
   String get notificationUnread;
+
+  /// No description provided for @appSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'App Settings'**
+  String get appSettings;
+
+  /// No description provided for @themeMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme (Light/Dark)'**
+  String get themeMode;
+
+  /// No description provided for @role.
+  ///
+  /// In en, this message translates to:
+  /// **'ROLE'**
+  String get role;
+
+  /// No description provided for @region.
+  ///
+  /// In en, this message translates to:
+  /// **'REGION'**
+  String get region;
+
+  /// No description provided for @dashboardDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Central Dashboard'**
+  String get dashboardDesc;
+
+  /// No description provided for @dailyTrips.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Trips'**
+  String get dailyTrips;
+
+  /// No description provided for @tripsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Update schedules'**
+  String get tripsDesc;
+
+  /// No description provided for @attendanceDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Working history'**
+  String get attendanceDesc;
+
+  /// No description provided for @mealDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Register meals'**
+  String get mealDesc;
+
+  /// No description provided for @settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings;
+
+  /// No description provided for @settingsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Account & App'**
+  String get settingsDesc;
+
+  /// No description provided for @supportLegal.
+  ///
+  /// In en, this message translates to:
+  /// **'SUPPORT & LEGAL'**
+  String get supportLegal;
+
+  /// No description provided for @helpCenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Help Center'**
+  String get helpCenter;
+
+  /// No description provided for @privacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get privacyPolicy;
+
+  /// No description provided for @defaultUser.
+  ///
+  /// In en, this message translates to:
+  /// **'User'**
+  String get defaultUser;
+
+  /// No description provided for @defaultRoleDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Fleet Manager #42'**
+  String get defaultRoleDesc;
+
+  /// No description provided for @defaultRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'Hanoi'**
+  String get defaultRegion;
+
+  /// No description provided for @tripManagement.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip Management'**
+  String get tripManagement;
+
+  /// No description provided for @vehicleQueue.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle Queue'**
+  String get vehicleQueue;
+
+  /// No description provided for @homeTab.
+  ///
+  /// In en, this message translates to:
+  /// **'HOME'**
+  String get homeTab;
+
+  /// No description provided for @tripsTab.
+  ///
+  /// In en, this message translates to:
+  /// **'TRIPS'**
+  String get tripsTab;
+
+  /// No description provided for @profileTab.
+  ///
+  /// In en, this message translates to:
+  /// **'PROFILE'**
+  String get profileTab;
 }
 
 class _AppLocalizationsDelegate

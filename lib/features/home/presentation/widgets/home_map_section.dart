@@ -3,12 +3,12 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 
-import 'package:vehicle_management/core/theme/app_spacing.dart';
-import 'package:vehicle_management/features/home/presentation/widgets/vehicle_detail_sheet.dart';
-import 'package:vehicle_management/features/order/data/models/order_model.dart';
-import 'package:vehicle_management/features/stations/data/models/station_model.dart';
-import 'package:vehicle_management/features/vtracking/data/models/vtracking_vehicle.dart';
-import 'package:vehicle_management/l10n/app_localizations.dart';
+import 'package:nguyenanh/core/theme/app_spacing.dart';
+import 'package:nguyenanh/features/home/presentation/widgets/vehicle_detail_sheet.dart';
+import 'package:nguyenanh/features/order/data/models/order_model.dart';
+import 'package:nguyenanh/features/stations/data/models/station_model.dart';
+import 'package:nguyenanh/features/vtracking/data/models/vtracking_vehicle.dart';
+import 'package:nguyenanh/l10n/app_localizations.dart';
 
 class HomeMapSection extends StatefulWidget {
   final List<Station> stations;
@@ -117,27 +117,101 @@ class _HomeMapSectionState extends State<HomeMapSection> {
 
       return Marker(
         point: LatLng(v.latitude, v.longitude),
-        width: 18,
-        height: 18,
+        width: 100,
+        height: 80,
+        alignment: Alignment.topCenter, // Align so the tip points at the coordinate
         child: GestureDetector(
           onTap: () => VehicleDetailSheet.show(context, v, widget.stations),
-          child: Container(
-            width: 14,
-            height: 14,
-            decoration: BoxDecoration(
-              color: dotColor,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: colorScheme.surface,
-                width: 2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: colorScheme.shadow.withValues(alpha: 0.4),
-                  blurRadius: 4,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Label Tooltip
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(4.r),
+                  border: Border.all(color: colorScheme.outlineVariant),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.shadow.withValues(alpha: 0.15),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      v.vehicleName.isNotEmpty ? v.vehicleName : '---',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 10.sp,
+                          ),
+                    ),
+                    if (v.licensePlate.isNotEmpty)
+                      Text(
+                        v.licensePlate,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              fontSize: 8.sp,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                      ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 2.h),
+              // Top-down Car Vector
+              Transform.rotate(
+                angle: v.direction * (3.1415926535897932 / 180),
+                child: Container(
+                  width: 14,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: dotColor,
+                    borderRadius: BorderRadius.circular(4.r),
+                    border: Border.all(color: colorScheme.surface, width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.shadow.withValues(alpha: 0.3),
+                        blurRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Windshield
+                      Container(
+                        width: 10,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(2.r),
+                            topRight: Radius.circular(2.r),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      // Rear window
+                      Container(
+                        width: 10,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.4),
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(1.r),
+                            bottomRight: Radius.circular(1.r),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -220,20 +294,105 @@ class _MapView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FlutterMap(
-      mapController: mapController,
-      options: MapOptions(
-        initialCenter: center,
-        initialZoom: 16,
-      ),
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Stack(
       children: [
-        TileLayer(
-          urlTemplate:
-              'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-          subdomains: const ['a', 'b', 'c', 'd'],
+        FlutterMap(
+          mapController: mapController,
+          options: MapOptions(
+            initialCenter: center,
+            initialZoom: 16,
+          ),
+          children: [
+            TileLayer(
+              urlTemplate:
+                  'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+              subdomains: const ['a', 'b', 'c', 'd'],
+            ),
+            CircleLayer(circles: circles),
+            MarkerLayer(markers: markers),
+          ],
         ),
-        CircleLayer(circles: circles),
-        MarkerLayer(markers: markers),
+        // Zoom controls
+        Positioned(
+          bottom: 8.h,
+          left: 8.w,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 32.w,
+                height: 32.w,
+                margin: EdgeInsets.only(bottom: 4.h),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(8.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.shadow.withValues(alpha: 0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  iconSize: 20.sp,
+                  icon: Icon(Icons.add_rounded, color: colorScheme.onSurface),
+                  onPressed: () {
+                    final zoom = mapController.camera.zoom;
+                    mapController.move(mapController.camera.center, zoom + 1);
+                  },
+                ),
+              ),
+              Container(
+                width: 32.w,
+                height: 32.w,
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(8.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.shadow.withValues(alpha: 0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  iconSize: 20.sp,
+                  icon: Icon(Icons.remove_rounded, color: colorScheme.onSurface),
+                  onPressed: () {
+                    final zoom = mapController.camera.zoom;
+                    mapController.move(mapController.camera.center, zoom - 1);
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Recenter control
+        Positioned(
+          bottom: 8.h,
+          right: 8.w,
+          child: FilledButton.tonalIcon(
+            onPressed: () {
+              mapController.move(center, 16);
+            },
+            icon: Icon(Icons.my_location_rounded, size: 14.sp),
+            label: Text(
+              'Vị trí ban đầu',
+              style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700),
+            ),
+            style: FilledButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 0),
+              minimumSize: Size(0, 32.h),
+            ),
+          ),
+        ),
       ],
     );
   }
