@@ -42,6 +42,15 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
   List<OrderModel> _orders = [];
   bool _isLoading = true;
 
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -953,18 +962,68 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _loadOrders,
-      child: ListView.builder(
-        padding: EdgeInsets.symmetric(
-            horizontal: 16.w, vertical: 8.h),
-        itemCount: _sortedVehicles.length,
-        itemBuilder: (context, index) {
-          final vehicle = _sortedVehicles[index];
-          return _buildVehicleItem(
-              vehicle, index, theme, colorScheme);
-        },
-      ),
+    final query = _searchQuery.trim().toLowerCase();
+    final filteredVehicles = _sortedVehicles.where((v) {
+      if (query.isEmpty) return true;
+      return v.vehicleLicensePlate.toLowerCase().contains(query) ||
+             v.vehicleName.toLowerCase().contains(query);
+    }).toList();
+
+    return Column(
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
+          child: TextField(
+            controller: _searchController,
+            onChanged: (value) => setState(() => _searchQuery = value),
+            decoration: InputDecoration(
+              hintText: 'Tìm kiếm biển số xe...', // Wait, l10n maybe? Better hardcode for now or use app_en.arb
+              hintStyle: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.outline),
+              prefixIcon: Icon(Icons.search_rounded, color: colorScheme.outline, size: 20.sp),
+              contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 0.h),
+              filled: true,
+              fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(100.r),
+                borderSide: BorderSide.none,
+              ),
+              isDense: true,
+            ),
+          ),
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _loadOrders,
+            child: filteredVehicles.isEmpty
+                ? SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 60.h),
+                      child: Center(
+                        child: Text(
+                          'Không tồn tại',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                    itemCount: filteredVehicles.length,
+                    itemBuilder: (context, index) {
+                      final vehicle = filteredVehicles[index];
+                      // To keep #index consistent with original list, maybe use indexOf?
+                      // Or just use the new filtered index + 1
+                      return _buildVehicleItem(
+                          vehicle, _sortedVehicles.indexOf(vehicle), theme, colorScheme);
+                    },
+                  ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -973,68 +1032,108 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
     final tripCount = _ordersForVehicle(vehicle.vehicleId).length;
     final iconColor = colorScheme.primary;
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: 6.h),
-      child: Material(
+    return Container(
+      margin: EdgeInsets.only(bottom: 8.h),
+      decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Material(
+        color: Colors.transparent,
         child: InkWell(
-          onTap: () => _showVehiclePopup(vehicle),
           borderRadius: BorderRadius.circular(12.r),
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-            child: Row(
-              children: [
-                Container(
-                  width: 32.w,
-                  height: 32.w,
-                  decoration: BoxDecoration(
-                    color: iconColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10.r),
+          onTap: () => _showVehiclePopup(vehicle),
+          child: Row(
+            children: [
+              // Accent bar like HomeOrderItem
+              Container(
+                width: 4.w,
+                height: 64.h,
+                decoration: BoxDecoration(
+                  color: iconColor,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(12.r),
+                    bottomLeft: Radius.circular(12.r),
                   ),
-                  child: Center(
-                    child: Text(
-                      vehicle.vehicleName.isNotEmpty
-                          ? vehicle.vehicleName
-                          : '${index + 1}',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        color: iconColor,
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                  child: Row(
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                vehicle.vehicleName.isNotEmpty
+                                    ? vehicle.vehicleName
+                                    : '#${index + 1}',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                  color: iconColor,
+                                  fontSize: 14.sp,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            vehicle.vehicleLicensePlate,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
-                    ),
+                      const Spacer(),
+                      if (tripCount > 0)
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                          decoration: BoxDecoration(
+                            color: iconColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '$tripCount',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                  color: iconColor,
+                                ),
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                'chuyến',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: iconColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        Text(
+                          'Chưa có chuyến',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: colorScheme.outline,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      SizedBox(width: 8.w),
+                      Icon(Icons.chevron_right_rounded,
+                          size: 20.sp, color: colorScheme.outlineVariant),
+                    ],
                   ),
                 ),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: Text(
-                    vehicle.vehicleLicensePlate,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                if (tripCount > 0) ...[
-                  Text(
-                    '$tripCount',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: colorScheme.primary,
-                    ),
-                  ),
-                  SizedBox(width: 2.w),
-                  Text(
-                    'chuyến',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      fontSize: 10.sp,
-                    ),
-                  ),
-                  SizedBox(width: 6.w),
-                ],
-                Icon(Icons.chevron_right_rounded,
-                    size: 20.sp, color: colorScheme.outlineVariant),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
