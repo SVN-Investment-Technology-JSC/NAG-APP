@@ -3,8 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:vehicle_management/core/network/auth_interceptor.dart';
-import 'package:vehicle_management/core/network/app_endpoints.dart';
+import 'package:nguyenanh/core/network/auth_interceptor.dart';
+import 'package:nguyenanh/core/network/app_endpoints.dart';
 
 class ApiClient {
   static late Dio dio;

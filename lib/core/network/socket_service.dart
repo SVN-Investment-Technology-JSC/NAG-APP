@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
-import 'package:vehicle_management/core/network/app_endpoints.dart';
+import 'package:nguyenanh/core/network/app_endpoints.dart';
 
 class SocketService {
   io.Socket? _socket;

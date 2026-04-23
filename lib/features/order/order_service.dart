@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
-import 'package:vehicle_management/core/network/app_endpoints.dart';
-import 'package:vehicle_management/features/order/data/models/order_model.dart';
+import 'package:nguyenanh/core/network/app_endpoints.dart';
+import 'package:nguyenanh/features/order/data/models/order_model.dart';
 
 class OrderService {
   final Dio dio;

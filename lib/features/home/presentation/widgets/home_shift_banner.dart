@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 
-import 'package:vehicle_management/core/network/api_client.dart';
-import 'package:vehicle_management/core/theme/app_colors.dart';
-import 'package:vehicle_management/core/theme/app_spacing.dart';
-import 'package:vehicle_management/features/order/order_service.dart';
-import 'package:vehicle_management/l10n/app_localizations.dart';
+import 'package:nguyenanh/core/network/api_client.dart';
+import 'package:nguyenanh/core/theme/app_colors.dart';
+import 'package:nguyenanh/core/theme/app_spacing.dart';
+import 'package:nguyenanh/features/order/order_service.dart';
+import 'package:nguyenanh/l10n/app_localizations.dart';
 
 class HomeShiftBanner extends StatefulWidget {
   final int pendingCount;

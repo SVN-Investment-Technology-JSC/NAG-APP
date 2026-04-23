@@ -3,22 +3,22 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:vehicle_management/core/l10n/language_provider.dart';
-import 'package:vehicle_management/core/network/notification_socket_service.dart';
-import 'package:vehicle_management/core/network/socket_service.dart';
-import 'package:vehicle_management/core/theme/app_spacing.dart';
-import 'package:vehicle_management/core/theme/theme_toggle_button.dart';
-import 'package:vehicle_management/features/home/presentation/widgets/home_map_section.dart';
-import 'package:vehicle_management/features/home/presentation/widgets/home_order_item.dart';
-import 'package:vehicle_management/features/home/presentation/widgets/home_station_card.dart';
-import 'package:vehicle_management/features/home/presentation/widgets/home_user_header.dart';
-import 'package:vehicle_management/features/order/data/models/order_model.dart';
-import 'package:vehicle_management/features/stations/data/models/station_model.dart';
-import 'package:vehicle_management/features/vtracking/data/models/vtracking_vehicle.dart';
-import 'package:vehicle_management/features/setup/presentation/selection_page.dart';
-import 'package:vehicle_management/features/shell/presentation/main_shell.dart';
-import 'package:vehicle_management/features/vehicle/data/models/vehicle_model.dart';
-import 'package:vehicle_management/l10n/app_localizations.dart';
+import 'package:nguyenanh/core/l10n/language_provider.dart';
+import 'package:nguyenanh/core/network/notification_socket_service.dart';
+import 'package:nguyenanh/core/network/socket_service.dart';
+import 'package:nguyenanh/core/theme/app_spacing.dart';
+import 'package:nguyenanh/core/theme/theme_toggle_button.dart';
+import 'package:nguyenanh/features/home/presentation/widgets/home_map_section.dart';
+import 'package:nguyenanh/features/home/presentation/widgets/home_order_item.dart';
+import 'package:nguyenanh/features/home/presentation/widgets/home_station_card.dart';
+import 'package:nguyenanh/features/home/presentation/widgets/home_user_header.dart';
+import 'package:nguyenanh/features/order/data/models/order_model.dart';
+import 'package:nguyenanh/features/stations/data/models/station_model.dart';
+import 'package:nguyenanh/features/vtracking/data/models/vtracking_vehicle.dart';
+import 'package:nguyenanh/features/setup/presentation/selection_page.dart';
+import 'package:nguyenanh/features/shell/presentation/main_shell.dart';
+import 'package:nguyenanh/features/vehicle/data/models/vehicle_model.dart';
+import 'package:nguyenanh/l10n/app_localizations.dart';
 
 class HomePage extends StatefulWidget {
   final List<OrderModel> orders;
@@ -86,96 +86,7 @@ class _HomePageState extends State<HomePage> {
     return sorted;
   }
 
-  Future<void> _logout() async {
-    final l10n = AppLocalizations.of(context)!;
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.confirmLogoutTitle),
-        content: Text(l10n.confirmLogoutContent),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.logOut),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true) return;
-
-    widget.socketService.dispose();
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('access_token');
-    await prefs.remove('user_id');
-    await prefs.remove('user_full_name');
-    await prefs.remove('user_role');
-    await prefs.setBool('is_logged_in', false);
-
-    if (!mounted) return;
-
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const SelectionPage()),
-      (route) => false,
-    );
-  }
-
-  void _showLanguagePicker() {
-    final languageProvider = Provider.of<LanguageProvider>(
-      context,
-      listen: false,
-    );
-    final l10n = AppLocalizations.of(context)!;
-
-    showModalBottomSheet(
-      context: context,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
-      builder: (context) {
-        return Container(
-          padding: EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                l10n.selectLanguage,
-                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: AppSpacing.mdH),
-              ListTile(
-                title: const Text('Tieng Viet (VN)'),
-                trailing: languageProvider.locale.languageCode == 'vi'
-                    ? Icon(Icons.check_circle,
-                        color: Theme.of(context).colorScheme.tertiary)
-                    : null,
-                onTap: () {
-                  languageProvider.setLocale(const Locale('vi'));
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                title: const Text('English (EN)'),
-                trailing: languageProvider.locale.languageCode == 'en'
-                    ? Icon(Icons.check_circle,
-                        color: Theme.of(context).colorScheme.tertiary)
-                    : null,
-                onTap: () {
-                  languageProvider.setLocale(const Locale('en'));
-                  Navigator.pop(context);
-                },
-              ),
-              SizedBox(height: 12.h),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -187,31 +98,12 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: Text(
-          l10n.todayOrders,
+          'Trang chủ',
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w800,
           ),
         ),
         automaticallyImplyLeading: false,
-        leading: IconButton(
-          onPressed: () => mainShellScaffoldKey.currentState?.openDrawer(),
-          icon: Icon(Icons.menu_rounded, color: colorScheme.primary),
-          tooltip: 'Menu',
-        ),
-        actions: [
-          IconButton(
-            onPressed: _showLanguagePicker,
-            icon: Icon(Icons.language_rounded, color: colorScheme.primary),
-            tooltip: l10n.selectLanguage,
-          ),
-          const ThemeToggleButton(),
-          IconButton(
-            onPressed: _logout,
-            icon: Icon(Icons.logout_rounded, color: colorScheme.error),
-            tooltip: l10n.logOut,
-          ),
-          SizedBox(width: AppSpacing.sm),
-        ],
       ),
       body: _buildBody(theme, colorScheme, l10n),
     );
@@ -229,14 +121,6 @@ class _HomePageState extends State<HomePage> {
         onRefresh: widget.onRefresh,
         child: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(
-              child: HomeUserHeader(
-                userFullName: _userFullName,
-                userRole: _userRole,
-                orderCount: widget.orders.length,
-                isSocketConnected: widget.socketService.isConnected,
-              ),
-            ),
             ..._buildStationSliver(),
             SliverToBoxAdapter(
               child: HomeMapSection(
@@ -245,8 +129,6 @@ class _HomePageState extends State<HomePage> {
                 collectingOrders: _collectingOrders,
               ),
             ),
-            SliverToBoxAdapter(child: _OrdersHeader(orders: _sortedOrders)),
-            _buildOrdersSliver(l10n, colorScheme, theme),
             SliverToBoxAdapter(child: SizedBox(height: 20.h)),
           ],
         ),
