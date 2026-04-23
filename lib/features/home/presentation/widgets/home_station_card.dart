@@ -91,7 +91,7 @@ class _StationHeader extends StatelessWidget {
           Icon(
             Icons.factory_rounded,
             size: 18.sp,
-            color: hasCollecting ? colorScheme.tertiary : colorScheme.primary,
+            color: colorScheme.primary,
           ),
           SizedBox(width: AppSpacing.sm),
           Expanded(
@@ -99,9 +99,7 @@ class _StationHeader extends StatelessWidget {
               station.stationName,
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w800,
-                color: hasCollecting
-                    ? colorScheme.tertiary
-                    : colorScheme.onSurface,
+                color: colorScheme.onSurface,
               ),
             ),
           ),
@@ -111,14 +109,14 @@ class _StationHeader extends StatelessWidget {
             Container(
               padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 3.h),
               decoration: BoxDecoration(
-                color: colorScheme.tertiaryContainer,
+                color: colorScheme.secondaryContainer,
                 borderRadius: BorderRadius.circular(10.r),
               ),
               child: Text(
                 '$collectingCount $collectingLabel',
                 style: theme.textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: colorScheme.onTertiaryContainer,
+                  color: colorScheme.onSecondaryContainer,
                 ),
               ),
             ),
@@ -182,12 +180,8 @@ class _CameraBadgeState extends State<_CameraBadge> with SingleTickerProviderSta
     final colorScheme = theme.colorScheme;
     
     final color = widget.isConnected ? ext.success : colorScheme.error;
-    final bgColor = widget.isConnected 
-        ? const Color(0xFFECFDF5) // emerald-50
-        : const Color(0xFFFEF2F2); // red-50
-    final borderColor = widget.isConnected
-        ? const Color(0xFFA7F3D0) // emerald-200
-        : const Color(0xFFFECACA); // red-200
+    final bgColor = color.withValues(alpha: 0.1);
+    final borderColor = color.withValues(alpha: 0.25);
     
     final label = widget.isConnected ? 'Camera kết nối' : 'Camera ngắt kết nối';
 
@@ -270,16 +264,16 @@ class _CollectingVehicleTile extends StatelessWidget {
       margin: EdgeInsets.only(bottom: 6.h),
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: AppSpacing.smH),
       decoration: BoxDecoration(
-        color: colorScheme.tertiary.withValues(alpha: 0.05),
+        color: colorScheme.secondaryContainer.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(10.r),
         border: Border.all(
-          color: colorScheme.tertiary.withValues(alpha: 0.12),
+          color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
         ),
       ),
       child: Row(
         children: [
           Icon(Icons.local_shipping_rounded,
-              size: 16.sp, color: colorScheme.tertiary),
+              size: 16.sp, color: colorScheme.secondary),
           SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
@@ -292,14 +286,14 @@ class _CollectingVehicleTile extends StatelessWidget {
           Container(
             padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
             decoration: BoxDecoration(
-              color: colorScheme.tertiaryContainer,
+              color: colorScheme.secondaryContainer,
               borderRadius: BorderRadius.circular(6.r),
             ),
             child: Text(
               collectingLabel,
               style: theme.textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: colorScheme.onTertiaryContainer,
+                color: colorScheme.onSecondaryContainer,
                 fontSize: 9.sp,
               ),
             ),
