@@ -26,7 +26,6 @@ class _AttendancePageState extends State<AttendancePage> {
   final AttendanceService _service = AttendanceService(ApiClient.dio);
 
   AttendanceResponse? _data;
-  final Set<String> _expandedGroups = {};
   bool _isLoading = true;
   String? _error;
 
@@ -250,8 +249,8 @@ class _AttendancePageState extends State<AttendancePage> {
       onRefresh: _loadData,
       child: CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(child: _buildHeader(data, theme, colorScheme, l10n)),
-          ...data.nhomNS.where((g) => g.nhanSu.isNotEmpty).expand((group) {
+          SliverToBoxAdapter(child: _buildHeader(context, data, theme, colorScheme, l10n, data.results)),
+          ...data.nhomNS.where((g) => g.nhanSu.isNotEmpty).map((group) {
             final members = group.nhanSu
                 .map((hoTen) => recordByHoTen[hoTen])
                 .whereType<AttendanceRecord>()
@@ -259,39 +258,28 @@ class _AttendancePageState extends State<AttendancePage> {
             final working = members.where((r) => r.isWorking).length;
             final half = members.where((r) => r.isHalf).length;
 
-            return [
-              SliverToBoxAdapter(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    setState(() {
-                      if (_expandedGroups.contains(group.key)) {
-                        _expandedGroups.remove(group.key);
-                      } else {
-                        _expandedGroups.add(group.key);
-                      }
-                    });
-                  },
-                  child: _buildGroupHeader(
-                    group: group,
-                    total: members.length,
-                    working: working,
-                    half: half,
-                    theme: theme,
-                    colorScheme: colorScheme,
-                    isExpanded: _expandedGroups.contains(group.key),
-                  ),
+            return SliverToBoxAdapter(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _showMembersBottomSheet(
+                  context: context,
+                  title: group.ten,
+                  icon: _groupIcons[group.key] ?? Icons.group_rounded,
+                  members: members,
+                  initialFilter: 'Tất cả',
+                  theme: theme,
+                  colorScheme: colorScheme,
+                ),
+                child: _buildGroupHeader(
+                  group: group,
+                  total: members.length,
+                  working: working,
+                  half: half,
+                  theme: theme,
+                  colorScheme: colorScheme,
                 ),
               ),
-              if (_expandedGroups.contains(group.key))
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) =>
-                        _buildEmployeeItem(members[index], theme, colorScheme),
-                    childCount: members.length,
-                  ),
-                ),
-            ];
+            );
           }),
           SliverToBoxAdapter(child: SizedBox(height: 16.h)),
         ],
@@ -299,85 +287,283 @@ class _AttendancePageState extends State<AttendancePage> {
     );
   }
 
-  Widget _buildHeader(AttendanceResponse data, ThemeData theme, ColorScheme colorScheme, AppLocalizations l10n) {
+  Widget _buildHeader(BuildContext context, AttendanceResponse data, ThemeData theme, ColorScheme colorScheme, AppLocalizations l10n, List<AttendanceRecord> allMembers) {
     final s = data.summary;
-    return Container(
-      margin: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 4.h),
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16.r),
-      ),
-      child: Row(
+    final total = s.total;
+    final working = s.working;
+    final off = s.off;
+    final half = s.half;
+
+    final now = DateTime.now();
+    final dateStr = 'Hôm nay, ${now.day.toString().padLeft(2, '0')} Tháng ${now.month}';
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _summaryChip(
-            label: l10n.attendanceTotal,
-            value: '${s.total}',
-            color: colorScheme.primary,
-            theme: theme,
-            colorScheme: colorScheme,
+          SizedBox(height: 16.h),
+          Text(
+            dateStr,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-          SizedBox(width: 8.w),
-          _summaryChip(
-            label: l10n.attendanceWorking,
-            value: '${s.working}',
-            color: Colors.green,
-            theme: theme,
-            colorScheme: colorScheme,
+          SizedBox(height: 4.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Thống kê nhân sự', // or l10n string
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(100.r),
+                ),
+                child: Row(
+                  children: [
+                    Container(width: 6.w, height: 6.w, decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle)),
+                    SizedBox(width: 6.w),
+                    Text(
+                      'ĐANG CẬP NHẬT',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: const Color(0xFF10B981),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 9.sp,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          SizedBox(width: 8.w),
-          _summaryChip(
-            label: l10n.attendanceOff,
-            value: '${s.off}',
-            color: colorScheme.error,
-            theme: theme,
-            colorScheme: colorScheme,
+          SizedBox(height: 16.h),
+          // 2x2 Grid
+          Row(
+            children: [
+              Expanded(
+                child: _statCard1(
+                  title: 'TỔNG SỐ',
+                  value: '$total',
+                  sub: 'NHÂN VIÊN TOÀN HỆ THỐNG',
+                  icon: Icons.groups_rounded,
+                  onTap: () => _showMembersBottomSheet(
+                    context: context,
+                    title: 'Tất cả nhân sự',
+                    icon: Icons.groups_rounded,
+                    members: allMembers,
+                    initialFilter: 'Tất cả',
+                    theme: theme,
+                    colorScheme: colorScheme,
+                  ),
+                  theme: theme,
+                  colorScheme: colorScheme,
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: _statCard2(
+                  title: 'ĐI LÀM',
+                  value: '$working',
+                  progress: total > 0 ? working / total : 0,
+                  icon: Icons.how_to_reg_rounded,
+                  onTap: () => _showMembersBottomSheet(
+                    context: context,
+                    title: 'Nhân sự đi làm',
+                    icon: Icons.how_to_reg_rounded,
+                    members: allMembers,
+                    initialFilter: 'Đi làm',
+                    theme: theme,
+                    colorScheme: colorScheme,
+                  ),
+                  theme: theme,
+                  colorScheme: colorScheme,
+                ),
+              ),
+            ],
           ),
-          SizedBox(width: 8.w),
-          _summaryChip(
-            label: l10n.attendanceHalf,
-            value: '${s.half}',
-            color: const Color(0xFFF59E0B),
-            theme: theme,
-            colorScheme: colorScheme,
+          SizedBox(height: 12.h),
+          Row(
+            children: [
+              Expanded(
+                child: _statCard3(
+                  title: 'NGHỈ',
+                  value: '${off < 10 ? '0$off' : off}',
+                  sub: '${total > 0 ? (off / total * 100).toStringAsFixed(1) : 0}% VẮNG MẶT',
+                  icon: Icons.person_off_rounded,
+                  color: colorScheme.error,
+                  onTap: () => _showMembersBottomSheet(
+                    context: context,
+                    title: 'Nhân sự nghỉ',
+                    icon: Icons.person_off_rounded,
+                    members: allMembers,
+                    initialFilter: 'Nghỉ',
+                    theme: theme,
+                    colorScheme: colorScheme,
+                  ),
+                  theme: theme,
+                  colorScheme: colorScheme,
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: _statCard3(
+                  title: 'NỬA NGÀY',
+                  value: '${half < 10 ? '0$half' : half}',
+                  sub: 'ĐÃ PHÊ DUYỆT',
+                  icon: Icons.wb_sunny_rounded,
+                  color: const Color(0xFF10B981),
+                  onTap: () => _showMembersBottomSheet(
+                    context: context,
+                    title: 'Nhân sự nghỉ nửa ngày',
+                    icon: Icons.wb_sunny_rounded,
+                    members: allMembers,
+                    initialFilter: 'Nửa ngày',
+                    theme: theme,
+                    colorScheme: colorScheme,
+                  ),
+                  theme: theme,
+                  colorScheme: colorScheme,
+                ),
+              ),
+            ],
           ),
+          SizedBox(height: 24.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Danh sách tổ nhóm',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _showMembersBottomSheet(
+                  context: context,
+                  title: 'Tất cả nhân sự',
+                  icon: Icons.groups_rounded,
+                  members: allMembers,
+                  initialFilter: 'Tất cả',
+                  theme: theme,
+                  colorScheme: colorScheme,
+                ),
+                child: Text(
+                  'XEM TẤT CẢ',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colorScheme.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
         ],
       ),
     );
   }
 
-  Widget _summaryChip({
-    required String label,
-    required String value,
-    required Color color,
-    required ThemeData theme,
-    required ColorScheme colorScheme,
-  }) {
-    return Expanded(
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 8.h),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(color: color.withValues(alpha: 0.2)),
+  Widget _statCard1({required String title, required String value, required String sub, required IconData icon, required VoidCallback onTap, required ThemeData theme, required ColorScheme colorScheme}) {
+    return Material(
+      color: colorScheme.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(16.r),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: EdgeInsets.all(16.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, size: 16.sp, color: colorScheme.onSurfaceVariant),
+                  SizedBox(width: 8.w),
+                  Text(title, style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800, color: colorScheme.onSurfaceVariant)),
+                ],
+              ),
+              SizedBox(height: 12.h),
+              Text(value, style: theme.textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w900, color: colorScheme.onSurface)),
+              SizedBox(height: 4.h),
+              Text(sub, style: theme.textTheme.labelSmall?.copyWith(fontSize: 8.sp, fontWeight: FontWeight.w700, color: colorScheme.onSurfaceVariant)),
+            ],
+          ),
         ),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: color,
+      ),
+    );
+  }
+
+  Widget _statCard2({required String title, required String value, required double progress, required IconData icon, required VoidCallback onTap, required ThemeData theme, required ColorScheme colorScheme}) {
+    return Material(
+      color: colorScheme.primary, // Blue background
+      borderRadius: BorderRadius.circular(16.r),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: EdgeInsets.all(16.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, size: 16.sp, color: colorScheme.onPrimary),
+                  SizedBox(width: 8.w),
+                  Text(title, style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800, color: colorScheme.onPrimary)),
+                ],
               ),
-            ),
-            Text(
-              label,
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontSize: 9.sp,
-                color: colorScheme.onSurfaceVariant,
+              SizedBox(height: 12.h),
+              Text(value, style: theme.textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w900, color: colorScheme.onPrimary)),
+              SizedBox(height: 8.h),
+              LinearProgressIndicator(
+                value: progress,
+                backgroundColor: colorScheme.onPrimary.withValues(alpha: 0.3),
+                valueColor: AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),
+                minHeight: 4.h,
+                borderRadius: BorderRadius.circular(2.r),
               ),
-            ),
-          ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _statCard3({required String title, required String value, required String sub, required IconData icon, required Color color, required VoidCallback onTap, required ThemeData theme, required ColorScheme colorScheme}) {
+    return Material(
+      color: colorScheme.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(16.r),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: EdgeInsets.all(16.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, size: 16.sp, color: colorScheme.onSurfaceVariant),
+                  SizedBox(width: 8.w),
+                  Text(title, style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800, color: colorScheme.onSurfaceVariant)),
+                ],
+              ),
+              SizedBox(height: 12.h),
+              Text(value, style: theme.textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w900, color: color)),
+              SizedBox(height: 4.h),
+              Text(sub, style: theme.textTheme.labelSmall?.copyWith(fontSize: 8.sp, fontWeight: FontWeight.w800, color: color)),
+            ],
+          ),
         ),
       ),
     );
@@ -408,80 +594,257 @@ class _AttendancePageState extends State<AttendancePage> {
     required int half,
     required ThemeData theme,
     required ColorScheme colorScheme,
-    required bool isExpanded,
   }) {
     final color = _groupColors[group.key] ?? colorScheme.primary;
     final icon = _groupIcons[group.key] ?? Icons.group_rounded;
-    final off = total - working - half;
+    final performance = total > 0 ? (working / total * 100).round() : 0;
 
     return Container(
-      margin: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [color.withValues(alpha: 0.12), color.withValues(alpha: 0.04)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20.r),
       ),
       child: Row(
         children: [
           Container(
-            width: 32.w,
-            height: 32.w,
+            width: 48.w,
+            height: 48.w,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8.r),
+              color: color.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
             ),
-            child: Icon(icon, size: 16.sp, color: color),
+            child: Icon(icon, size: 24.sp, color: color),
           ),
-          SizedBox(width: 10.w),
+          SizedBox(width: 16.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${group.key}. ${group.ten}',
-                  style: theme.textTheme.bodySmall?.copyWith(
+                  group.ten,
+                  style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w800,
-                    color: color,
                   ),
                 ),
-                SizedBox(height: 2.h),
-                Text(
-                  '$working đi làm${half > 0 ? ' · $half nửa ngày' : ''}${off > 0 ? ' · $off nghỉ' : ''}',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontSize: 9.sp,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                SizedBox(height: 4.h),
+                Row(
+                  children: [
+                    Text(
+                      '$total Nhân viên',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 6.w),
+                      child: Icon(Icons.circle, size: 4.sp, color: colorScheme.outlineVariant),
+                    ),
+                    Text(
+                      '$working Đang làm',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: const Color(0xFF10B981),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8.r),
-            ),
-            child: Text(
-              '$total',
-              style: theme.textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: color,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '$performance%',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: colorScheme.onSurface,
+                ),
               ),
-            ),
+              Text(
+                'HIỆU SUẤT',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontSize: 8.sp,
+                  fontWeight: FontWeight.w700,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
           ),
-          SizedBox(width: 8.w),
+          SizedBox(width: 12.w),
           Icon(
-            isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
-            color: color,
+            Icons.chevron_right_rounded,
+            color: colorScheme.outlineVariant,
             size: 20.sp,
           ),
         ],
       ),
+    );
+  }
+
+  void _showMembersBottomSheet({
+    required BuildContext context,
+    required String title,
+    required IconData icon,
+    required List<AttendanceRecord> members,
+    required String initialFilter,
+    required ThemeData theme,
+    required ColorScheme colorScheme,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+      ),
+      builder: (context) {
+        String selectedFilter = initialFilter;
+        final filters = ['Tất cả', 'Đi làm', 'Nửa ngày', 'Nghỉ'];
+
+        Color _getFilterColor(String filter) {
+          switch (filter) {
+            case 'Đi làm':
+              return const Color(0xFF10B981);
+            case 'Nửa ngày':
+              return const Color(0xFFF59E0B);
+            case 'Nghỉ':
+              return const Color(0xFFEF4444);
+            default:
+              return colorScheme.primary;
+          }
+        }
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            final filteredMembers = members.where((m) {
+              if (selectedFilter == 'Tất cả') return true;
+              if (selectedFilter == 'Đi làm') return m.isWorking;
+              if (selectedFilter == 'Nửa ngày') return m.isHalf;
+              return !m.isWorking && !m.isHalf;
+            }).toList();
+
+            return Container(
+              constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(height: 12.h),
+                  Container(
+                    width: 48.w,
+                    height: 4.h,
+                    decoration: BoxDecoration(
+                      color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(8.w),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.group_rounded, color: colorScheme.primary, size: 20.sp),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                              ),
+                              Text(
+                                'Danh sách nhân sự',
+                                style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: Icon(Icons.close_rounded, color: colorScheme.onSurfaceVariant),
+                          style: IconButton.styleFrom(backgroundColor: colorScheme.surfaceContainerHighest),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    child: Row(
+                      children: filters.map((filter) {
+                        final isSelected = selectedFilter == filter;
+                        final filterColor = _getFilterColor(filter);
+                        
+                        return Padding(
+                          padding: EdgeInsets.only(right: 8.w),
+                          child: FilterChip(
+                            label: Text(
+                              filter,
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                color: isSelected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              setState(() => selectedFilter = filter);
+                            },
+                            backgroundColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                            selectedColor: filterColor,
+                            checkmarkColor: colorScheme.onPrimary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(100.r),
+                              side: BorderSide.none,
+                            ),
+                            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  SizedBox(height: 12.h),
+                  Expanded(
+                    child: filteredMembers.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.inbox_rounded, size: 48.sp, color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+                                SizedBox(height: 12.h),
+                                Text(
+                                  'Không có nhân sự nào',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: EdgeInsets.only(bottom: 24.h),
+                            itemCount: filteredMembers.length,
+                            itemBuilder: (context, index) => _buildEmployeeItem(filteredMembers[index], theme, colorScheme),
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -491,7 +854,7 @@ class _AttendancePageState extends State<AttendancePage> {
     IconData statusIcon;
 
     if (record.isWorking) {
-      statusColor = Colors.green;
+      statusColor = const Color(0xFF10B981);
       statusLabel = 'Đi làm';
       statusIcon = Icons.check_circle_rounded;
     } else if (record.isHalf) {
@@ -499,75 +862,93 @@ class _AttendancePageState extends State<AttendancePage> {
       statusLabel = 'Nửa ngày';
       statusIcon = Icons.timelapse_rounded;
     } else {
-      statusColor = colorScheme.error;
+      statusColor = const Color(0xFFEF4444);
       statusLabel = 'Nghỉ';
       statusIcon = Icons.cancel_rounded;
     }
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 3.h),
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 8.h),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36.w,
-            height: 36.w,
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.person_rounded, size: 18.sp, color: statusColor),
-          ),
-          SizedBox(width: 10.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  record.hoTen,
-                  style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w800),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (record.boPhan.isNotEmpty)
-                  Text(
-                    record.boPhan,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      fontSize: 10.sp,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-              ],
-            ),
-          ),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8.r),
-              border: Border.all(color: statusColor.withValues(alpha: 0.25)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(statusIcon, size: 12.sp, color: statusColor),
-                SizedBox(width: 4.w),
-                Text(
-                  statusLabel,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: statusColor,
-                    fontSize: 10.sp,
-                  ),
-                ),
-              ],
-            ),
+        borderRadius: BorderRadius.circular(14.r),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              width: 5.w,
+              color: statusColor,
+            ),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            record.hoTen,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: colorScheme.onSurface,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (record.boPhan.isNotEmpty) ...[
+                            SizedBox(height: 4.h),
+                            Text(
+                              record.boPhan,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(100.r),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(statusIcon, size: 14.sp, color: statusColor),
+                          SizedBox(width: 4.w),
+                          Text(
+                            statusLabel,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: statusColor,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
