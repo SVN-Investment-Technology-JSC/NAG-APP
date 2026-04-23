@@ -28,6 +28,7 @@ class _CameraDialogState extends State<CameraDialog> {
   bool _isDisposed = false;
   Uint8List? _currentFrame;
   bool _isError = false;
+  String _errorMessage = '';
   bool _isLoading = true;
 
   // Digest Auth state
@@ -52,10 +53,9 @@ class _CameraDialogState extends State<CameraDialog> {
 
   Future<void> _fetchFrame() async {
     final ip = widget.station.stationIpAddress;
-    final port = widget.station.stationPort ?? 
-      (widget.station.stationId == 1 ? '81' : 
-       widget.station.stationId == 2 ? '82' : 
-       widget.station.stationId == 3 ? '80' : '80');
+    final port = widget.station.stationId == 1 ? '81' : 
+                 widget.station.stationId == 2 ? '82' : 
+                 widget.station.stationId == 3 ? '80' : '80';
 
     if (ip == null || ip.isEmpty) {
       setState(() { _isLoading = false; _isError = true; });
@@ -99,16 +99,21 @@ class _CameraDialogState extends State<CameraDialog> {
             _currentFrame = Uint8List.fromList(res.data);
             _isLoading = false;
             _isError = false;
+            _errorMessage = '';
           });
         }
       } else {
         if (!_isDisposed && _currentFrame == null) {
-          setState(() { _isError = true; _isLoading = false; });
+          setState(() { _isError = true; _errorMessage = 'HTTP ${res.statusCode}'; _isLoading = false; });
         }
+      }
+    } on DioException catch (e) {
+      if (!_isDisposed && _currentFrame == null) {
+        setState(() { _isError = true; _errorMessage = e.message ?? e.toString(); _isLoading = false; });
       }
     } catch (e) {
       if (!_isDisposed && _currentFrame == null) {
-        setState(() { _isError = true; _isLoading = false; });
+        setState(() { _isError = true; _errorMessage = e.toString(); _isLoading = false; });
       }
     } finally {
       _isFetching = false;
@@ -155,10 +160,9 @@ class _CameraDialogState extends State<CameraDialog> {
     final colorScheme = theme.colorScheme;
     
     final ip = widget.station.stationIpAddress;
-    final port = widget.station.stationPort ?? 
-      (widget.station.stationId == 1 ? '81' : 
-       widget.station.stationId == 2 ? '82' : 
-       widget.station.stationId == 3 ? '80' : '80');
+    final port = widget.station.stationId == 1 ? '81' : 
+                 widget.station.stationId == 2 ? '82' : 
+                 widget.station.stationId == 3 ? '80' : '80';
     final bool hasConfig = ip != null && ip.isNotEmpty;
 
     return Dialog(
@@ -219,8 +223,10 @@ class _CameraDialogState extends State<CameraDialog> {
             Container(
               color: Colors.black,
               height: 250.h,
-              child: !hasConfig
-                  ? Center(
+              child: Builder(
+                builder: (context) {
+                  if (!hasConfig) {
+                    return Center(
                       child: Padding(
                         padding: EdgeInsets.all(24.w),
                         child: Text(
@@ -232,30 +238,46 @@ class _CameraDialogState extends State<CameraDialog> {
                           ),
                         ),
                       ),
-                    )
-                  : _currentFrame != null
-                      ? Image.memory(
-                          _currentFrame!,
-                          fit: BoxFit.contain,
-                          gaplessPlayback: true,
-                        )
-                      : _isError
-                          ? Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.wifi_off_rounded, color: Colors.white54, size: 48.sp),
-                                  SizedBox(height: 8.h),
-                                  Text(
-                                    'Mất kết nối Camera',
-                                    style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
-                                  ),
-                                ],
+                    );
+                  }
+                  if (_currentFrame != null) {
+                    return Image.memory(
+                      _currentFrame!,
+                      fit: BoxFit.contain,
+                      gaplessPlayback: true,
+                    );
+                  }
+                  if (_isError) {
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.wifi_off_rounded, color: Colors.white54, size: 48.sp),
+                          SizedBox(height: 8.h),
+                          Text(
+                            'Mất kết nối Camera',
+                            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
+                          ),
+                          if (_errorMessage.isNotEmpty) ...[
+                            SizedBox(height: 4.h),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 16.w),
+                              child: Text(
+                                _errorMessage,
+                                style: theme.textTheme.labelSmall?.copyWith(color: Colors.redAccent),
+                                textAlign: TextAlign.center,
                               ),
-                            )
-                          : Center(
-                              child: CircularProgressIndicator(color: const Color(0xFF6366F1)),
                             ),
+                          ],
+                        ],
+                      ),
+                    );
+                  }
+                  return const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF6366F1)),
+                  );
+                },
+              ),
             ),
           ],
         ),
