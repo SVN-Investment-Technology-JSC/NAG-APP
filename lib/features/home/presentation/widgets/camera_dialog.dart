@@ -35,11 +35,20 @@ class _CameraDialogState extends State<CameraDialog> {
   String? _authHeader;
   int _ncCount = 1;
   bool _isFetching = false;
+  bool _minLoadingDone = false;
 
   @override
   void initState() {
     super.initState();
     _startStream();
+    
+    Future.delayed(const Duration(milliseconds: 2500), () {
+      if (mounted && !_isDisposed) {
+        setState(() {
+          _minLoadingDone = true;
+        });
+      }
+    });
   }
 
   void _startStream() {
@@ -241,10 +250,35 @@ class _CameraDialogState extends State<CameraDialog> {
                     );
                   }
                   if (_currentFrame != null) {
-                    return Image.memory(
-                      _currentFrame!,
-                      fit: BoxFit.contain,
-                      gaplessPlayback: true,
+                    return Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.memory(
+                          _currentFrame!,
+                          fit: BoxFit.contain,
+                          gaplessPlayback: true,
+                        ),
+                        Positioned(
+                          bottom: 12.h,
+                          right: 12.w,
+                          child: IconButton(
+                            onPressed: () {
+                              Navigator.of(context).push(MaterialPageRoute(
+                                builder: (_) => FullScreenCameraPage(station: widget.station),
+                              ));
+                            },
+                            icon: Icon(Icons.fullscreen_rounded, color: Colors.white, size: 28.sp),
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.black54,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+                  if (!_minLoadingDone) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: Color(0xFF6366F1)),
                     );
                   }
                   if (_isError) {
@@ -280,6 +314,213 @@ class _CameraDialogState extends State<CameraDialog> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class FullScreenCameraPage extends StatefulWidget {
+  final Station station;
+
+  const FullScreenCameraPage({super.key, required this.station});
+
+  @override
+  State<FullScreenCameraPage> createState() => _FullScreenCameraPageState();
+}
+
+class _FullScreenCameraPageState extends State<FullScreenCameraPage> {
+  late Timer _timer;
+  bool _isDisposed = false;
+  Uint8List? _currentFrame;
+  bool _isError = false;
+  String _errorMessage = '';
+  bool _isLoading = true;
+  bool _minLoadingDone = false;
+
+  // Digest Auth state
+  String? _authHeader;
+  int _ncCount = 1;
+  bool _isFetching = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startStream();
+    
+    Future.delayed(const Duration(milliseconds: 2500), () {
+      if (mounted && !_isDisposed) {
+        setState(() {
+          _minLoadingDone = true;
+        });
+      }
+    });
+  }
+
+  void _startStream() {
+    _fetchFrame();
+    _timer = Timer.periodic(const Duration(milliseconds: 150), (timer) {
+      if (!_isDisposed && !_isFetching) {
+        _fetchFrame();
+      }
+    });
+  }
+
+  Future<void> _fetchFrame() async {
+    final ip = widget.station.stationIpAddress;
+    final port = widget.station.stationId == 1 ? '81' : 
+                 widget.station.stationId == 2 ? '82' : 
+                 widget.station.stationId == 3 ? '80' : '80';
+
+    if (ip == null || ip.isEmpty) {
+      setState(() { _isLoading = false; _isError = true; });
+      return;
+    }
+
+    _isFetching = true;
+    final targetUrl = 'http://$ip:$port/ISAPI/Streaming/channels/102/picture';
+
+    try {
+      final dio = Dio(BaseOptions(
+        responseType: ResponseType.bytes,
+        receiveTimeout: const Duration(seconds: 5),
+        sendTimeout: const Duration(seconds: 5),
+        validateStatus: (status) => true,
+      ));
+
+      final headers = <String, dynamic>{};
+      if (_authHeader != null) {
+        headers['Authorization'] = _authHeader;
+      }
+
+      var res = await dio.get(targetUrl, options: Options(headers: headers));
+
+      if (res.statusCode == 401) {
+        final wwwAuth = res.headers.value('www-authenticate');
+        if (wwwAuth != null && wwwAuth.contains('Digest')) {
+          _authHeader = _generateDigestAuthHeader(wwwAuth, 'GET', '/ISAPI/Streaming/channels/102/picture');
+          headers['Authorization'] = _authHeader;
+          res = await dio.get(targetUrl, options: Options(headers: headers));
+        } else {
+          final basic = 'Basic ${base64Encode(utf8.encode('admin:14526525aA@'))}';
+          headers['Authorization'] = basic;
+          res = await dio.get(targetUrl, options: Options(headers: headers));
+        }
+      }
+
+      if (res.statusCode == 200 && res.data != null) {
+        if (!_isDisposed) {
+          setState(() {
+            _currentFrame = Uint8List.fromList(res.data);
+            _isLoading = false;
+            _isError = false;
+            _errorMessage = '';
+          });
+        }
+      } else {
+        if (!_isDisposed && _currentFrame == null) {
+          setState(() { _isError = true; _errorMessage = 'HTTP ${res.statusCode}'; _isLoading = false; });
+        }
+      }
+    } on DioException catch (e) {
+      if (!_isDisposed && _currentFrame == null) {
+        setState(() { _isError = true; _errorMessage = e.message ?? e.toString(); _isLoading = false; });
+      }
+    } catch (e) {
+      if (!_isDisposed && _currentFrame == null) {
+        setState(() { _isError = true; _errorMessage = e.toString(); _isLoading = false; });
+      }
+    } finally {
+      _isFetching = false;
+    }
+  }
+
+  String _generateDigestAuthHeader(String wwwAuth, String method, String uri) {
+    const user = 'admin';
+    const pass = '14526525aA@';
+    final realmMatch = RegExp(r'realm="([^"]+)"').firstMatch(wwwAuth);
+    final nonceMatch = RegExp(r'nonce="([^"]+)"').firstMatch(wwwAuth);
+    final qopMatch = RegExp(r'qop="([^"]+)"').firstMatch(wwwAuth);
+
+    if (realmMatch == null || nonceMatch == null) return '';
+
+    final realm = realmMatch.group(1)!;
+    final nonce = nonceMatch.group(1)!;
+    final qop = qopMatch != null ? qopMatch.group(1)! : 'auth';
+
+    final ha1 = md5.convert(utf8.encode('$user:$realm:$pass')).toString();
+    final ha2 = md5.convert(utf8.encode('$method:$uri')).toString();
+    
+    final nc = _ncCount.toRadixString(16).padLeft(8, '0');
+    _ncCount++;
+    
+    final cnonce = md5.convert(utf8.encode(DateTime.now().millisecondsSinceEpoch.toString())).toString().substring(0, 8);
+    final response = md5.convert(utf8.encode('$ha1:$nonce:$nc:$cnonce:$qop:$ha2')).toString();
+
+    return 'Digest username="$user", realm="$realm", nonce="$nonce", uri="$uri", qop=$qop, nc=$nc, cnonce="$cnonce", response="$response"';
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(
+          widget.station.stationName,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: SafeArea(
+        child: Builder(
+          builder: (context) {
+            if (_currentFrame != null) {
+              return InteractiveViewer(
+                minScale: 1.0,
+                maxScale: 5.0,
+                child: Center(
+                  child: Image.memory(
+                    _currentFrame!,
+                    fit: BoxFit.contain,
+                    gaplessPlayback: true,
+                    width: double.infinity,
+                    height: double.infinity,
+                  ),
+                ),
+              );
+            }
+            if (!_minLoadingDone) {
+              return const Center(
+                child: CircularProgressIndicator(color: Color(0xFF6366F1)),
+              );
+            }
+            if (_isError) {
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.wifi_off_rounded, color: Colors.white54, size: 64.sp),
+                    SizedBox(height: 16.h),
+                    Text(
+                      'Mất kết nối Camera',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white70),
+                    ),
+                  ],
+                ),
+              );
+            }
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFF6366F1)),
+            );
+          },
         ),
       ),
     );
