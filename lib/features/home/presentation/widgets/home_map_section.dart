@@ -307,8 +307,9 @@ class _MapView extends StatelessWidget {
           ),
           children: [
             TileLayer(
-              urlTemplate:
-                  'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+              urlTemplate: theme.brightness == Brightness.dark
+                  ? 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png'
+                  : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
               subdomains: const ['a', 'b', 'c', 'd'],
             ),
             CircleLayer(circles: circles),

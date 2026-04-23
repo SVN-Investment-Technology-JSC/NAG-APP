@@ -29,17 +29,8 @@ class HomeStationCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xsH),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(14.r),
-        border: _hasCollecting
-            ? Border.all(
-                color: colorScheme.tertiary.withValues(alpha: 0.3),
-                width: 1.5,
-              )
-            : null,
-      ),
+      padding: EdgeInsets.symmetric(vertical: 4.h),
+      color: Colors.transparent,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

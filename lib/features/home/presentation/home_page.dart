@@ -144,17 +144,59 @@ class _HomePageState extends State<HomePage> {
   }
 
   List<Widget> _buildStationSliver() {
-    return _workingStations.map((station) {
-      final cameraStatus =
-          widget.socketService.cameraStatusMap[station.stationId.toString()];
-      return SliverToBoxAdapter(
-        child: HomeStationCard(
-          station: station,
-          collectingVehicles: _collectingAtStation(station.stationId),
-          isCameraConnected: cameraStatus == 'connected',
+    if (_workingStations.isEmpty) return [];
+
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return [
+      SliverToBoxAdapter(
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xsH),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 8.h),
+                child: Row(
+                  children: [
+                    Icon(Icons.business_rounded, size: 18.sp, color: colorScheme.primary),
+                    SizedBox(width: 8.w),
+                    Text(
+                      'Các trạm đang hoạt động',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ..._workingStations.asMap().entries.map((entry) {
+                final index = entry.key;
+                final station = entry.value;
+                final cameraStatus = widget.socketService.cameraStatusMap[station.stationId.toString()];
+                return Column(
+                  children: [
+                    if (index > 0)
+                      Divider(height: 1, indent: 16.w, endIndent: 16.w, color: colorScheme.outlineVariant.withValues(alpha: 0.4)),
+                    HomeStationCard(
+                      station: station,
+                      collectingVehicles: _collectingAtStation(station.stationId),
+                      isCameraConnected: cameraStatus == 'connected',
+                    ),
+                  ],
+                );
+              }),
+              SizedBox(height: 8.h),
+            ],
+          ),
         ),
-      );
-    }).toList();
+      )
+    ];
   }
 
   Widget _buildOrdersSliver(
