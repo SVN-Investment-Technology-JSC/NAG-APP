@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Vehicle Management'**
+  /// **'Nguyên Anh'**
   String get appTitle;
 
   /// No description provided for @selectLanguage.
@@ -299,7 +299,7 @@ abstract class AppLocalizations {
   /// No description provided for @prioritize.
   ///
   /// In en, this message translates to:
-  /// **'Move to top'**
+  /// **'Prioritize'**
   String get prioritize;
 
   /// No description provided for @vehiclesAtStation.
@@ -317,7 +317,7 @@ abstract class AppLocalizations {
   /// No description provided for @stationOverview.
   ///
   /// In en, this message translates to:
-  /// **'Station Overview'**
+  /// **'Station overview'**
   String get stationOverview;
 
   /// No description provided for @vehicleCount.
@@ -329,7 +329,7 @@ abstract class AppLocalizations {
   /// No description provided for @todayOrders.
   ///
   /// In en, this message translates to:
-  /// **'Vehicle Queue Order'**
+  /// **'Vehicle Queue'**
   String get todayOrders;
 
   /// No description provided for @today.
@@ -413,25 +413,25 @@ abstract class AppLocalizations {
   /// No description provided for @vehicleManagement.
   ///
   /// In en, this message translates to:
-  /// **'Today\'s Trips'**
+  /// **'Daily Trips'**
   String get vehicleManagement;
 
   /// No description provided for @selectDate.
   ///
   /// In en, this message translates to:
-  /// **'Select date'**
+  /// **'Select Date'**
   String get selectDate;
 
   /// No description provided for @noVehicles.
   ///
   /// In en, this message translates to:
-  /// **'No mixer trucks'**
+  /// **'No tankers'**
   String get noVehicles;
 
   /// No description provided for @tripsOnDate.
   ///
   /// In en, this message translates to:
-  /// **'Trips on date'**
+  /// **'Daily Trips'**
   String get tripsOnDate;
 
   /// No description provided for @stopCountLabel.
@@ -461,7 +461,7 @@ abstract class AppLocalizations {
   /// No description provided for @attendanceHalf.
   ///
   /// In en, this message translates to:
-  /// **'Half day'**
+  /// **'Half-day'**
   String get attendanceHalf;
 
   /// No description provided for @attendanceTotal.
@@ -479,19 +479,19 @@ abstract class AppLocalizations {
   /// No description provided for @shiftClose.
   ///
   /// In en, this message translates to:
-  /// **'Close Shift'**
+  /// **'Shift Close'**
   String get shiftClose;
 
   /// No description provided for @shiftCloseConfirmTitle.
   ///
   /// In en, this message translates to:
-  /// **'Confirm Close Shift'**
+  /// **'Confirm Shift Close'**
   String get shiftCloseConfirmTitle;
 
   /// No description provided for @shiftCloseConfirmContent.
   ///
   /// In en, this message translates to:
-  /// **'Are you sure you want to close today\'s shift? All pending orders will be canceled.'**
+  /// **'Are you sure you want to close shift? All pending orders will be canceled.'**
   String get shiftCloseConfirmContent;
 
   /// No description provided for @shiftCloseSuccess.
@@ -503,13 +503,13 @@ abstract class AppLocalizations {
   /// No description provided for @shiftCloseFailed.
   ///
   /// In en, this message translates to:
-  /// **'Failed to close shift'**
+  /// **'Shift close failed'**
   String get shiftCloseFailed;
 
   /// No description provided for @shiftPendingWarning.
   ///
   /// In en, this message translates to:
-  /// **'{count} pending orders remaining'**
+  /// **'{count} pending orders'**
   String shiftPendingWarning(Object count);
 
   /// No description provided for @mealCheck.
@@ -715,6 +715,264 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'PROFILE'**
   String get profileTab;
+
+  /// No description provided for @vietnamese.
+  ///
+  /// In en, this message translates to:
+  /// **'Tiếng Việt (VN)'**
+  String get vietnamese;
+
+  /// No description provided for @english.
+  ///
+  /// In en, this message translates to:
+  /// **'English (EN)'**
+  String get english;
+
+  /// No description provided for @mealShareError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error sharing image!'**
+  String get mealShareError;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// No description provided for @mealTableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'MEAL ALLOWANCE RECORD'**
+  String get mealTableTitle;
+
+  /// No description provided for @mealFromDate.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get mealFromDate;
+
+  /// No description provided for @mealToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'to'**
+  String get mealToDate;
+
+  /// No description provided for @mealSTT.
+  ///
+  /// In en, this message translates to:
+  /// **'No.'**
+  String get mealSTT;
+
+  /// No description provided for @mealFullName.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Name'**
+  String get mealFullName;
+
+  /// No description provided for @mealTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get mealTotal;
+
+  /// No description provided for @mealGrandTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Grand Total'**
+  String get mealGrandTotal;
+
+  /// No description provided for @mealUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'meals'**
+  String get mealUnit;
+
+  /// No description provided for @mealChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking...'**
+  String get mealChecking;
+
+  /// No description provided for @mealCheckBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Check'**
+  String get mealCheckBtn;
+
+  /// No description provided for @mealCheckHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Select date, slot then press Check'**
+  String get mealCheckHint;
+
+  /// No description provided for @mealShareTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Share Image'**
+  String get mealShareTooltip;
+
+  /// No description provided for @attendanceStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Personnel Statistics'**
+  String get attendanceStats;
+
+  /// No description provided for @updating.
+  ///
+  /// In en, this message translates to:
+  /// **'UPDATING'**
+  String get updating;
+
+  /// No description provided for @totalPersonnel.
+  ///
+  /// In en, this message translates to:
+  /// **'TOTAL'**
+  String get totalPersonnel;
+
+  /// No description provided for @allSystems.
+  ///
+  /// In en, this message translates to:
+  /// **'EMPLOYEES SYSTEM-WIDE'**
+  String get allSystems;
+
+  /// No description provided for @allPersonnel.
+  ///
+  /// In en, this message translates to:
+  /// **'All Personnel'**
+  String get allPersonnel;
+
+  /// No description provided for @workingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'WORKING'**
+  String get workingStatus;
+
+  /// No description provided for @personnelWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'Working Personnel'**
+  String get personnelWorking;
+
+  /// No description provided for @offStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'OFF'**
+  String get offStatus;
+
+  /// No description provided for @absent.
+  ///
+  /// In en, this message translates to:
+  /// **'ABSENT'**
+  String get absent;
+
+  /// No description provided for @personnelOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off Personnel'**
+  String get personnelOff;
+
+  /// No description provided for @halfDayStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'HALF DAY'**
+  String get halfDayStatus;
+
+  /// No description provided for @approved.
+  ///
+  /// In en, this message translates to:
+  /// **'APPROVED'**
+  String get approved;
+
+  /// No description provided for @personnelHalfDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Half-day Personnel'**
+  String get personnelHalfDay;
+
+  /// No description provided for @groupList.
+  ///
+  /// In en, this message translates to:
+  /// **'Group List'**
+  String get groupList;
+
+  /// No description provided for @viewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'VIEW ALL'**
+  String get viewAll;
+
+  /// No description provided for @performance.
+  ///
+  /// In en, this message translates to:
+  /// **'PERFORMANCE'**
+  String get performance;
+
+  /// No description provided for @all.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get all;
+
+  /// No description provided for @exportExcel.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Excel'**
+  String get exportExcel;
+
+  /// No description provided for @openGoogleSheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Google Sheet'**
+  String get openGoogleSheet;
+
+  /// No description provided for @personnelList.
+  ///
+  /// In en, this message translates to:
+  /// **'Personnel List'**
+  String get personnelList;
+
+  /// No description provided for @monthLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get monthLabel;
+
+  /// No description provided for @stt.
+  ///
+  /// In en, this message translates to:
+  /// **'No.'**
+  String get stt;
+
+  /// No description provided for @fullName.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Name'**
+  String get fullName;
+
+  /// No description provided for @department.
+  ///
+  /// In en, this message translates to:
+  /// **'Dept.'**
+  String get department;
+
+  /// No description provided for @status.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get status;
+
+  /// No description provided for @activeStations.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Stations'**
+  String get activeStations;
+
+  /// No description provided for @live.
+  ///
+  /// In en, this message translates to:
+  /// **'Live'**
+  String get live;
 }
 
 class _AppLocalizationsDelegate

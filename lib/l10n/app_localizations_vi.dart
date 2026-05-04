@@ -9,7 +9,7 @@ class AppLocalizationsVi extends AppLocalizations {
   AppLocalizationsVi([String locale = 'vi']) : super(locale);
 
   @override
-  String get appTitle => 'Quản lý xe';
+  String get appTitle => 'Nguyên Anh';
 
   @override
   String get selectLanguage => 'Ngôn ngữ / Language';
@@ -324,4 +324,133 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get profileTab => 'PROFILE';
+
+  @override
+  String get vietnamese => 'Tiếng Việt (VN)';
+
+  @override
+  String get english => 'English (EN)';
+
+  @override
+  String get mealShareError => 'Lỗi chia sẻ ảnh!';
+
+  @override
+  String get retry => 'Thử lại';
+
+  @override
+  String get mealTableTitle => 'BẢNG CHẤM TIỀN ĂN QUA BỮA';
+
+  @override
+  String get mealFromDate => 'Từ ngày';
+
+  @override
+  String get mealToDate => 'đến';
+
+  @override
+  String get mealSTT => 'STT';
+
+  @override
+  String get mealFullName => 'Họ và tên';
+
+  @override
+  String get mealTotal => 'Tổng';
+
+  @override
+  String get mealGrandTotal => 'Tổng cộng';
+
+  @override
+  String get mealUnit => 'bữa';
+
+  @override
+  String get mealChecking => 'Đang kiểm tra...';
+
+  @override
+  String get mealCheckBtn => 'Kiểm tra';
+
+  @override
+  String get mealCheckHint => 'Chọn ngày, buổi rồi bấm Kiểm tra';
+
+  @override
+  String get mealShareTooltip => 'Chia sẻ ảnh';
+
+  @override
+  String get attendanceStats => 'Thống kê nhân sự';
+
+  @override
+  String get updating => 'ĐANG CẬP NHẬT';
+
+  @override
+  String get totalPersonnel => 'TỔNG SỐ';
+
+  @override
+  String get allSystems => 'NHÂN VIÊN TOÀN HỆ THỐNG';
+
+  @override
+  String get allPersonnel => 'Tất cả nhân sự';
+
+  @override
+  String get workingStatus => 'ĐI LÀM';
+
+  @override
+  String get personnelWorking => 'Nhân sự đi làm';
+
+  @override
+  String get offStatus => 'NGHỈ';
+
+  @override
+  String get absent => 'VẮNG MẶT';
+
+  @override
+  String get personnelOff => 'Nhân sự nghỉ';
+
+  @override
+  String get halfDayStatus => 'NỬA NGÀY';
+
+  @override
+  String get approved => 'ĐÃ PHÊ DUYỆT';
+
+  @override
+  String get personnelHalfDay => 'Nhân sự nghỉ nửa ngày';
+
+  @override
+  String get groupList => 'Danh sách tổ nhóm';
+
+  @override
+  String get viewAll => 'XEM TẤT CẢ';
+
+  @override
+  String get performance => 'HIỆU SUẤT';
+
+  @override
+  String get all => 'Tất cả';
+
+  @override
+  String get exportExcel => 'Xuất Excel';
+
+  @override
+  String get openGoogleSheet => 'Mở Google Sheet';
+
+  @override
+  String get personnelList => 'Danh sách nhân sự';
+
+  @override
+  String get monthLabel => 'Tháng';
+
+  @override
+  String get stt => 'STT';
+
+  @override
+  String get fullName => 'Họ tên';
+
+  @override
+  String get department => 'Bộ phận';
+
+  @override
+  String get status => 'Trạng thái';
+
+  @override
+  String get activeStations => 'Các trạm đang hoạt động';
+
+  @override
+  String get live => 'Trực tiếp';
 }

@@ -150,7 +150,7 @@ class _SelectionPageState extends State<SelectionPage> {
               SizedBox(height: 16.h),
               ListTile(
                 leading: Text('🇻🇳', style: TextStyle(fontSize: 24.sp)),
-                title: const Text('Tiếng Việt (VN)'),
+                title: Text(l10n.vietnamese),
                 trailing: languageProvider.locale.languageCode == 'vi'
                     ? const Icon(Icons.check_circle, color: Colors.green)
                     : null,
@@ -161,7 +161,7 @@ class _SelectionPageState extends State<SelectionPage> {
               ),
               ListTile(
                 leading: Text('🇺🇸', style: TextStyle(fontSize: 24.sp)),
-                title: const Text('English (EN)'),
+                title: Text(l10n.english),
                 trailing: languageProvider.locale.languageCode == 'en'
                     ? const Icon(Icons.check_circle, color: Colors.green)
                     : null,
@@ -425,7 +425,7 @@ class _SelectionPageState extends State<SelectionPage> {
                     child: Opacity(
                       opacity: 0.4,
                       child: Text(
-                        'v1.0.0 • Savina Power DEV',
+                        'v1.0.0 • NGUYÊN ANH',
                         style: TextStyle(
                             fontSize: 10.sp,
                             fontWeight: FontWeight.bold,

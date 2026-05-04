@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Vehicle Management';
+  String get appTitle => 'Nguyên Anh';
 
   @override
   String get selectLanguage => 'Language / Ngôn ngữ';
@@ -110,7 +110,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get collecting => 'Collecting';
 
   @override
-  String get prioritize => 'Move to top';
+  String get prioritize => 'Prioritize';
 
   @override
   String get vehiclesAtStation => 'vehicles at station';
@@ -119,7 +119,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moveToTop => 'Move to top';
 
   @override
-  String get stationOverview => 'Station Overview';
+  String get stationOverview => 'Station overview';
 
   @override
   String vehicleCount(Object count) {
@@ -127,7 +127,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get todayOrders => 'Vehicle Queue Order';
+  String get todayOrders => 'Vehicle Queue';
 
   @override
   String get today => 'Today';
@@ -169,16 +169,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get running => 'Running';
 
   @override
-  String get vehicleManagement => 'Today\'s Trips';
+  String get vehicleManagement => 'Daily Trips';
 
   @override
-  String get selectDate => 'Select date';
+  String get selectDate => 'Select Date';
 
   @override
-  String get noVehicles => 'No mixer trucks';
+  String get noVehicles => 'No tankers';
 
   @override
-  String get tripsOnDate => 'Trips on date';
+  String get tripsOnDate => 'Daily Trips';
 
   @override
   String get stopCountLabel => 'stops';
@@ -193,7 +193,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get attendanceOff => 'Off';
 
   @override
-  String get attendanceHalf => 'Half day';
+  String get attendanceHalf => 'Half-day';
 
   @override
   String get attendanceTotal => 'Total';
@@ -202,24 +202,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noAttendanceData => 'No attendance data';
 
   @override
-  String get shiftClose => 'Close Shift';
+  String get shiftClose => 'Shift Close';
 
   @override
-  String get shiftCloseConfirmTitle => 'Confirm Close Shift';
+  String get shiftCloseConfirmTitle => 'Confirm Shift Close';
 
   @override
   String get shiftCloseConfirmContent =>
-      'Are you sure you want to close today\'s shift? All pending orders will be canceled.';
+      'Are you sure you want to close shift? All pending orders will be canceled.';
 
   @override
   String get shiftCloseSuccess => 'Shift closed successfully';
 
   @override
-  String get shiftCloseFailed => 'Failed to close shift';
+  String get shiftCloseFailed => 'Shift close failed';
 
   @override
   String shiftPendingWarning(Object count) {
-    return '$count pending orders remaining';
+    return '$count pending orders';
   }
 
   @override
@@ -323,4 +323,133 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileTab => 'PROFILE';
+
+  @override
+  String get vietnamese => 'Tiếng Việt (VN)';
+
+  @override
+  String get english => 'English (EN)';
+
+  @override
+  String get mealShareError => 'Error sharing image!';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get mealTableTitle => 'MEAL ALLOWANCE RECORD';
+
+  @override
+  String get mealFromDate => 'From';
+
+  @override
+  String get mealToDate => 'to';
+
+  @override
+  String get mealSTT => 'No.';
+
+  @override
+  String get mealFullName => 'Full Name';
+
+  @override
+  String get mealTotal => 'Total';
+
+  @override
+  String get mealGrandTotal => 'Grand Total';
+
+  @override
+  String get mealUnit => 'meals';
+
+  @override
+  String get mealChecking => 'Checking...';
+
+  @override
+  String get mealCheckBtn => 'Check';
+
+  @override
+  String get mealCheckHint => 'Select date, slot then press Check';
+
+  @override
+  String get mealShareTooltip => 'Share Image';
+
+  @override
+  String get attendanceStats => 'Personnel Statistics';
+
+  @override
+  String get updating => 'UPDATING';
+
+  @override
+  String get totalPersonnel => 'TOTAL';
+
+  @override
+  String get allSystems => 'EMPLOYEES SYSTEM-WIDE';
+
+  @override
+  String get allPersonnel => 'All Personnel';
+
+  @override
+  String get workingStatus => 'WORKING';
+
+  @override
+  String get personnelWorking => 'Working Personnel';
+
+  @override
+  String get offStatus => 'OFF';
+
+  @override
+  String get absent => 'ABSENT';
+
+  @override
+  String get personnelOff => 'Off Personnel';
+
+  @override
+  String get halfDayStatus => 'HALF DAY';
+
+  @override
+  String get approved => 'APPROVED';
+
+  @override
+  String get personnelHalfDay => 'Half-day Personnel';
+
+  @override
+  String get groupList => 'Group List';
+
+  @override
+  String get viewAll => 'VIEW ALL';
+
+  @override
+  String get performance => 'PERFORMANCE';
+
+  @override
+  String get all => 'All';
+
+  @override
+  String get exportExcel => 'Export Excel';
+
+  @override
+  String get openGoogleSheet => 'Open Google Sheet';
+
+  @override
+  String get personnelList => 'Personnel List';
+
+  @override
+  String get monthLabel => 'Month';
+
+  @override
+  String get stt => 'No.';
+
+  @override
+  String get fullName => 'Full Name';
+
+  @override
+  String get department => 'Dept.';
+
+  @override
+  String get status => 'Status';
+
+  @override
+  String get activeStations => 'Active Stations';
+
+  @override
+  String get live => 'Live';
 }

@@ -68,7 +68,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               SizedBox(height: AppSpacing.mdH),
               ListTile(
-                title: const Text('Tieng Viet (VN)'),
+                title: Text(l10n.vietnamese),
                 trailing: languageProvider.locale.languageCode == 'vi'
                     ? Icon(Icons.check_circle,
                         color: Theme.of(context).colorScheme.tertiary)
@@ -79,7 +79,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 },
               ),
               ListTile(
-                title: const Text('English (EN)'),
+                title: Text(l10n.english),
                 trailing: languageProvider.locale.languageCode == 'en'
                     ? Icon(Icons.check_circle,
                         color: Theme.of(context).colorScheme.tertiary)
@@ -98,19 +98,20 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _handleLogout() async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Đăng xuất'),
-        content: const Text('Bạn có chắc chắn muốn đăng xuất không?'),
+        title: Text(l10n.confirmLogoutTitle),
+        content: Text(l10n.confirmLogoutContent),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Hủy'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Đăng xuất'),
+            child: Text(l10n.logOut),
           ),
         ],
       ),
@@ -150,7 +151,7 @@ class _ProfilePageState extends State<ProfilePage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Cài đặt ứng dụng',
+                l10n.appSettings,
                 style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: AppSpacing.mdH),
@@ -165,7 +166,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               ListTile(
                 leading: Icon(Icons.dark_mode_rounded, color: colorScheme.secondary),
-                title: const Text('Giao diện (Sáng/Tối)'),
+                title: Text(l10n.themeMode),
                 trailing: const ThemeToggleButton(),
               ),
               SizedBox(height: 12.h),
@@ -239,14 +240,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                   SizedBox(height: 16.h),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildInfoBadge(l10n.role, _userRole.toUpperCase(), theme, colorScheme),
-                      SizedBox(width: 12.w),
-                      _buildInfoBadge(l10n.region, l10n.defaultRegion, theme, colorScheme),
-                    ],
-                  ),
                 ],
               ),
             ),
@@ -368,7 +361,7 @@ class _ProfilePageState extends State<ProfilePage> {
             // Version text
             Center(
               child: Text(
-                'VERSION 1.0.0 • VEHICLE MANAGEMENT',
+                'VERSION 1.0.0 • NGUYÊN ANH',
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: colorScheme.outline,
                   letterSpacing: 1.5,
@@ -383,22 +376,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildInfoBadge(String label, String value, ThemeData theme, ColorScheme colorScheme) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(20.r),
-      ),
-      child: Column(
-        children: [
-          Text(label, style: TextStyle(fontSize: 10.sp, color: colorScheme.outline, fontWeight: FontWeight.w600)),
-          SizedBox(height: 2.h),
-          Text(value, style: TextStyle(fontSize: 14.sp, color: colorScheme.primary, fontWeight: FontWeight.w700)),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildListCard(BuildContext context, ThemeData theme, ColorScheme colorScheme, {required IconData icon, required Color iconColor, required String title, required String subtitle, required VoidCallback onTap}) {
     return InkWell(

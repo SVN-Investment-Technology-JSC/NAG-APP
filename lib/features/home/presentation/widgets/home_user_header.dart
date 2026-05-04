@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:nguyenanh/l10n/app_localizations.dart';
 
 import 'package:nguyenanh/core/theme/app_colors.dart';
 import 'package:nguyenanh/core/theme/app_spacing.dart';
@@ -22,6 +23,7 @@ class HomeUserHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.smH),
@@ -40,7 +42,7 @@ class HomeUserHeader extends StatelessWidget {
           SizedBox(height: AppSpacing.smH),
           Row(
             children: [
-              _StatusChip(label: 'Cap nhat', isConnected: isSocketConnected),
+              _StatusChip(label: l10n.live.toUpperCase(), isConnected: isSocketConnected),
             ],
           ),
         ],

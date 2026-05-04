@@ -184,6 +184,7 @@ class _MealCheckPageState extends State<MealCheckPage> {
 
   Future<void> _shareImage() async {
     if (!_checked || _personnel.isEmpty) return;
+    final l10n = AppLocalizations.of(context)!;
 
     try {
       final activeSlots = mealSlots.where((s) => _selectedSlots.contains(s.key)).toList();
@@ -271,13 +272,13 @@ class _MealCheckPageState extends State<MealCheckPage> {
 
       final titleBg = Paint()..color = const Color(0xFF2563EB);
       canvas.drawRect(Rect.fromLTWH(0, y, tableWidth, titleH), titleBg);
-      drawText(canvas, 'BANG CHAM TIEN AN QUA BUA', 0, y, tableWidth, titleH,
+      drawText(canvas, l10n.mealTableTitle, 0, y, tableWidth, titleH,
           fontSize: 18, bold: true, color: const Color(0xFFFFFFFF));
       y += titleH;
 
       final dateBg = Paint()..color = const Color(0xFFEFF6FF);
       canvas.drawRect(Rect.fromLTWH(0, y, tableWidth, dateH), dateBg);
-      final dateStr = 'Tu ngay ${DateFormat('dd/MM/yyyy').format(_fromDate)} - ${DateFormat('dd/MM/yyyy').format(_toDate)}';
+      final dateStr = '${l10n.mealFromDate} ${DateFormat('dd/MM/yyyy').format(_fromDate)} - ${l10n.mealToDate} ${DateFormat('dd/MM/yyyy').format(_toDate)}';
       drawText(canvas, dateStr, 0, y, tableWidth, dateH,
           fontSize: 13, bold: true, color: const Color(0xFF1E40AF));
       y += dateH;
@@ -285,9 +286,9 @@ class _MealCheckPageState extends State<MealCheckPage> {
       final hdrBg = Paint()..color = const Color(0xFFF1F5F9);
       canvas.drawRect(Rect.fromLTWH(0, y, tableWidth, headerH), hdrBg);
       canvas.drawRect(Rect.fromLTWH(0, y, colSTT, headerH), boldBorderPaint);
-      drawText(canvas, 'STT', 0, y, colSTT, headerH, fontSize: 11, bold: true);
+      drawText(canvas, l10n.mealSTT, 0, y, colSTT, headerH, fontSize: 11, bold: true);
       canvas.drawRect(Rect.fromLTWH(colSTT, y, colName, headerH), boldBorderPaint);
-      drawText(canvas, 'Ho va ten', colSTT, y, colName, headerH, fontSize: 11, bold: true);
+      drawText(canvas, l10n.mealFullName, colSTT, y, colName, headerH, fontSize: 11, bold: true);
 
       double dx = colSTT + colName;
       for (final day in days) {
@@ -296,7 +297,7 @@ class _MealCheckPageState extends State<MealCheckPage> {
         dx += dayWidth;
       }
       canvas.drawRect(Rect.fromLTWH(dx, y, colTotal, headerH), boldBorderPaint);
-      drawText(canvas, 'Tong', dx, y, colTotal, headerH, fontSize: 11, bold: true);
+      drawText(canvas, l10n.mealTotal, dx, y, colTotal, headerH, fontSize: 11, bold: true);
       y += headerH;
 
       canvas.drawRect(Rect.fromLTWH(0, y, colSTT, rowH), borderPaint);
@@ -375,7 +376,7 @@ class _MealCheckPageState extends State<MealCheckPage> {
       final totalBg = Paint()..color = const Color(0xFFECFDF5);
       canvas.drawRect(Rect.fromLTWH(0, y, tableWidth, totalRowH), totalBg);
       canvas.drawRect(Rect.fromLTWH(0, y, tableWidth, totalRowH), boldBorderPaint);
-      drawText(canvas, 'Tong cong: $grandTotal bua', 0, y, tableWidth, totalRowH,
+      drawText(canvas, '${l10n.mealGrandTotal}: $grandTotal ${l10n.mealUnit}', 0, y, tableWidth, totalRowH,
           fontSize: 14, bold: true, color: const Color(0xFF065F46));
       y += totalRowH;
 
@@ -395,7 +396,7 @@ class _MealCheckPageState extends State<MealCheckPage> {
       debugPrint('Share image error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Loi chia se anh!')),
+          SnackBar(content: Text(l10n.mealShareError)),
         );
       }
     }
@@ -436,7 +437,7 @@ class _MealCheckPageState extends State<MealCheckPage> {
           IconButton(
             icon: Icon(Icons.share_rounded, color: colorScheme.primary),
             onPressed: () => _shareImage(),
-            tooltip: 'Chia sẻ ảnh',
+            tooltip: l10n.mealShareTooltip,
           ),
           SizedBox(width: 8.w),
         ],
@@ -532,7 +533,7 @@ class _MealCheckPageState extends State<MealCheckPage> {
                       color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3)),
                   SizedBox(height: 12.h),
                   Text(
-                    'Chọn ngày, buổi rồi bấm Kiểm tra',
+                    l10n.mealCheckHint,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                     ),
@@ -662,7 +663,7 @@ class _MealCheckPageState extends State<MealCheckPage> {
                     ),
                   )
                 : const Icon(Icons.search_rounded),
-            label: Text(_isLoading ? 'Đang kiểm tra...' : 'Kiểm tra'),
+            label: Text(_isLoading ? l10n.mealChecking : l10n.mealCheckBtn),
             style: FilledButton.styleFrom(
               padding: EdgeInsets.symmetric(vertical: 12.h),
             ),

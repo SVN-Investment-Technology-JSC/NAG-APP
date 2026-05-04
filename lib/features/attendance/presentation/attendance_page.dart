@@ -58,6 +58,7 @@ class _AttendancePageState extends State<AttendancePage> {
   }
 
   Future<void> _exportExcel() async {
+    final l10n = AppLocalizations.of(context)!;
     final data = _data;
     if (data == null || data.results.isEmpty) return;
 
@@ -66,7 +67,7 @@ class _AttendancePageState extends State<AttendancePage> {
     final sheet = excel[sheetName];
     excel.delete('Sheet1');
 
-    final headers = ['STT', 'Ho ten', 'Bo phan', 'Trang thai'];
+    final headers = [l10n.stt, l10n.fullName, l10n.department, l10n.status];
     final headerStyle = CellStyle(
       bold: true,
       horizontalAlign: HorizontalAlign.Center,
@@ -114,11 +115,11 @@ class _AttendancePageState extends State<AttendancePage> {
 
         String statusText;
         if (r.isWorking) {
-          statusText = 'Di lam';
+          statusText = l10n.attendanceWorking;
         } else if (r.isHalf) {
-          statusText = 'Nua ngay';
+          statusText = l10n.attendanceHalf;
         } else {
-          statusText = 'Nghi';
+          statusText = l10n.attendanceOff;
         }
 
         final values = [
@@ -187,12 +188,12 @@ class _AttendancePageState extends State<AttendancePage> {
                   ? colorScheme.outlineVariant
                   : colorScheme.primary,
             ),
-            tooltip: 'Xuất Excel',
+            tooltip: l10n.exportExcel,
           ),
           IconButton(
             onPressed: _openSheet,
             icon: Icon(Icons.open_in_new_rounded, color: colorScheme.primary),
-            tooltip: 'Mở Google Sheet',
+            tooltip: l10n.openGoogleSheet,
           ),
           SizedBox(width: 4.w),
         ],
@@ -222,7 +223,7 @@ class _AttendancePageState extends State<AttendancePage> {
             FilledButton.icon(
               onPressed: _loadData,
               icon: const Icon(Icons.refresh),
-              label: const Text('Thử lại'),
+              label: Text(l10n.retry),
             ),
           ],
         ),
@@ -266,7 +267,7 @@ class _AttendancePageState extends State<AttendancePage> {
                   title: group.ten,
                   icon: _groupIcons[group.key] ?? Icons.group_rounded,
                   members: members,
-                  initialFilter: 'Tất cả',
+                  initialFilter: l10n.all,
                   theme: theme,
                   colorScheme: colorScheme,
                 ),
@@ -295,7 +296,7 @@ class _AttendancePageState extends State<AttendancePage> {
     final half = s.half;
 
     final now = DateTime.now();
-    final dateStr = 'Hôm nay, ${now.day.toString().padLeft(2, '0')} Tháng ${now.month}';
+    final dateStr = '${l10n.today}, ${now.day.toString().padLeft(2, '0')} ${l10n.monthLabel} ${now.month}';
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -315,7 +316,7 @@ class _AttendancePageState extends State<AttendancePage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Thống kê nhân sự', // or l10n string
+                l10n.attendanceStats,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w900,
                   color: colorScheme.onSurface,
@@ -332,7 +333,7 @@ class _AttendancePageState extends State<AttendancePage> {
                     Container(width: 6.w, height: 6.w, decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle)),
                     SizedBox(width: 6.w),
                     Text(
-                      'ĐANG CẬP NHẬT',
+                      l10n.updating,
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: const Color(0xFF10B981),
                         fontWeight: FontWeight.w800,
@@ -350,13 +351,13 @@ class _AttendancePageState extends State<AttendancePage> {
             children: [
               Expanded(
                 child: _statCard1(
-                  title: 'TỔNG SỐ',
+                  title: l10n.totalPersonnel,
                   value: '$total',
-                  sub: 'NHÂN VIÊN TOÀN HỆ THỐNG',
+                  sub: l10n.allSystems,
                   icon: Icons.groups_rounded,
                   onTap: () => _showMembersBottomSheet(
                     context: context,
-                    title: 'Tất cả nhân sự',
+                    title: l10n.allPersonnel,
                     icon: Icons.groups_rounded,
                     members: allMembers,
                     initialFilter: 'Tất cả',
@@ -370,13 +371,13 @@ class _AttendancePageState extends State<AttendancePage> {
               SizedBox(width: 12.w),
               Expanded(
                 child: _statCard2(
-                  title: 'ĐI LÀM',
+                  title: l10n.workingStatus,
                   value: '$working',
                   progress: total > 0 ? working / total : 0,
                   icon: Icons.how_to_reg_rounded,
                   onTap: () => _showMembersBottomSheet(
                     context: context,
-                    title: 'Nhân sự đi làm',
+                    title: l10n.personnelWorking,
                     icon: Icons.how_to_reg_rounded,
                     members: allMembers,
                     initialFilter: 'Đi làm',
@@ -394,14 +395,14 @@ class _AttendancePageState extends State<AttendancePage> {
             children: [
               Expanded(
                 child: _statCard3(
-                  title: 'NGHỈ',
+                  title: l10n.offStatus,
                   value: '${off < 10 ? '0$off' : off}',
                   sub: '${total > 0 ? (off / total * 100).toStringAsFixed(1) : 0}% VẮNG MẶT',
                   icon: Icons.person_off_rounded,
                   color: colorScheme.error,
                   onTap: () => _showMembersBottomSheet(
                     context: context,
-                    title: 'Nhân sự nghỉ',
+                    title: l10n.personnelOff,
                     icon: Icons.person_off_rounded,
                     members: allMembers,
                     initialFilter: 'Nghỉ',
@@ -415,14 +416,14 @@ class _AttendancePageState extends State<AttendancePage> {
               SizedBox(width: 12.w),
               Expanded(
                 child: _statCard3(
-                  title: 'NỬA NGÀY',
+                  title: l10n.halfDayStatus,
                   value: '${half < 10 ? '0$half' : half}',
                   sub: 'ĐÃ PHÊ DUYỆT',
                   icon: Icons.wb_sunny_rounded,
                   color: const Color(0xFF10B981),
                   onTap: () => _showMembersBottomSheet(
                     context: context,
-                    title: 'Nhân sự nghỉ nửa ngày',
+                    title: l10n.personnelHalfDay,
                     icon: Icons.wb_sunny_rounded,
                     members: allMembers,
                     initialFilter: 'Nửa ngày',
@@ -440,7 +441,7 @@ class _AttendancePageState extends State<AttendancePage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Danh sách tổ nhóm',
+                l10n.groupList,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                   color: colorScheme.onSurface,
@@ -458,7 +459,7 @@ class _AttendancePageState extends State<AttendancePage> {
                   colorScheme: colorScheme,
                 ),
                 child: Text(
-                  'XEM TẤT CẢ',
+                  l10n.viewAll,
                   style: theme.textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: colorScheme.primary,
@@ -595,6 +596,7 @@ class _AttendancePageState extends State<AttendancePage> {
     required ThemeData theme,
     required ColorScheme colorScheme,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     final color = _groupColors[group.key] ?? colorScheme.primary;
     final icon = _groupIcons[group.key] ?? Icons.group_rounded;
     final performance = total > 0 ? (working / total * 100).round() : 0;
@@ -665,7 +667,7 @@ class _AttendancePageState extends State<AttendancePage> {
                 ),
               ),
               Text(
-                'HIỆU SUẤT',
+                l10n.performance,
                 style: theme.textTheme.labelSmall?.copyWith(
                   fontSize: 8.sp,
                   fontWeight: FontWeight.w700,
@@ -694,6 +696,7 @@ class _AttendancePageState extends State<AttendancePage> {
     required ThemeData theme,
     required ColorScheme colorScheme,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -703,7 +706,7 @@ class _AttendancePageState extends State<AttendancePage> {
       ),
       builder: (context) {
         String selectedFilter = initialFilter;
-        final filters = ['Tất cả', 'Đi làm', 'Nửa ngày', 'Nghỉ'];
+        final filters = [l10n.all, l10n.attendanceWorking, l10n.attendanceHalf, l10n.attendanceOff];
 
         Color _getFilterColor(String filter) {
           switch (filter) {
@@ -764,7 +767,7 @@ class _AttendancePageState extends State<AttendancePage> {
                                 style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
                               ),
                               Text(
-                                'Danh sách nhân sự',
+                                l10n.personnelList,
                                 style: theme.textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant),
                               ),
                             ],
