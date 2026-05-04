@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 
 import 'package:nguyenanh/core/theme/app_spacing.dart';
@@ -108,11 +109,11 @@ class _HomeMapSectionState extends State<HomeMapSection> {
     return widget.vtrackingVehicles.map((v) {
       Color dotColor;
       if (v.status == 'run') {
-        dotColor = const Color(0xFF10B981);
+        dotColor = const Color(0xFFFF1744); // Vibrant Red Accent
       } else if (v.status == 'park') {
-        dotColor = const Color(0xFFF59E0B);
+        dotColor = const Color(0xFFFFEA00); // Vibrant Yellow
       } else {
-        dotColor = colorScheme.error;
+        dotColor = const Color(0xFF9E9E9E); // Grey for offline
       }
 
       return Marker(
@@ -162,52 +163,26 @@ class _HomeMapSectionState extends State<HomeMapSection> {
                 ),
               ),
               SizedBox(height: 2.h),
-              // Top-down Car Vector
+              // Car Icon (SVG)
               Transform.rotate(
                 angle: v.direction * (3.1415926535897932 / 180),
                 child: Container(
-                  width: 14,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: dotColor,
-                    borderRadius: BorderRadius.circular(4.r),
-                    border: Border.all(color: colorScheme.surface, width: 1.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colorScheme.shadow.withValues(alpha: 0.3),
-                        blurRadius: 2,
+                  child: ColorFiltered(
+                    colorFilter: ColorFilter.mode(dotColor, BlendMode.modulate),
+                    child: ColorFiltered(
+                      colorFilter: const ColorFilter.matrix([
+                        0.33, 0.59, 0.11, 0, 30,
+                        0.33, 0.59, 0.11, 0, 30,
+                        0.33, 0.59, 0.11, 0, 30,
+                        0, 0, 0, 1, 0,
+                      ]),
+                      child: SvgPicture.asset(
+                        'assets/images/car.svg',
+                        width: 24.w,
+                        height: 24.w,
+                        fit: BoxFit.contain,
                       ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Windshield
-                      Container(
-                        width: 10,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.6),
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(2.r),
-                            topRight: Radius.circular(2.r),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 2),
-                      // Rear window
-                      Container(
-                        width: 10,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.4),
-                          borderRadius: BorderRadius.only(
-                            bottomLeft: Radius.circular(1.r),
-                            bottomRight: Radius.circular(1.r),
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
