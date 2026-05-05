@@ -286,6 +286,7 @@ class _MapView extends StatelessWidget {
                   ? 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png'
                   : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
               subdomains: const ['a', 'b', 'c', 'd'],
+              retinaMode: RetinaMode.isHighDensity(context),
             ),
             CircleLayer(circles: circles),
             MarkerLayer(markers: markers),

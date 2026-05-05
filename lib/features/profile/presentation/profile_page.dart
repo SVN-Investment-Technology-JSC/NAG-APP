@@ -246,15 +246,20 @@ class _ProfilePageState extends State<ProfilePage> {
             SizedBox(height: 24.h),
 
             // Dashboard Button (Trang chủ)
-            _buildListCard(
-              context,
-              theme,
-              colorScheme,
-              icon: Icons.home_rounded,
-              iconColor: Colors.blue,
-              title: l10n.home,
-              subtitle: l10n.dashboardDesc,
-              onTap: widget.onNavigateHome,
+            Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: 800.w),
+                child: _buildListCard(
+                  context,
+                  theme,
+                  colorScheme,
+                  icon: Icons.home_rounded,
+                  iconColor: Colors.blue,
+                  title: l10n.home,
+                  subtitle: l10n.dashboardDesc,
+                  onTap: widget.onNavigateHome,
+                ),
+              ),
             ),
             SizedBox(height: 16.h),
 
@@ -262,10 +267,10 @@ class _ProfilePageState extends State<ProfilePage> {
             GridView.count(
               physics: const NeverScrollableScrollPhysics(),
               shrinkWrap: true,
-              crossAxisCount: 2,
+              crossAxisCount: MediaQuery.of(context).size.width > 900 ? 4 : (MediaQuery.of(context).size.width > 600 ? 3 : 2),
               mainAxisSpacing: 16.h,
               crossAxisSpacing: 16.w,
-              childAspectRatio: 1.1,
+              childAspectRatio: MediaQuery.of(context).size.width > 600 ? 1.3 : 1.1,
               children: [
                 _buildGridCard(
                   context,
@@ -339,21 +344,27 @@ class _ProfilePageState extends State<ProfilePage> {
             SizedBox(height: 24.h),
 
             // Logout Button
-            OutlinedButton.icon(
-              onPressed: _handleLogout,
-              icon: Icon(Icons.logout_rounded, color: colorScheme.error),
-              label: Text(
-                l10n.logOut,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: colorScheme.error,
-                  fontWeight: FontWeight.w700,
+            Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: 400.w),
+                child: OutlinedButton.icon(
+                  onPressed: _handleLogout,
+                  icon: Icon(Icons.logout_rounded, color: colorScheme.error),
+                  label: Text(
+                    l10n.logOut,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: colorScheme.error,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                    side: BorderSide(color: colorScheme.error.withOpacity(0.3)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+                    backgroundColor: colorScheme.error.withOpacity(0.1),
+                    minimumSize: const Size(double.infinity, 0),
+                  ),
                 ),
-              ),
-              style: OutlinedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 14.h),
-                side: BorderSide(color: colorScheme.error.withOpacity(0.3)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-                backgroundColor: colorScheme.error.withOpacity(0.1),
               ),
             ),
             SizedBox(height: 32.h),

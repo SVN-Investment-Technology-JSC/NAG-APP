@@ -830,6 +830,7 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
       child: Scaffold(
         backgroundColor: colorScheme.surface,
         appBar: AppBar(
+          centerTitle: false,
           title: Text(
             l10n.tripManagement,
             style: theme.textTheme.titleLarge?.copyWith(
@@ -1032,108 +1033,113 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
     final tripCount = _ordersForVehicle(vehicle.vehicleId).length;
     final iconColor = colorScheme.primary;
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 8.h),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12.r),
-          onTap: () => _showVehiclePopup(vehicle),
-          child: Row(
-            children: [
-              // Accent bar like HomeOrderItem
-              Container(
-                width: 4.w,
-                height: 64.h,
-                decoration: BoxDecoration(
-                  color: iconColor,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(12.r),
-                    bottomLeft: Radius.circular(12.r),
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 800.w),
+        child: Container(
+          margin: EdgeInsets.only(bottom: 8.h),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12.r),
+              onTap: () => _showVehiclePopup(vehicle),
+              child: Row(
+                children: [
+                  // Accent bar like HomeOrderItem
+                  Container(
+                    width: 4.w,
+                    height: 64.h,
+                    decoration: BoxDecoration(
+                      color: iconColor,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(12.r),
+                        bottomLeft: Radius.circular(12.r),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-                  child: Row(
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                      child: Row(
                         children: [
-                          Row(
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    vehicle.vehicleName.isNotEmpty
+                                        ? vehicle.vehicleName
+                                        : '#${index + 1}',
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.w900,
+                                      color: iconColor,
+                                      fontSize: 14.sp,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 4.h),
                               Text(
-                                vehicle.vehicleName.isNotEmpty
-                                    ? vehicle.vehicleName
-                                    : '#${index + 1}',
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  color: iconColor,
-                                  fontSize: 14.sp,
+                                vehicle.vehicleLicensePlate,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  fontWeight: FontWeight.w800,
                                 ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            vehicle.vehicleLicensePlate,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w800,
+                          const Spacer(),
+                          if (tripCount > 0)
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                              decoration: BoxDecoration(
+                                color: iconColor.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '$tripCount',
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      fontWeight: FontWeight.w900,
+                                      color: iconColor,
+                                    ),
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  Text(
+                                    'chuyến',
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: iconColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else
+                            Text(
+                              'Chưa có chuyến',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: colorScheme.outline,
+                                fontStyle: FontStyle.italic,
+                              ),
                             ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          SizedBox(width: 8.w),
+                          Icon(Icons.chevron_right_rounded,
+                              size: 20.sp, color: colorScheme.outlineVariant),
                         ],
                       ),
-                      const Spacer(),
-                      if (tripCount > 0)
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                          decoration: BoxDecoration(
-                            color: iconColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                '$tripCount',
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  color: iconColor,
-                                ),
-                              ),
-                              SizedBox(width: 4.w),
-                              Text(
-                                'chuyến',
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: iconColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      else
-                        Text(
-                          'Chưa có chuyến',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: colorScheme.outline,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      SizedBox(width: 8.w),
-                      Icon(Icons.chevron_right_rounded,
-                          size: 20.sp, color: colorScheme.outlineVariant),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

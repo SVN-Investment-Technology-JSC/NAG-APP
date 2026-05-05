@@ -175,6 +175,7 @@ class _AttendancePageState extends State<AttendancePage> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
+        centerTitle: false,
         title: Text(
           l10n.attendance,
           style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -347,94 +348,103 @@ class _AttendancePageState extends State<AttendancePage> {
           ),
           SizedBox(height: 16.h),
           // 2x2 Grid
-          Row(
-            children: [
-              Expanded(
-                child: _statCard1(
-                  title: l10n.totalPersonnel,
-                  value: '$total',
-                  sub: l10n.allSystems,
-                  icon: Icons.groups_rounded,
-                  onTap: () => _showMembersBottomSheet(
-                    context: context,
-                    title: l10n.allPersonnel,
-                    icon: Icons.groups_rounded,
-                    members: allMembers,
-                    initialFilter: 'Tất cả',
-                    theme: theme,
-                    colorScheme: colorScheme,
+          Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 800.w),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _statCard1(
+                          title: l10n.totalPersonnel,
+                          value: '$total',
+                          sub: l10n.allSystems,
+                          icon: Icons.groups_rounded,
+                          onTap: () => _showMembersBottomSheet(
+                            context: context,
+                            title: l10n.allPersonnel,
+                            icon: Icons.groups_rounded,
+                            members: allMembers,
+                            initialFilter: 'Tất cả',
+                            theme: theme,
+                            colorScheme: colorScheme,
+                          ),
+                          theme: theme,
+                          colorScheme: colorScheme,
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: _statCard2(
+                          title: l10n.workingStatus,
+                          value: '$working',
+                          progress: total > 0 ? working / total : 0,
+                          icon: Icons.how_to_reg_rounded,
+                          onTap: () => _showMembersBottomSheet(
+                            context: context,
+                            title: l10n.personnelWorking,
+                            icon: Icons.how_to_reg_rounded,
+                            members: allMembers,
+                            initialFilter: 'Đi làm',
+                            theme: theme,
+                            colorScheme: colorScheme,
+                          ),
+                          theme: theme,
+                          colorScheme: colorScheme,
+                        ),
+                      ),
+                    ],
                   ),
-                  theme: theme,
-                  colorScheme: colorScheme,
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: _statCard2(
-                  title: l10n.workingStatus,
-                  value: '$working',
-                  progress: total > 0 ? working / total : 0,
-                  icon: Icons.how_to_reg_rounded,
-                  onTap: () => _showMembersBottomSheet(
-                    context: context,
-                    title: l10n.personnelWorking,
-                    icon: Icons.how_to_reg_rounded,
-                    members: allMembers,
-                    initialFilter: 'Đi làm',
-                    theme: theme,
-                    colorScheme: colorScheme,
+                  SizedBox(height: 12.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _statCard3(
+                          title: l10n.offStatus,
+                          value: '${off < 10 ? '0$off' : off}',
+                          sub: '${total > 0 ? (off / total * 100).toStringAsFixed(1) : 0}% VẮNG MẶT',
+                          icon: Icons.person_off_rounded,
+                          color: colorScheme.error,
+                          onTap: () => _showMembersBottomSheet(
+                            context: context,
+                            title: l10n.personnelOff,
+                            icon: Icons.person_off_rounded,
+                            members: allMembers,
+                            initialFilter: 'Nghỉ',
+                            theme: theme,
+                            colorScheme: colorScheme,
+                          ),
+                          theme: theme,
+                          colorScheme: colorScheme,
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: _statCard3(
+                          title: l10n.halfDayStatus,
+                          value: '${half < 10 ? '0$half' : half}',
+                          sub: 'ĐÃ PHÊ DUYỆT',
+                          icon: Icons.wb_sunny_rounded,
+                          color: const Color(0xFF10B981),
+                          onTap: () => _showMembersBottomSheet(
+                            context: context,
+                            title: l10n.personnelHalfDay,
+                            icon: Icons.wb_sunny_rounded,
+                            members: allMembers,
+                            initialFilter: 'Nửa ngày',
+                            theme: theme,
+                            colorScheme: colorScheme,
+                          ),
+                          theme: theme,
+                          colorScheme: colorScheme,
+                        ),
+                      ),
+                    ],
                   ),
-                  theme: theme,
-                  colorScheme: colorScheme,
-                ),
+                ],
               ),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          Row(
-            children: [
-              Expanded(
-                child: _statCard3(
-                  title: l10n.offStatus,
-                  value: '${off < 10 ? '0$off' : off}',
-                  sub: '${total > 0 ? (off / total * 100).toStringAsFixed(1) : 0}% VẮNG MẶT',
-                  icon: Icons.person_off_rounded,
-                  color: colorScheme.error,
-                  onTap: () => _showMembersBottomSheet(
-                    context: context,
-                    title: l10n.personnelOff,
-                    icon: Icons.person_off_rounded,
-                    members: allMembers,
-                    initialFilter: 'Nghỉ',
-                    theme: theme,
-                    colorScheme: colorScheme,
-                  ),
-                  theme: theme,
-                  colorScheme: colorScheme,
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: _statCard3(
-                  title: l10n.halfDayStatus,
-                  value: '${half < 10 ? '0$half' : half}',
-                  sub: 'ĐÃ PHÊ DUYỆT',
-                  icon: Icons.wb_sunny_rounded,
-                  color: const Color(0xFF10B981),
-                  onTap: () => _showMembersBottomSheet(
-                    context: context,
-                    title: l10n.personnelHalfDay,
-                    icon: Icons.wb_sunny_rounded,
-                    members: allMembers,
-                    initialFilter: 'Nửa ngày',
-                    theme: theme,
-                    colorScheme: colorScheme,
-                  ),
-                  theme: theme,
-                  colorScheme: colorScheme,
-                ),
-              ),
-            ],
+            ),
           ),
           SizedBox(height: 24.h),
           Row(
@@ -601,88 +611,93 @@ class _AttendancePageState extends State<AttendancePage> {
     final icon = _groupIcons[group.key] ?? Icons.group_rounded;
     final performance = total > 0 ? (working / total * 100).round() : 0;
 
-    return Container(
-      margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20.r),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48.w,
-            height: 48.w,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, size: 24.sp, color: color),
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 800.w),
+        child: Container(
+          margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 12.h),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(20.r),
           ),
-          SizedBox(width: 16.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  group.ten,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+          child: Row(
+            children: [
+              Container(
+                width: 48.w,
+                height: 48.w,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
                 ),
-                SizedBox(height: 4.h),
-                Row(
+                child: Icon(icon, size: 24.sp, color: color),
+              ),
+              SizedBox(width: 16.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$total Nhân viên',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 6.w),
-                      child: Icon(Icons.circle, size: 4.sp, color: colorScheme.outlineVariant),
-                    ),
-                    Text(
-                      '$working Đang làm',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: const Color(0xFF10B981),
+                      group.ten,
+                      style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
                     ),
+                    SizedBox(height: 4.h),
+                    Row(
+                      children: [
+                        Text(
+                          '$total Nhân viên',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 6.w),
+                          child: Icon(Icons.circle, size: 4.sp, color: colorScheme.outlineVariant),
+                        ),
+                        Text(
+                          '$working Đang làm',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: const Color(0xFF10B981),
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '$performance%',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: colorScheme.onSurface,
-                ),
               ),
-              Text(
-                l10n.performance,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  fontSize: 8.sp,
-                  fontWeight: FontWeight.w700,
-                  color: colorScheme.onSurfaceVariant,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '$performance%',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  Text(
+                    l10n.performance,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontSize: 8.sp,
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(width: 12.w),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: colorScheme.outlineVariant,
+                size: 20.sp,
               ),
             ],
           ),
-          SizedBox(width: 12.w),
-          Icon(
-            Icons.chevron_right_rounded,
-            color: colorScheme.outlineVariant,
-            size: 20.sp,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -870,87 +885,92 @@ class _AttendancePageState extends State<AttendancePage> {
       statusIcon = Icons.cancel_rounded;
     }
 
-    return Container(
-      margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 8.h),
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(14.r),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              width: 5.w,
-              color: statusColor,
-            ),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            record.hoTen,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: colorScheme.onSurface,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (record.boPhan.isNotEmpty) ...[
-                            SizedBox(height: 4.h),
-                            Text(
-                              record.boPhan,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(100.r),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(statusIcon, size: 14.sp, color: statusColor),
-                          SizedBox(width: 4.w),
-                          Text(
-                            statusLabel,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: statusColor,
-                              letterSpacing: 0.2,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 600.w),
+        child: Container(
+          margin: EdgeInsets.fromLTRB(16.w, 0, 16.w, 8.h),
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(14.r),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.shadow.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
+            ],
+          ),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  width: 5.w,
+                  color: statusColor,
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                record.hoTen,
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: colorScheme.onSurface,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (record.boPhan.isNotEmpty) ...[
+                                SizedBox(height: 4.h),
+                                Text(
+                                  record.boPhan,
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                          decoration: BoxDecoration(
+                            color: statusColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(100.r),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(statusIcon, size: 14.sp, color: statusColor),
+                              SizedBox(width: 4.w),
+                              Text(
+                                statusLabel,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: statusColor,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

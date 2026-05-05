@@ -1,7 +1,12 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:nguyenanh/features/vehicle/data/services/vehicle_service.dart';
+import 'package:nguyenanh/features/home/presentation/widgets/end_of_day_modal.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:latlong2/latlong.dart' hide Path;
+import 'package:intl/intl.dart';
 
 import 'package:nguyenanh/core/l10n/language_provider.dart';
 import 'package:nguyenanh/core/network/notification_socket_service.dart';
@@ -22,10 +27,12 @@ import 'package:nguyenanh/l10n/app_localizations.dart';
 
 class HomePage extends StatefulWidget {
   final List<OrderModel> orders;
+  final List<OrderModel> pendingOrders;
   final List<OrderModel> collectingOrders;
   final List<Station> stations;
   final List<VtrackingVehicle> vtrackingVehicles;
   final List<VehicleModel> vehicles;
+  final VehicleService vehicleService;
   final SocketService socketService;
   final NotificationSocketService notificationService;
   final bool isLoading;
@@ -35,10 +42,12 @@ class HomePage extends StatefulWidget {
   const HomePage({
     super.key,
     required this.orders,
+    required this.pendingOrders,
     required this.collectingOrders,
     required this.stations,
     required this.vtrackingVehicles,
     required this.vehicles,
+    required this.vehicleService,
     required this.socketService,
     required this.notificationService,
     required this.isLoading,
@@ -53,6 +62,28 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String _userFullName = '';
   String _userRole = '';
+  bool _showYardEntryTime = true;
+  final ScrollController _yardScrollController = ScrollController();
+
+  double _haversineDistance(double lat1, double lon1, double lat2, double lon2) {
+    const double r = 6371000; // Earth radius in meters
+    double toRad(double deg) => deg * pi / 180;
+    
+    final dLat = toRad(lat2 - lat1);
+    final dLon = toRad(lon2 - lon1);
+    
+    final a = (sin(dLat / 2) * sin(dLat / 2)) +
+              cos(toRad(lat1)) * cos(toRad(lat2)) * 
+              (sin(dLon / 2) * sin(dLon / 2));
+    
+    return r * 2 * atan2(sqrt(a), sqrt(1 - a));
+  }
+
+  @override
+  void dispose() {
+    _yardScrollController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -81,9 +112,80 @@ class _HomePageState extends State<HomePage> {
   List<OrderModel> get _collectingOrders => widget.collectingOrders;
 
   List<OrderModel> get _sortedOrders {
-    final sorted = List<OrderModel>.from(widget.orders)
+    final sorted = List<OrderModel>.from(widget.pendingOrders)
       ..sort((a, b) => a.orderNumber.compareTo(b.orderNumber));
     return sorted;
+  }
+
+  List<Map<String, dynamic>> get _readyVehicles {
+    // 1. Get the geofence station (Prefer explicit GPS fields first, like React find())
+    var geofenceStation = widget.stations.where(
+      (s) => s.stationGpsLatitude != null && s.stationGpsLongitude != null,
+    ).firstOrNull;
+    
+    // Fallback to the first station if none found with explicit GPS fields
+    geofenceStation ??= widget.stations.firstOrNull;
+    
+    if (geofenceStation == null) return [];
+    final station = geofenceStation;
+    final stationLatLng = LatLng(station.getLat!, station.getLng!);
+
+    // 2. Filter and compute distances
+    final readyList = widget.vtrackingVehicles.where((v) {
+      if (!v.hasPosition) return false;
+      // In React it filters by name starting with 'X'
+      if (!v.vehicleName.toUpperCase().startsWith('X')) return false;
+
+      final distance = _haversineDistance(stationLatLng.latitude, stationLatLng.longitude, v.latitude, v.longitude);
+      
+      // In range check (using the geofence radius from station model)
+      return distance <= station.stationGpsGeofencing;
+    }).map((v) {
+      final distance = _haversineDistance(stationLatLng.latitude, stationLatLng.longitude, v.latitude, v.longitude);
+
+      // 3. Find matching order for sorting and entry time
+      // We look into the pending orders to see when they were initialized
+      final match = widget.orders.where((o) {
+        final plate = o.vehicles?.vehicleLicensePlate.toUpperCase() ?? '';
+        final vName = v.vehicleName.toUpperCase();
+        final vPlate = v.licensePlate.toUpperCase();
+        return plate == vName || plate == vPlate;
+      }).toList();
+      
+      if (match.isNotEmpty) {
+        match.sort((a, b) => a.orderInitDatetime.compareTo(b.orderInitDatetime));
+      }
+      
+      final order = match.isNotEmpty ? match.first : null;
+
+      return {
+        'vehicle': v,
+        'distance': distance,
+        'order': order,
+      };
+    }).toList();
+
+    // 4. Sort the final list
+    readyList.sort((a, b) {
+      final orderA = a['order'] as OrderModel?;
+      final orderB = b['order'] as OrderModel?;
+
+      if (orderA != null && orderB != null) {
+        return orderA.orderInitDatetime.compareTo(orderB.orderInitDatetime);
+      }
+      if (orderA != null) return -1;
+      if (orderB != null) return 1;
+
+      // Secondary sort by distance
+      final distA = a['distance'] as num;
+      final distB = b['distance'] as num;
+      if (distA != distB) return distA.compareTo(distB);
+
+      // Tertiary sort by plate
+      return (a['vehicle'] as VtrackingVehicle).licensePlate.compareTo((b['vehicle'] as VtrackingVehicle).licensePlate);
+    });
+
+    return readyList;
   }
 
 
@@ -104,6 +206,38 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         automaticallyImplyLeading: false,
+        centerTitle: false,
+        actions: [
+          Padding(
+            padding: EdgeInsets.only(right: 16.w),
+            child: OutlinedButton.icon(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => EndOfDayModal(
+                    vehicleService: widget.vehicleService,
+                  ),
+                );
+              },
+              icon: Icon(Icons.save_outlined, size: 16.sp),
+              label: Text(
+                'CHECK LOG',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: colorScheme.primary,
+                side: BorderSide(color: colorScheme.primary.withValues(alpha: 0.2)),
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 0),
+                minimumSize: Size(0, 32.h),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+              ),
+            ),
+          ),
+        ],
       ),
       body: _buildBody(theme, colorScheme, l10n),
     );
@@ -129,7 +263,8 @@ class _HomePageState extends State<HomePage> {
                 collectingOrders: _collectingOrders,
               ),
             ),
-            SliverToBoxAdapter(child: SizedBox(height: 20.h)),
+            ..._buildReadyVehiclesSliver(theme, colorScheme, l10n),
+            SliverToBoxAdapter(child: SizedBox(height: 24.h)),
           ],
         ),
       );
@@ -142,6 +277,174 @@ class _HomePageState extends State<HomePage> {
       child: content,
     );
   }
+
+  List<Widget> _buildReadyVehiclesSliver(ThemeData theme, ColorScheme colorScheme, AppLocalizations l10n) {
+    final readyList = _readyVehicles;
+    if (readyList.isEmpty) return [];
+
+    return [
+      SliverToBoxAdapter(
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xsH),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 12.h),
+                child: Row(
+                  children: [
+                    Icon(Icons.local_shipping_rounded, size: 18.sp, color: colorScheme.primary),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Text(
+                        'XE TRONG BÃI',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        _showYardEntryTime ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+                        size: 18.sp,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      onPressed: () => setState(() => _showYardEntryTime = !_showYardEntryTime),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                    SizedBox(width: 12.w),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer.withValues(alpha: 0.7),
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
+                      child: Text(
+                        '${readyList.length} XE',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          color: colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: 380.h),
+                child: Scrollbar(
+                  controller: _yardScrollController,
+                  thumbVisibility: true,
+                  child: SingleChildScrollView(
+                    controller: _yardScrollController,
+                    padding: EdgeInsets.fromLTRB(12.w, 0, 12.w, 12.h),
+                    child: Column(
+                      children: readyList.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final item = entry.value;
+                    final v = item['vehicle'] as VtrackingVehicle;
+                    final distance = item['distance'] as num;
+                    final order = item['order'] as OrderModel?;
+                    
+                    String timeStr = '--:--:--';
+                    String dateStr = '--/--/----';
+                    if (order != null && order.orderInitDatetime.isNotEmpty) {
+                      try {
+                        final dt = DateTime.parse(order.orderInitDatetime);
+                        timeStr = DateFormat('HH:mm:ss').format(dt);
+                        dateStr = DateFormat('dd/MM/yyyy').format(dt);
+                      } catch (_) {}
+                    }
+
+                    return Container(
+                      margin: EdgeInsets.only(bottom: index == readyList.length - 1 ? 0 : 6.h),
+                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surface,
+                        borderRadius: BorderRadius.circular(8.r),
+                        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colorScheme.shadow.withValues(alpha: 0.03),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${v.licensePlate}${v.vehicleName.isNotEmpty ? ' | ${v.vehicleName}' : ''}',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 13.sp,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          SizedBox(width: 8.w),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                distance >= 1000 ? '${(distance / 1000).toStringAsFixed(1)} km' : '${distance.round()} m',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 10.sp,
+                                ),
+                              ),
+                              if (order != null && _showYardEntryTime)
+                                Padding(
+                                  padding: EdgeInsets.only(top: 2.h),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        timeStr,
+                                        style: theme.textTheme.labelSmall?.copyWith(
+                                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 9.sp,
+                                        ),
+                                      ),
+                                      SizedBox(width: 8.w),
+                                      Text(
+                                        dateStr,
+                                        style: theme.textTheme.labelSmall?.copyWith(
+                                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 9.sp,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  ),
+];
+}
 
   List<Widget> _buildStationSliver() {
     if (_workingStations.isEmpty) return [];
