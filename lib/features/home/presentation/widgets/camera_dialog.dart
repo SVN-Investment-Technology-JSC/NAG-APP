@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nguyenanh/features/stations/data/models/station_model.dart';
+import 'package:nguyenanh/core/network/api_client.dart';
 
 class CameraDialog extends StatefulWidget {
   final Station station;
@@ -31,9 +31,6 @@ class _CameraDialogState extends State<CameraDialog> {
   String _errorMessage = '';
   bool _isLoading = true;
 
-  // Digest Auth state
-  String? _authHeader;
-  int _ncCount = 1;
   bool _isFetching = false;
   bool _minLoadingDone = false;
 
@@ -72,35 +69,23 @@ class _CameraDialogState extends State<CameraDialog> {
     }
 
     _isFetching = true;
-    final targetUrl = 'http://$ip:$port/ISAPI/Streaming/channels/102/picture';
+    final targetUrl = '/camera/proxy';
 
     try {
-      final dio = Dio(BaseOptions(
-        responseType: ResponseType.bytes,
-        receiveTimeout: const Duration(seconds: 5),
-        sendTimeout: const Duration(seconds: 5),
-        validateStatus: (status) => true,
-      ));
-
-      final headers = <String, dynamic>{};
-      if (_authHeader != null) {
-        headers['Authorization'] = _authHeader;
-      }
-
-      var res = await dio.get(targetUrl, options: Options(headers: headers));
-
-      if (res.statusCode == 401) {
-        final wwwAuth = res.headers.value('www-authenticate');
-        if (wwwAuth != null && wwwAuth.contains('Digest')) {
-          _authHeader = _generateDigestAuthHeader(wwwAuth, 'GET', '/ISAPI/Streaming/channels/102/picture');
-          headers['Authorization'] = _authHeader;
-          res = await dio.get(targetUrl, options: Options(headers: headers));
-        } else {
-          final basic = 'Basic ${base64Encode(utf8.encode('admin:14526525aA@'))}';
-          headers['Authorization'] = basic;
-          res = await dio.get(targetUrl, options: Options(headers: headers));
-        }
-      }
+      final res = await ApiClient.dio.get(
+        targetUrl,
+        queryParameters: {
+          'ip': ip,
+          'port': port,
+          't': DateTime.now().millisecondsSinceEpoch.toString(),
+        },
+        options: Options(
+          responseType: ResponseType.bytes,
+          receiveTimeout: const Duration(seconds: 5),
+          sendTimeout: const Duration(seconds: 5),
+          validateStatus: (status) => true,
+        ),
+      );
 
       if (res.statusCode == 200 && res.data != null) {
         if (!_isDisposed) {
@@ -127,33 +112,6 @@ class _CameraDialogState extends State<CameraDialog> {
     } finally {
       _isFetching = false;
     }
-  }
-
-  String _generateDigestAuthHeader(String wwwAuth, String method, String uri) {
-    const user = 'admin';
-    const pass = '14526525aA@';
-
-    final realmMatch = RegExp(r'realm="([^"]+)"').firstMatch(wwwAuth);
-    final nonceMatch = RegExp(r'nonce="([^"]+)"').firstMatch(wwwAuth);
-    final qopMatch = RegExp(r'qop="([^"]+)"').firstMatch(wwwAuth);
-
-    if (realmMatch == null || nonceMatch == null) return '';
-
-    final realm = realmMatch.group(1)!;
-    final nonce = nonceMatch.group(1)!;
-    final qop = qopMatch != null ? qopMatch.group(1)! : 'auth';
-
-    final ha1 = md5.convert(utf8.encode('$user:$realm:$pass')).toString();
-    final ha2 = md5.convert(utf8.encode('$method:$uri')).toString();
-    
-    final nc = _ncCount.toRadixString(16).padLeft(8, '0');
-    _ncCount++;
-    
-    final cnonce = md5.convert(utf8.encode(DateTime.now().millisecondsSinceEpoch.toString())).toString().substring(0, 8);
-
-    final response = md5.convert(utf8.encode('$ha1:$nonce:$nc:$cnonce:$qop:$ha2')).toString();
-
-    return 'Digest username="$user", realm="$realm", nonce="$nonce", uri="$uri", qop=$qop, nc=$nc, cnonce="$cnonce", response="$response"';
   }
 
   @override
@@ -338,9 +296,6 @@ class _FullScreenCameraPageState extends State<FullScreenCameraPage> {
   bool _isLoading = true;
   bool _minLoadingDone = false;
 
-  // Digest Auth state
-  String? _authHeader;
-  int _ncCount = 1;
   bool _isFetching = false;
 
   @override
@@ -378,35 +333,23 @@ class _FullScreenCameraPageState extends State<FullScreenCameraPage> {
     }
 
     _isFetching = true;
-    final targetUrl = 'http://$ip:$port/ISAPI/Streaming/channels/102/picture';
+    final targetUrl = '/camera/proxy';
 
     try {
-      final dio = Dio(BaseOptions(
-        responseType: ResponseType.bytes,
-        receiveTimeout: const Duration(seconds: 5),
-        sendTimeout: const Duration(seconds: 5),
-        validateStatus: (status) => true,
-      ));
-
-      final headers = <String, dynamic>{};
-      if (_authHeader != null) {
-        headers['Authorization'] = _authHeader;
-      }
-
-      var res = await dio.get(targetUrl, options: Options(headers: headers));
-
-      if (res.statusCode == 401) {
-        final wwwAuth = res.headers.value('www-authenticate');
-        if (wwwAuth != null && wwwAuth.contains('Digest')) {
-          _authHeader = _generateDigestAuthHeader(wwwAuth, 'GET', '/ISAPI/Streaming/channels/102/picture');
-          headers['Authorization'] = _authHeader;
-          res = await dio.get(targetUrl, options: Options(headers: headers));
-        } else {
-          final basic = 'Basic ${base64Encode(utf8.encode('admin:14526525aA@'))}';
-          headers['Authorization'] = basic;
-          res = await dio.get(targetUrl, options: Options(headers: headers));
-        }
-      }
+      final res = await ApiClient.dio.get(
+        targetUrl,
+        queryParameters: {
+          'ip': ip,
+          'port': port,
+          't': DateTime.now().millisecondsSinceEpoch.toString(),
+        },
+        options: Options(
+          responseType: ResponseType.bytes,
+          receiveTimeout: const Duration(seconds: 5),
+          sendTimeout: const Duration(seconds: 5),
+          validateStatus: (status) => true,
+        ),
+      );
 
       if (res.statusCode == 200 && res.data != null) {
         if (!_isDisposed) {
@@ -433,31 +376,6 @@ class _FullScreenCameraPageState extends State<FullScreenCameraPage> {
     } finally {
       _isFetching = false;
     }
-  }
-
-  String _generateDigestAuthHeader(String wwwAuth, String method, String uri) {
-    const user = 'admin';
-    const pass = '14526525aA@';
-    final realmMatch = RegExp(r'realm="([^"]+)"').firstMatch(wwwAuth);
-    final nonceMatch = RegExp(r'nonce="([^"]+)"').firstMatch(wwwAuth);
-    final qopMatch = RegExp(r'qop="([^"]+)"').firstMatch(wwwAuth);
-
-    if (realmMatch == null || nonceMatch == null) return '';
-
-    final realm = realmMatch.group(1)!;
-    final nonce = nonceMatch.group(1)!;
-    final qop = qopMatch != null ? qopMatch.group(1)! : 'auth';
-
-    final ha1 = md5.convert(utf8.encode('$user:$realm:$pass')).toString();
-    final ha2 = md5.convert(utf8.encode('$method:$uri')).toString();
-    
-    final nc = _ncCount.toRadixString(16).padLeft(8, '0');
-    _ncCount++;
-    
-    final cnonce = md5.convert(utf8.encode(DateTime.now().millisecondsSinceEpoch.toString())).toString().substring(0, 8);
-    final response = md5.convert(utf8.encode('$ha1:$nonce:$nc:$cnonce:$qop:$ha2')).toString();
-
-    return 'Digest username="$user", realm="$realm", nonce="$nonce", uri="$uri", qop=$qop, nc=$nc, cnonce="$cnonce", response="$response"';
   }
 
   @override
