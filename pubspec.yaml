@@ -2,7 +2,7 @@ name: nguyenanh
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.0+2
+version: 1.0.0+5
 
 environment:
   sdk: ^3.10.3
@@ -13,6 +13,7 @@ dependencies:
   flutter_launcher_icons: ^0.13.1
   cupertino_icons: ^1.0.8
   flutter_svg: ^2.0.10+1
+  fl_chart: ^0.70.2
 
   # Networking
   dio: ^5.8.0+1
@@ -38,6 +39,7 @@ dependencies:
   url_launcher: ^6.3.1
   flutter_localizations:
     sdk: flutter
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_test:

@@ -183,7 +183,7 @@ class _CameraBadgeState extends State<_CameraBadge> with SingleTickerProviderSta
     final bgColor = color.withValues(alpha: 0.1);
     final borderColor = color.withValues(alpha: 0.25);
     
-    final label = widget.isConnected ? 'Camera kết nối' : 'Camera ngắt kết nối';
+    final label = widget.isConnected ? AppLocalizations.of(context)!.cameraConnected : AppLocalizations.of(context)!.cameraDisconnected;
 
     return GestureDetector(
       onTap: () => CameraDialog.show(context, widget.station),

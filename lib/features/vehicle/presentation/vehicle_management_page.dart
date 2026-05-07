@@ -23,6 +23,7 @@ class VehicleManagementPage extends StatefulWidget {
   final List<VehicleModel> vehicles;
   final List<VtrackingVehicle> vtrackingVehicles;
   final List<Station> stations;
+  final DateTime? initialDate;
 
   const VehicleManagementPage({
     super.key,
@@ -30,6 +31,7 @@ class VehicleManagementPage extends StatefulWidget {
     required this.vehicles,
     required this.vtrackingVehicles,
     required this.stations,
+    this.initialDate,
   });
 
   @override
@@ -37,6 +39,7 @@ class VehicleManagementPage extends StatefulWidget {
 }
 
 class _VehicleManagementPageState extends State<VehicleManagementPage> {
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
   final OrderService _orderService = OrderService(ApiClient.dio);
   DateTime _selectedDate = DateTime.now();
   List<OrderModel> _orders = [];
@@ -54,6 +57,9 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialDate != null) {
+      _selectedDate = widget.initialDate!;
+    }
     if (widget.vehicles.isNotEmpty) {
       _loadOrders();
     }
@@ -62,7 +68,12 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
   @override
   void didUpdateWidget(covariant VehicleManagementPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.vehicles.isEmpty && widget.vehicles.isNotEmpty) {
+    if (widget.initialDate != null && widget.initialDate != oldWidget.initialDate) {
+      setState(() {
+        _selectedDate = widget.initialDate!;
+      });
+      _loadOrders();
+    } else if (oldWidget.vehicles.isEmpty && widget.vehicles.isNotEmpty) {
       _loadOrders();
     }
   }
@@ -216,9 +227,11 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
     await file.writeAsBytes(fileBytes);
 
     if (!mounted) return;
+    final size = MediaQuery.of(context).size;
     await Share.shareXFiles(
       [XFile(file.path)],
       subject: 'Chuyen xe $sheetName',
+      sharePositionOrigin: Rect.fromLTWH(0, 0, size.width, size.height / 2),
     );
   }
 
@@ -505,7 +518,7 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
       statusText = l10n.completedStatus;
     } else if (isActive) {
       accentColor = const Color(0xFF0EA5E9);
-      statusText = 'Đang di chuyển';
+      statusText = l10n.transportingStatus;
     } else if (order.orderStatus == 'collecting') {
       accentColor = const Color(0xFFF59E0B);
       statusText = l10n.collecting;
@@ -522,7 +535,7 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
     final initDt = DateTime.tryParse(order.orderInitDatetime);
     if (initDt != null) {
       final local = initDt.toLocal();
-      initTimeText = '${local.hour} giờ ${local.minute.toString().padLeft(2, '0')} phút';
+      initTimeText = '${local.hour} ${l10n.hours} ${local.minute.toString().padLeft(2, '0')} ${l10n.minutes}';
     }
 
     // Start → End time
@@ -546,7 +559,7 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
         final diffMins = end.difference(start).inMinutes;
         final h = diffMins ~/ 60;
         final m = diffMins % 60;
-        runDurationText = h > 0 ? '$h giờ $m phút' : '$m phút';
+        runDurationText = h > 0 ? '$h ${l10n.hours} $m ${l10n.minutes}' : '$m ${l10n.minutes}';
       }
     }
 
@@ -562,7 +575,7 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
         if (mixMins > 0) {
           final h = mixMins ~/ 60;
           final m = mixMins % 60;
-          mixDurationText = h > 0 ? '$h giờ $m phút' : '$mixMins phút';
+          mixDurationText = h > 0 ? '$h ${l10n.hours} $m ${l10n.minutes}' : '$mixMins ${l10n.minutes}';
         }
       }
     }
@@ -576,7 +589,7 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
       if (multi.stopCount > 0) {
         if (multi.stopDurationSeconds > 0) {
           final stopMins = multi.stopDurationSeconds ~/ 60;
-          stopsText = '${multi.stopCount} ${l10n.stopCountLabel} ($stopMins phút)';
+          stopsText = '${multi.stopCount} ${l10n.stopCountLabel} ($stopMins ${l10n.minutes})';
         } else {
           stopsText = '${multi.stopCount} ${l10n.stopCountLabel}';
         }
@@ -763,7 +776,7 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
                                 size: 11.sp, color: const Color(0xFF8B5CF6)),
                             SizedBox(width: 2.w),
                             Text(
-                              'Trộn: $mixDurationText',
+                              '${l10n.mixLabel}: $mixDurationText',
                               style: theme.textTheme.labelSmall?.copyWith(
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF8B5CF6),
@@ -830,6 +843,7 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
       child: Scaffold(
         backgroundColor: colorScheme.surface,
         appBar: AppBar(
+          centerTitle: false,
           title: Text(
             l10n.tripManagement,
             style: theme.textTheme.titleLarge?.copyWith(
@@ -977,7 +991,7 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
             controller: _searchController,
             onChanged: (value) => setState(() => _searchQuery = value),
             decoration: InputDecoration(
-              hintText: 'Tìm kiếm biển số xe...', // Wait, l10n maybe? Better hardcode for now or use app_en.arb
+              hintText: l10n.searchVehicleHint,
               hintStyle: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.outline),
               prefixIcon: Icon(Icons.search_rounded, color: colorScheme.outline, size: 20.sp),
               contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 0.h),
@@ -1001,7 +1015,7 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
                       padding: EdgeInsets.only(top: 60.h),
                       child: Center(
                         child: Text(
-                          'Không tồn tại',
+                          l10n.noResultsFound,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                             fontStyle: FontStyle.italic,
@@ -1032,108 +1046,113 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
     final tripCount = _ordersForVehicle(vehicle.vehicleId).length;
     final iconColor = colorScheme.primary;
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 8.h),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12.r),
-          onTap: () => _showVehiclePopup(vehicle),
-          child: Row(
-            children: [
-              // Accent bar like HomeOrderItem
-              Container(
-                width: 4.w,
-                height: 64.h,
-                decoration: BoxDecoration(
-                  color: iconColor,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(12.r),
-                    bottomLeft: Radius.circular(12.r),
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 800.w),
+        child: Container(
+          margin: EdgeInsets.only(bottom: 8.h),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12.r),
+              onTap: () => _showVehiclePopup(vehicle),
+              child: Row(
+                children: [
+                  // Accent bar like HomeOrderItem
+                  Container(
+                    width: 4.w,
+                    height: 64.h,
+                    decoration: BoxDecoration(
+                      color: iconColor,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(12.r),
+                        bottomLeft: Radius.circular(12.r),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-                  child: Row(
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                      child: Row(
                         children: [
-                          Row(
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    vehicle.vehicleName.isNotEmpty
+                                        ? vehicle.vehicleName
+                                        : '#${index + 1}',
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.w900,
+                                      color: iconColor,
+                                      fontSize: 14.sp,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 4.h),
                               Text(
-                                vehicle.vehicleName.isNotEmpty
-                                    ? vehicle.vehicleName
-                                    : '#${index + 1}',
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  color: iconColor,
-                                  fontSize: 14.sp,
+                                vehicle.vehicleLicensePlate,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  fontWeight: FontWeight.w800,
                                 ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            vehicle.vehicleLicensePlate,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w800,
+                          const Spacer(),
+                          if (tripCount > 0)
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                              decoration: BoxDecoration(
+                                color: iconColor.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '$tripCount',
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      fontWeight: FontWeight.w900,
+                                      color: iconColor,
+                                    ),
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  Text(
+                                    l10n.trips,
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: iconColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else
+                            Text(
+                              l10n.noTripsYet,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: colorScheme.outline,
+                                fontStyle: FontStyle.italic,
+                              ),
                             ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          SizedBox(width: 8.w),
+                          Icon(Icons.chevron_right_rounded,
+                              size: 20.sp, color: colorScheme.outlineVariant),
                         ],
                       ),
-                      const Spacer(),
-                      if (tripCount > 0)
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                          decoration: BoxDecoration(
-                            color: iconColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                '$tripCount',
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  color: iconColor,
-                                ),
-                              ),
-                              SizedBox(width: 4.w),
-                              Text(
-                                'chuyến',
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: iconColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      else
-                        Text(
-                          'Chưa có chuyến',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: colorScheme.outline,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      SizedBox(width: 8.w),
-                      Icon(Icons.chevron_right_rounded,
-                          size: 20.sp, color: colorScheme.outlineVariant),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

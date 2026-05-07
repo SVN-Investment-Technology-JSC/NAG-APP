@@ -10,6 +10,7 @@ import 'package:nguyenanh/features/attendance/presentation/attendance_page.dart'
 import 'package:nguyenanh/features/home/presentation/home_page.dart';
 import 'package:nguyenanh/features/meal/presentation/meal_check_page.dart';
 import 'package:nguyenanh/features/profile/presentation/profile_page.dart';
+import 'package:nguyenanh/features/reports/presentation/pages/report_page.dart';
 import 'package:nguyenanh/features/order/data/models/order_model.dart';
 import 'package:nguyenanh/features/order/order_service.dart';
 import 'package:nguyenanh/features/stations/data/models/station_model.dart';
@@ -45,11 +46,13 @@ class _MainShellState extends State<MainShell> {
 
   List<OrderModel> _pendingOrders = [];
   List<OrderModel> _collectingOrders = [];
+  List<OrderModel> _yardOrders = [];
   List<Station> _stations = [];
   List<VtrackingVehicle> _vtrackingVehicles = [];
   List<VehicleModel> _vehicles = [];
   bool _isLoading = true;
   String? _error;
+  DateTime? _targetTripDate;
 
   @override
   void initState() {
@@ -138,6 +141,14 @@ class _MainShellState extends State<MainShell> {
           debugPrint('[LOAD] Collecting orders failed: $e');
           return <OrderModel>[];
         }),
+        _orderService.getOrders(statuses: ['transporting']).catchError((e) {
+          debugPrint('[LOAD] Transporting orders failed: $e');
+          return <OrderModel>[];
+        }),
+        _orderService.getTodayOrders().catchError((e) {
+          debugPrint('[LOAD] Today orders failed: $e');
+          return <OrderModel>[];
+        }),
         _stationService.getStations().catchError((e) {
           debugPrint('[LOAD] Stations failed: $e');
           return <Station>[];
@@ -151,7 +162,7 @@ class _MainShellState extends State<MainShell> {
 
       if (!mounted) return;
 
-      final allVehicles = results[4] as List<VehicleModel>;
+      final allVehicles = results[6] as List<VehicleModel>;
       final mixerVehicles =
           allVehicles.where((v) => v.vehicleName.startsWith('X') && v.vehicleStatus != 'maintenance').toList();
       final mixerVehicleIds =
@@ -161,8 +172,7 @@ class _MainShellState extends State<MainShell> {
           .where((o) =>
               o.vehicles != null &&
               mixerVehicleIds.contains(o.vehicles!.vehicleId))
-          .toList()
-        ..sort((a, b) => a.orderNumber.compareTo(b.orderNumber));
+          .toList();
 
       final collectingOrders = (results[1] as List<OrderModel>)
           .where((o) =>
@@ -170,14 +180,42 @@ class _MainShellState extends State<MainShell> {
               mixerVehicleIds.contains(o.vehicles!.vehicleId))
           .toList();
 
-      final allVtracking = results[3] as List<VtrackingVehicle>;
+      final transportingOrders = (results[2] as List<OrderModel>)
+          .where((o) =>
+              o.vehicles != null &&
+              mixerVehicleIds.contains(o.vehicles!.vehicleId))
+          .toList();
+
+      final todayOrders = (results[3] as List<OrderModel>)
+          .where((o) =>
+              o.vehicles != null &&
+              mixerVehicleIds.contains(o.vehicles!.vehicleId))
+          .toList();
+
+      // Combine all orders for the yard list to find the correct init_datetime
+      final allActiveOrders = [
+        ...pendingOrders, 
+        ...collectingOrders, 
+        ...transportingOrders,
+        ...todayOrders,
+      ];
+      // Sort and remove duplicates based on orderId
+      final Map<int, OrderModel> uniqueOrders = {};
+      for (var o in allActiveOrders) {
+        uniqueOrders[o.orderId] = o;
+      }
+      final finalOrders = uniqueOrders.values.toList()
+        ..sort((a, b) => a.orderNumber.compareTo(b.orderNumber));
+
+      final allVtracking = results[5] as List<VtrackingVehicle>;
       final mixerVtracking =
           allVtracking.where((v) => v.vehicleName.startsWith('X')).toList();
 
       setState(() {
-        _pendingOrders = pendingOrders;
+        _pendingOrders = pendingOrders; 
         _collectingOrders = collectingOrders;
-        _stations = results[2] as List<Station>;
+        _yardOrders = finalOrders;
+        _stations = results[4] as List<Station>;
         _vtrackingVehicles = mixerVtracking;
         _vehicles = mixerVehicles;
         _isLoading = false;
@@ -234,6 +272,11 @@ class _MainShellState extends State<MainShell> {
                 label: l10n.tripsTab,
               ),
               NavigationDestination(
+                icon: const Icon(Icons.bar_chart_outlined),
+                selectedIcon: const Icon(Icons.bar_chart_rounded),
+                label: l10n.reportsTab,
+              ),
+              NavigationDestination(
                 icon: const Icon(Icons.person_outline_rounded),
                 selectedIcon: const Icon(Icons.person_rounded),
                 label: l10n.profileTab,
@@ -246,11 +289,13 @@ class _MainShellState extends State<MainShell> {
         index: _currentIndex,
         children: [
           HomePage(
-            orders: _pendingOrders,
+            orders: _yardOrders, // Pass today's orders for yard feature
+            pendingOrders: _pendingOrders, // Pass only pending for other uses
             collectingOrders: _collectingOrders,
             stations: _stations,
             vtrackingVehicles: _vtrackingVehicles,
             vehicles: _vehicles,
+            vehicleService: _vehicleService,
             socketService: _socketService,
             notificationService: _notificationService,
             isLoading: _isLoading,
@@ -262,6 +307,15 @@ class _MainShellState extends State<MainShell> {
             vehicles: _vehicles,
             vtrackingVehicles: _vtrackingVehicles,
             stations: _stations,
+            initialDate: _targetTripDate,
+          ),
+          ReportPage(
+            onNavigateTrips: (date) {
+              setState(() {
+                _targetTripDate = date;
+                _currentIndex = 1;
+              });
+            },
           ),
           ProfilePage(
             onNavigateHome: () => setState(() => _currentIndex = 0),

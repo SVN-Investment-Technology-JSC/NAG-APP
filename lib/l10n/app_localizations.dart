@@ -179,7 +179,7 @@ abstract class AppLocalizations {
   /// No description provided for @noData.
   ///
   /// In en, this message translates to:
-  /// **'No data available'**
+  /// **'No data'**
   String get noData;
 
   /// No description provided for @loginInvalidCredentials.
@@ -395,7 +395,7 @@ abstract class AppLocalizations {
   /// No description provided for @completedStatus.
   ///
   /// In en, this message translates to:
-  /// **'Completed'**
+  /// **'completed'**
   String get completedStatus;
 
   /// No description provided for @noTripsForVehicle.
@@ -701,20 +701,26 @@ abstract class AppLocalizations {
   /// No description provided for @homeTab.
   ///
   /// In en, this message translates to:
-  /// **'HOME'**
+  /// **'Home'**
   String get homeTab;
 
   /// No description provided for @tripsTab.
   ///
   /// In en, this message translates to:
-  /// **'TRIPS'**
+  /// **'Trips'**
   String get tripsTab;
 
   /// No description provided for @profileTab.
   ///
   /// In en, this message translates to:
-  /// **'PROFILE'**
+  /// **'Profile'**
   String get profileTab;
+
+  /// No description provided for @reportsTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Reports'**
+  String get reportsTab;
 
   /// No description provided for @vietnamese.
   ///
@@ -973,6 +979,354 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Live'**
   String get live;
+
+  /// No description provided for @deleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This action cannot be undone. All your personal data will be permanently deleted.'**
+  String get deleteAccountWarning;
+
+  /// No description provided for @confirmDeleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Delete Account'**
+  String get confirmDeleteAccount;
+
+  /// No description provided for @accountDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account has been deleted'**
+  String get accountDeleted;
+
+  /// No description provided for @donotHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account?'**
+  String get donotHaveAccount;
+
+  /// No description provided for @contactAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact admin for access.'**
+  String get contactAdmin;
+
+  /// No description provided for @partnershipContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Partnership Contact'**
+  String get partnershipContact;
+
+  /// No description provided for @checkLog.
+  ///
+  /// In en, this message translates to:
+  /// **'CHECK LOG'**
+  String get checkLog;
+
+  /// No description provided for @cameraConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera connected'**
+  String get cameraConnected;
+
+  /// No description provided for @cameraDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera disconnected'**
+  String get cameraDisconnected;
+
+  /// No description provided for @parkedVehicles.
+  ///
+  /// In en, this message translates to:
+  /// **'PARKED VEHICLES'**
+  String get parkedVehicles;
+
+  /// No description provided for @transportReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Transport Report'**
+  String get transportReport;
+
+  /// No description provided for @production.
+  ///
+  /// In en, this message translates to:
+  /// **'Production'**
+  String get production;
+
+  /// No description provided for @vehicleRanking.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle Ranking'**
+  String get vehicleRanking;
+
+  /// No description provided for @byDay.
+  ///
+  /// In en, this message translates to:
+  /// **'By day'**
+  String get byDay;
+
+  /// No description provided for @byWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'By week'**
+  String get byWeek;
+
+  /// No description provided for @byMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'By month'**
+  String get byMonth;
+
+  /// No description provided for @exportReportBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'EXPORT REPORT'**
+  String get exportReportBtn;
+
+  /// No description provided for @avgProduction.
+  ///
+  /// In en, this message translates to:
+  /// **'AVG PRODUCTION'**
+  String get avgProduction;
+
+  /// No description provided for @totalTrips.
+  ///
+  /// In en, this message translates to:
+  /// **'TOTAL TRIPS'**
+  String get totalTrips;
+
+  /// No description provided for @completedUpper.
+  ///
+  /// In en, this message translates to:
+  /// **'COMPLETED'**
+  String get completedUpper;
+
+  /// No description provided for @totalKm.
+  ///
+  /// In en, this message translates to:
+  /// **'TOTAL KM'**
+  String get totalKm;
+
+  /// No description provided for @productionChart.
+  ///
+  /// In en, this message translates to:
+  /// **'Production Chart'**
+  String get productionChart;
+
+  /// No description provided for @productionChartDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Transport production by {groupBy}'**
+  String productionChartDesc(Object groupBy);
+
+  /// No description provided for @hours.
+  ///
+  /// In en, this message translates to:
+  /// **'h'**
+  String get hours;
+
+  /// No description provided for @minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'m'**
+  String get minutes;
+
+  /// No description provided for @transportingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Moving'**
+  String get transportingStatus;
+
+  /// No description provided for @mixLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Mix'**
+  String get mixLabel;
+
+  /// No description provided for @totalProduction.
+  ///
+  /// In en, this message translates to:
+  /// **'Total production'**
+  String get totalProduction;
+
+  /// No description provided for @averageLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Average'**
+  String get averageLevel;
+
+  /// No description provided for @detailsUpper.
+  ///
+  /// In en, this message translates to:
+  /// **'DETAILS'**
+  String get detailsUpper;
+
+  /// No description provided for @stationPerformance.
+  ///
+  /// In en, this message translates to:
+  /// **'Station Performance'**
+  String get stationPerformance;
+
+  /// No description provided for @seeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See all'**
+  String get seeAll;
+
+  /// No description provided for @trips.
+  ///
+  /// In en, this message translates to:
+  /// **'trips'**
+  String get trips;
+
+  /// No description provided for @tons.
+  ///
+  /// In en, this message translates to:
+  /// **'Tons'**
+  String get tons;
+
+  /// No description provided for @productionRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Production by recent period'**
+  String get productionRecent;
+
+  /// No description provided for @clickToOpenDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Click on each period to open trip details'**
+  String get clickToOpenDetails;
+
+  /// No description provided for @dayUpper.
+  ///
+  /// In en, this message translates to:
+  /// **'DAY'**
+  String get dayUpper;
+
+  /// No description provided for @periodUpper.
+  ///
+  /// In en, this message translates to:
+  /// **'PERIOD'**
+  String get periodUpper;
+
+  /// No description provided for @vehicleRankingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Productive Vehicle Ranking'**
+  String get vehicleRankingTitle;
+
+  /// No description provided for @vehicleRankingDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Based on total trips and distance'**
+  String get vehicleRankingDesc;
+
+  /// No description provided for @vehicleCode.
+  ///
+  /// In en, this message translates to:
+  /// **'VEHICLE CODE'**
+  String get vehicleCode;
+
+  /// No description provided for @licensePlate.
+  ///
+  /// In en, this message translates to:
+  /// **'LICENSE PLATE'**
+  String get licensePlate;
+
+  /// No description provided for @tripsUpper.
+  ///
+  /// In en, this message translates to:
+  /// **'TRIPS'**
+  String get tripsUpper;
+
+  /// No description provided for @operationalLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Operational Log'**
+  String get operationalLog;
+
+  /// No description provided for @totalVehicles.
+  ///
+  /// In en, this message translates to:
+  /// **'Total: {count} vehicles'**
+  String totalVehicles(Object count);
+
+  /// No description provided for @delivering.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivering'**
+  String get delivering;
+
+  /// No description provided for @startedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'started at'**
+  String get startedAt;
+
+  /// No description provided for @statusInDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Status in day'**
+  String get statusInDay;
+
+  /// No description provided for @searchVehicleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Find vehicle, license plate...'**
+  String get searchVehicleHint;
+
+  /// No description provided for @noStationData.
+  ///
+  /// In en, this message translates to:
+  /// **'No station data yet'**
+  String get noStationData;
+
+  /// No description provided for @noTripsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No trips found'**
+  String get noTripsFound;
+
+  /// No description provided for @tripDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip detail'**
+  String get tripDetail;
+
+  /// No description provided for @tripsInPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} trips in this period'**
+  String tripsInPeriod(Object count);
+
+  /// No description provided for @otherStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get otherStatus;
+
+  /// No description provided for @noResultsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No results found'**
+  String get noResultsFound;
+
+  /// No description provided for @noTripsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No trips yet'**
+  String get noTripsYet;
+
+  /// No description provided for @featureUnderDevelopment.
+  ///
+  /// In en, this message translates to:
+  /// **'Feature under development'**
+  String get featureUnderDevelopment;
 }
 
 class _AppLocalizationsDelegate

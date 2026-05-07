@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:nguyenanh/core/network/app_endpoints.dart';
 import 'package:nguyenanh/features/vehicle/data/models/vehicle_model.dart';
+import 'package:nguyenanh/features/vehicle/data/models/end_of_day_model.dart';
 
 class VehicleService {
   final Dio dio;
@@ -24,6 +25,25 @@ class VehicleService {
     } catch (e) {
       debugPrint('[VehicleService] Error: $e');
       return [];
+    }
+  }
+
+  Future<EndOfDayStatusResponse?> getEndOfDayStatus(String? date) async {
+    try {
+      final String fullUrl = '${AppEndpoints.apiBaseUrl}vehicles/end-of-day-status';
+      final response = await dio.get(
+        fullUrl,
+        queryParameters: date != null ? {'date': date} : null,
+      );
+
+      if (response.statusCode == 200) {
+        final raw = response.data['data'] ?? response.data;
+        return EndOfDayStatusResponse.fromJson(raw);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('[VehicleService] getEndOfDayStatus Error: $e');
+      return null;
     }
   }
 }

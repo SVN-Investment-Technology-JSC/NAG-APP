@@ -21,7 +21,7 @@ class VehicleApp extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return ScreenUtilInit(
-      designSize: const Size(360, 690),
+      designSize: const Size(375, 812), // Standard design size for better scaling
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
