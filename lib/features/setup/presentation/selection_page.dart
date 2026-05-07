@@ -9,6 +9,7 @@ import 'package:nguyenanh/features/auth/data/services/auth_service.dart';
 import 'package:nguyenanh/features/auth/data/services/auth_storage_service.dart';
 import 'package:nguyenanh/features/shell/presentation/main_shell.dart';
 import 'package:nguyenanh/l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SelectionPage extends StatefulWidget {
   const SelectionPage({super.key});
@@ -279,146 +280,197 @@ class _SelectionPageState extends State<SelectionPage> {
                   SizedBox(height: 20.h),
 
                   // LOGIN FORM CARD
-                  Container(
-                    width: double.infinity,
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 20.w, vertical: 28.h),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                      borderRadius: BorderRadius.circular(24.r),
-                      border: Border.all(
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.08)
-                              : Colors.black.withValues(alpha: 0.04)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black
-                              .withValues(alpha: isDark ? 0.3 : 0.08),
-                          blurRadius: 40,
-                          offset: const Offset(0, 10),
-                        )
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildTextField(
-                          l10n.username,
-                          _usernameController,
-                          Icons.person_outline_rounded,
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: 450.w),
+                      child: Container(
+                        width: double.infinity,
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 20.w, vertical: 28.h),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          borderRadius: BorderRadius.circular(24.r),
+                          border: Border.all(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.08)
+                                  : Colors.black.withValues(alpha: 0.04)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black
+                                  .withValues(alpha: isDark ? 0.3 : 0.08),
+                              blurRadius: 40,
+                              offset: const Offset(0, 10),
+                            )
+                          ],
                         ),
-                        SizedBox(height: 20.h),
-                        _buildTextField(
-                          l10n.password,
-                          _passwordController,
-                          Icons.lock_open_rounded,
-                          isPassword: true,
-                        ),
-                        SizedBox(height: 20.h),
-
-                        // REMEMBER ME
-                        Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            GestureDetector(
-                              onTap: () =>
-                                  setState(() => _rememberMe = !_rememberMe),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                width: 22.w,
-                                height: 22.w,
-                                decoration: BoxDecoration(
-                                  color: _rememberMe
-                                      ? colorScheme.primary
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(6.r),
-                                  border: Border.all(
-                                    color: _rememberMe
-                                        ? colorScheme.primary
-                                        : colorScheme.onSurface
-                                            .withValues(alpha: 0.2),
-                                    width: 2,
+                            _buildTextField(
+                              l10n.username,
+                              _usernameController,
+                              Icons.person_outline_rounded,
+                            ),
+                            SizedBox(height: 20.h),
+                            _buildTextField(
+                              l10n.password,
+                              _passwordController,
+                              Icons.lock_open_rounded,
+                              isPassword: true,
+                            ),
+                            SizedBox(height: 20.h),
+    
+                            // REMEMBER ME
+                            Row(
+                              children: [
+                                GestureDetector(
+                                  onTap: () =>
+                                      setState(() => _rememberMe = !_rememberMe),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    width: 22.w,
+                                    height: 22.w,
+                                    decoration: BoxDecoration(
+                                      color: _rememberMe
+                                          ? colorScheme.primary
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(6.r),
+                                      border: Border.all(
+                                        color: _rememberMe
+                                            ? colorScheme.primary
+                                            : colorScheme.onSurface
+                                                .withValues(alpha: 0.2),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: _rememberMe
+                                        ? Icon(Icons.check_rounded,
+                                            color: Colors.white, size: 14.sp)
+                                        : null,
                                   ),
                                 ),
-                                child: _rememberMe
-                                    ? Icon(Icons.check_rounded,
-                                        color: Colors.white, size: 14.sp)
-                                    : null,
-                              ),
+                                SizedBox(width: 12.w),
+                                Text(
+                                  l10n.rememberMe,
+                                  style: TextStyle(
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: colorScheme.onSurface
+                                        .withValues(alpha: 0.6),
+                                  ),
+                                ),
+                              ],
                             ),
-                            SizedBox(width: 12.w),
-                            Text(
-                              l10n.rememberMe,
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w600,
-                                color: colorScheme.onSurface
-                                    .withValues(alpha: 0.6),
+    
+                            SizedBox(height: 32.h),
+    
+                            // CONFIRM BUTTON
+                            GestureDetector(
+                              onTap: _isLoading ? null : _onConfirm,
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                width: double.infinity,
+                                height: 60.h,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20.r),
+                                  gradient: LinearGradient(
+                                    colors: _isLoading
+                                        ? [
+                                            colorScheme.primary
+                                                .withValues(alpha: 0.6),
+                                            colorScheme.primary
+                                                .withValues(alpha: 0.4)
+                                          ]
+                                        : [
+                                            colorScheme.primary,
+                                            const Color(0xFF1E3A8A)
+                                          ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  boxShadow: [
+                                    if (!_isLoading)
+                                      BoxShadow(
+                                        color: colorScheme.primary
+                                            .withValues(alpha: 0.3),
+                                        blurRadius: 15,
+                                        offset: const Offset(0, 8),
+                                      )
+                                  ],
+                                ),
+                                child: Center(
+                                  child: _isLoading
+                                      ? SizedBox(
+                                          width: 24.w,
+                                          height: 24.w,
+                                          child: const CircularProgressIndicator(
+                                              strokeWidth: 2, color: Colors.white),
+                                        )
+                                      : Text(
+                                          l10n.confirm.toUpperCase(),
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 15.sp,
+                                            fontWeight: FontWeight.w900,
+                                            letterSpacing: 1.5,
+                                          ),
+                                        ),
+                                ),
                               ),
                             ),
                           ],
                         ),
-
-                        SizedBox(height: 32.h),
-
-                        // CONFIRM BUTTON
-                        GestureDetector(
-                          onTap: _isLoading ? null : _onConfirm,
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            width: double.infinity,
-                            height: 60.h,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20.r),
-                              gradient: LinearGradient(
-                                colors: _isLoading
-                                    ? [
-                                        colorScheme.primary
-                                            .withValues(alpha: 0.6),
-                                        colorScheme.primary
-                                            .withValues(alpha: 0.4)
-                                      ]
-                                    : [
-                                        colorScheme.primary,
-                                        const Color(0xFF1E3A8A)
-                                      ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              boxShadow: [
-                                if (!_isLoading)
-                                  BoxShadow(
-                                    color: colorScheme.primary
-                                        .withValues(alpha: 0.3),
-                                    blurRadius: 15,
-                                    offset: const Offset(0, 8),
-                                  )
-                              ],
-                            ),
-                            child: Center(
-                              child: _isLoading
-                                  ? SizedBox(
-                                      width: 24.w,
-                                      height: 24.w,
-                                      child: const CircularProgressIndicator(
-                                          strokeWidth: 2, color: Colors.white),
-                                    )
-                                  : Text(
-                                      l10n.confirm.toUpperCase(),
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 15.sp,
-                                        fontWeight: FontWeight.w900,
-                                        letterSpacing: 1.5,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
 
-                  SizedBox(height: 20.h),
+                  SizedBox(height: 32.h),
+
+                  // REGISTRATION HELP (For Apple Review)
+                  Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20.w),
+                      child: Column(
+                        children: [
+                          Text(
+                            l10n.donotHaveAccount,
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.onSurface.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            l10n.contactAdmin,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w500,
+                              color: colorScheme.onSurface.withValues(alpha: 0.4),
+                            ),
+                          ),
+                          SizedBox(height: 12.h),
+                          TextButton.icon(
+                            onPressed: () async {
+                              final uri = Uri.parse('https://nguyenanhgroup.vn/');
+                              if (await canLaunchUrl(uri)) {
+                                await launchUrl(uri, mode: LaunchMode.externalApplication);
+                              }
+                            },
+                            icon: Icon(Icons.business_center_rounded, size: 18.sp),
+                            label: Text(l10n.partnershipContact),
+                            style: TextButton.styleFrom(
+                              foregroundColor: colorScheme.primary,
+                              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 32.h),
 
                   // FOOTER
                   Center(

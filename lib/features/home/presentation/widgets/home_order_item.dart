@@ -27,36 +27,41 @@ class HomeOrderItem extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final status = _resolveStatus(colorScheme, l10n, theme);
 
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 3.h),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12.r),
-        border: order.orderStatus == 'collecting'
-            ? Border.all(
-                color: status.color.withValues(alpha: 0.3), width: 1.5)
-            : null,
-      ),
-      child: Row(
-        children: [
-          _AccentBar(color: status.color),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: AppSpacing.smH),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _StnRow(orderNumber: orderNumber, status: status),
-                  SizedBox(height: AppSpacing.xsH),
-                  _PlateRow(label: _vehicleLabel),
-                  SizedBox(height: AppSpacing.xsH),
-                  _MetaRow(order: order, status: status),
-                  if (order.orderStatus == 'completed') _DistanceRow(order: order),
-                ],
-              ),
-            ),
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 800.w),
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 3.h),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(12.r),
+            border: order.orderStatus == 'collecting'
+                ? Border.all(
+                    color: status.color.withValues(alpha: 0.3), width: 1.5)
+                : null,
           ),
-        ],
+          child: Row(
+            children: [
+              _AccentBar(color: status.color),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: AppSpacing.smH),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _StnRow(orderNumber: orderNumber, status: status),
+                      SizedBox(height: AppSpacing.xsH),
+                      _PlateRow(label: _vehicleLabel),
+                      SizedBox(height: AppSpacing.xsH),
+                      _MetaRow(order: order, status: status),
+                      if (order.orderStatus == 'completed') _DistanceRow(order: order),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -188,9 +193,10 @@ class _MetaRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final duration = _computeDuration();
+    final l10n = AppLocalizations.of(context)!;
+    final duration = _computeDuration(l10n);
     final endTime = _computeEndTime();
-    final initTime = _computeInitTime();
+    final initTime = _computeInitTime(l10n);
 
     return Row(
       children: [
@@ -233,14 +239,14 @@ class _MetaRow extends StatelessWidget {
     );
   }
 
-  String? _computeInitTime() {
+  String? _computeInitTime(AppLocalizations l10n) {
     final initDt = DateTime.tryParse(order.orderInitDatetime);
     if (initDt == null) return null;
     final local = initDt.toLocal();
-    return '${local.hour} giờ ${local.minute.toString().padLeft(2, '0')} phút';
+    return '${local.hour} ${l10n.hours} ${local.minute.toString().padLeft(2, '0')} ${l10n.minutes}';
   }
 
-  String? _computeDuration() {
+  String? _computeDuration(AppLocalizations l10n) {
     if (order.orderStartDatetime == null || order.orderEndDatetime == null) {
       return null;
     }
@@ -251,8 +257,8 @@ class _MetaRow extends StatelessWidget {
     final hours = diff.inHours;
     final mins = diff.inMinutes % 60;
     return hours > 0
-        ? '${hours}h${mins.toString().padLeft(2, '0')}m'
-        : '${mins}m';
+        ? '${hours}${l10n.hours[0]}${mins.toString().padLeft(2, '0')}${l10n.minutes[0]}'
+        : '${mins}${l10n.minutes[0]}';
   }
 
   String? _computeEndTime() {

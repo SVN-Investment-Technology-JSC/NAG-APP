@@ -16,4 +16,8 @@ class AppEndpoints {
   static const String vtrackingUsername = 'nguyenanh2_qbh';
   static const String vtrackingPassword = 'Nguyenanh@123';
   static const String vtrackingOrgId = '5a98e365-b805-475c-8fea-6e863d502d72';
+
+  // Reports
+  static const String reportProduction = 'reports/production';
+  static const String vehicleTypes = 'vehicle-types';
 }

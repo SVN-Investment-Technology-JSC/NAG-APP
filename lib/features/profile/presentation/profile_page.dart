@@ -10,6 +10,8 @@ import 'package:nguyenanh/features/attendance/presentation/attendance_page.dart'
 import 'package:nguyenanh/features/meal/presentation/meal_check_page.dart';
 import 'package:nguyenanh/features/setup/presentation/selection_page.dart';
 import 'package:nguyenanh/l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:nguyenanh/core/network/app_endpoints.dart';
 
 class ProfilePage extends StatefulWidget {
   final VoidCallback onNavigateHome;
@@ -189,72 +191,102 @@ class _ProfilePageState extends State<ProfilePage> {
       backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: ListView(
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+          padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width > 600 ? 40.w : 20.w, vertical: 16.h),
           children: [
             // User Profile Section
-            Container(
-              padding: EdgeInsets.symmetric(vertical: 24.h),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(24.r),
-              ),
-              child: Column(
-                children: [
-                  Stack(
-                    alignment: Alignment.bottomRight,
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 450),
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.w),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(24.r),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      CircleAvatar(
-                        radius: 40.r,
-                        backgroundColor: colorScheme.primaryContainer,
-                        backgroundImage: NetworkImage(
-                          'https://ui-avatars.com/api/?name=${Uri.encodeComponent(displayName)}&background=0D8ABC&color=fff',
+                      InkWell(
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(l10n.featureUnderDevelopment),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(36.r),
+                        child: Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            CircleAvatar(
+                              radius: 36.r,
+                              backgroundColor: colorScheme.primaryContainer,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(36.r),
+                                child: Image.network(
+                                  'https://ui-avatars.com/api/?name=${Uri.encodeComponent(displayName)}&background=0D8ABC&color=fff',
+                                  errorBuilder: (context, error, stackTrace) => Icon(
+                                    Icons.person_rounded,
+                                    size: 36.sp,
+                                    color: colorScheme.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              right: 0,
+                              bottom: 0,
+                              child: Container(
+                                padding: EdgeInsets.all(4.w),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.primary,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: colorScheme.surface, width: 2.w),
+                                ),
+                                child: Icon(Icons.edit, color: colorScheme.onPrimary, size: 12.sp),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      Positioned(
-                        right: 0,
-                        bottom: 0,
-                        child: Container(
-                          padding: EdgeInsets.all(4.w),
-                          decoration: BoxDecoration(
-                            color: colorScheme.primary,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.edit, color: colorScheme.onPrimary, size: 14.sp),
+                      SizedBox(height: 12.h),
+                      Text(
+                        displayName,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      SizedBox(height: 2.h),
+                      Text(
+                        l10n.defaultRoleDesc,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 16.h),
-                  Text(
-                    displayName,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    l10n.defaultRoleDesc,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-                ],
+                ),
               ),
             ),
             SizedBox(height: 24.h),
 
             // Dashboard Button (Trang chủ)
-            _buildListCard(
-              context,
-              theme,
-              colorScheme,
-              icon: Icons.home_rounded,
-              iconColor: Colors.blue,
-              title: l10n.home,
-              subtitle: l10n.dashboardDesc,
-              onTap: widget.onNavigateHome,
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: _buildListCard(
+                  context,
+                  theme,
+                  colorScheme,
+                  icon: Icons.home_rounded,
+                  iconColor: Colors.blue,
+                  title: l10n.home,
+                  subtitle: l10n.dashboardDesc,
+                  onTap: widget.onNavigateHome,
+                ),
+              ),
             ),
             SizedBox(height: 16.h),
 
@@ -262,10 +294,10 @@ class _ProfilePageState extends State<ProfilePage> {
             GridView.count(
               physics: const NeverScrollableScrollPhysics(),
               shrinkWrap: true,
-              crossAxisCount: 2,
-              mainAxisSpacing: 16.h,
+              crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 2,
+              mainAxisSpacing: 16.w,
               crossAxisSpacing: 16.w,
-              childAspectRatio: 1.1,
+              childAspectRatio: MediaQuery.of(context).size.width > 600 ? 1.0 : 1.1,
               children: [
                 _buildGridCard(
                   context,
@@ -323,37 +355,48 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
             ),
-            Container(
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(16.r),
-              ),
-              child: Column(
-                children: [
-                  _buildListTile(context, theme, colorScheme, icon: Icons.help_outline_rounded, title: l10n.helpCenter, onTap: () {}),
-                  Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w),
-                  _buildListTile(context, theme, colorScheme, icon: Icons.privacy_tip_outlined, title: l10n.privacyPolicy, onTap: () {}),
-                ],
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(16.r),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildListTile(context, theme, colorScheme, icon: Icons.help_outline_rounded, title: l10n.helpCenter, onTap: () => _launchUrl('https://nguyenanhgroup.vn/')),
+                      Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w),
+                      _buildListTile(context, theme, colorScheme, icon: Icons.privacy_tip_outlined, title: l10n.privacyPolicy, onTap: () => _launchUrl('https://nguyenanhgroup.vn/')),
+                    ],
+                  ),
+                ),
               ),
             ),
             SizedBox(height: 24.h),
 
             // Logout Button
-            OutlinedButton.icon(
-              onPressed: _handleLogout,
-              icon: Icon(Icons.logout_rounded, color: colorScheme.error),
-              label: Text(
-                l10n.logOut,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: colorScheme.error,
-                  fontWeight: FontWeight.w700,
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 450),
+                child: OutlinedButton.icon(
+                  onPressed: _handleLogout,
+                  icon: Icon(Icons.logout_rounded, color: colorScheme.error),
+                  label: Text(
+                    l10n.logOut,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: colorScheme.error,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                    side: BorderSide(color: colorScheme.error.withOpacity(0.3)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+                    backgroundColor: colorScheme.error.withOpacity(0.1),
+                    minimumSize: const Size(double.infinity, 0),
+                  ),
                 ),
-              ),
-              style: OutlinedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 14.h),
-                side: BorderSide(color: colorScheme.error.withOpacity(0.3)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-                backgroundColor: colorScheme.error.withOpacity(0.1),
               ),
             ),
             SizedBox(height: 32.h),
@@ -377,6 +420,13 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
 
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
 
   Widget _buildListCard(BuildContext context, ThemeData theme, ColorScheme colorScheme, {required IconData icon, required Color iconColor, required String title, required String subtitle, required VoidCallback onTap}) {
     return InkWell(
@@ -418,7 +468,7 @@ class _ProfilePageState extends State<ProfilePage> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(16.r),
       child: Container(
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(12.w),
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(16.r),
@@ -427,24 +477,34 @@ class _ProfilePageState extends State<ProfilePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: EdgeInsets.all(8.w),
-              decoration: BoxDecoration(color: iconColor.withOpacity(0.15), borderRadius: BorderRadius.circular(12.r)),
-              child: Icon(icon, color: iconColor, size: 24.sp),
+              padding: EdgeInsets.all(6.w),
+              decoration: BoxDecoration(color: iconColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10.r)),
+              child: Icon(icon, color: iconColor, size: 20.sp),
             ),
             const Spacer(),
-            Text(title, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.sp, color: colorScheme.onSurface)),
-            SizedBox(height: 4.h),
-            Text(subtitle, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 11.sp, height: 1.2)),
+            Text(
+              title, 
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.sp, color: colorScheme.onSurface),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(height: 2.h),
+            Text(
+              subtitle, 
+              style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 10.sp, height: 1.2),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildListTile(BuildContext context, ThemeData theme, ColorScheme colorScheme, {required IconData icon, required String title, required VoidCallback onTap}) {
+  Widget _buildListTile(BuildContext context, ThemeData theme, ColorScheme colorScheme, {required IconData icon, Color? iconColor, required String title, required VoidCallback onTap}) {
     return ListTile(
-      leading: Icon(icon, color: colorScheme.onSurfaceVariant),
-      title: Text(title, style: TextStyle(fontWeight: FontWeight.w600, color: colorScheme.onSurface, fontSize: 15.sp)),
+      leading: Icon(icon, color: iconColor ?? colorScheme.onSurfaceVariant),
+      title: Text(title, style: TextStyle(fontWeight: FontWeight.w600, color: iconColor ?? colorScheme.onSurface, fontSize: 15.sp)),
       trailing: Icon(Icons.chevron_right_rounded, color: colorScheme.outlineVariant),
       onTap: onTap,
     );

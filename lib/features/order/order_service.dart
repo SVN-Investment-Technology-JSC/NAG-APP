@@ -40,11 +40,12 @@ class OrderService {
   /// Fetch orders by start date
   Future<List<OrderModel>> getOrdersByDate(String date) async {
     try {
-      final String fullUrl = '${AppEndpoints.apiBaseUrl}orders/order-start=$date';
+      final String fullUrl = '${AppEndpoints.apiBaseUrl}orders';
 
       final response = await dio.get(
         fullUrl,
         queryParameters: {
+          'order_start_datetime': date,
           'limit': 1000,
         },
       );
