@@ -13,6 +13,7 @@ import 'package:nguyenanh/core/network/notification_socket_service.dart';
 import 'package:nguyenanh/core/network/socket_service.dart';
 import 'package:nguyenanh/core/theme/app_spacing.dart';
 import 'package:nguyenanh/core/theme/theme_toggle_button.dart';
+import 'package:nguyenanh/l10n/app_localizations.dart';
 import 'package:nguyenanh/features/home/presentation/widgets/home_map_section.dart';
 import 'package:nguyenanh/features/home/presentation/widgets/home_order_item.dart';
 import 'package:nguyenanh/features/home/presentation/widgets/home_station_card.dart';
@@ -200,7 +201,7 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: Text(
-          'Trang chủ',
+          l10n.home,
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w800,
           ),
@@ -221,7 +222,7 @@ class _HomePageState extends State<HomePage> {
               },
               icon: Icon(Icons.save_outlined, size: 16.sp),
               label: Text(
-                'CHECK LOG',
+                l10n.checkLog,
                 style: TextStyle(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w700,
@@ -284,166 +285,171 @@ class _HomePageState extends State<HomePage> {
 
     return [
       SliverToBoxAdapter(
-        child: Container(
-          margin: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xsH),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(16.r),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 12.h),
-                child: Row(
-                  children: [
-                    Icon(Icons.local_shipping_rounded, size: 18.sp, color: colorScheme.primary),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: Text(
-                        'XE TRONG BÃI',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        _showYardEntryTime ? Icons.visibility_rounded : Icons.visibility_off_rounded,
-                        size: 18.sp,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      onPressed: () => setState(() => _showYardEntryTime = !_showYardEntryTime),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                    SizedBox(width: 12.w),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer.withValues(alpha: 0.7),
-                        borderRadius: BorderRadius.circular(6.r),
-                      ),
-                      child: Text(
-                        '${readyList.length} XE',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          color: colorScheme.onPrimaryContainer,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: 800.w),
+            child: Container(
+              margin: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xsH),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(16.r),
               ),
-              ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: 380.h),
-                child: Scrollbar(
-                  controller: _yardScrollController,
-                  thumbVisibility: true,
-                  child: SingleChildScrollView(
-                    controller: _yardScrollController,
-                    padding: EdgeInsets.fromLTRB(12.w, 0, 12.w, 12.h),
-                    child: Column(
-                      children: readyList.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final item = entry.value;
-                    final v = item['vehicle'] as VtrackingVehicle;
-                    final distance = item['distance'] as num;
-                    final order = item['order'] as OrderModel?;
-                    
-                    String timeStr = '--:--:--';
-                    String dateStr = '--/--/----';
-                    if (order != null && order.orderInitDatetime.isNotEmpty) {
-                      try {
-                        final dt = DateTime.parse(order.orderInitDatetime);
-                        timeStr = DateFormat('HH:mm:ss').format(dt);
-                        dateStr = DateFormat('dd/MM/yyyy').format(dt);
-                      } catch (_) {}
-                    }
-
-                    return Container(
-                      margin: EdgeInsets.only(bottom: index == readyList.length - 1 ? 0 : 6.h),
-                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-                      decoration: BoxDecoration(
-                        color: colorScheme.surface,
-                        borderRadius: BorderRadius.circular(8.r),
-                        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: colorScheme.shadow.withValues(alpha: 0.03),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              '${v.licensePlate}${v.vehicleName.isNotEmpty ? ' | ${v.vehicleName}' : ''}',
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 13.sp,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 12.h),
+                    child: Row(
+                      children: [
+                        Icon(Icons.local_shipping_rounded, size: 18.sp, color: colorScheme.primary),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: Text(
+                            l10n.parkedVehicles.toUpperCase(),
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.5,
                             ),
                           ),
-                          SizedBox(width: 8.w),
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                distance >= 1000 ? '${(distance / 1000).toStringAsFixed(1)} km' : '${distance.round()} m',
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 10.sp,
-                                ),
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            _showYardEntryTime ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+                            size: 18.sp,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                          onPressed: () => setState(() => _showYardEntryTime = !_showYardEntryTime),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                        SizedBox(width: 12.w),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primaryContainer.withValues(alpha: 0.7),
+                            borderRadius: BorderRadius.circular(6.r),
+                          ),
+                          child: Text(
+                            '${readyList.length} XE',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              color: colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: 380.h),
+                    child: Scrollbar(
+                      controller: _yardScrollController,
+                      thumbVisibility: true,
+                      child: SingleChildScrollView(
+                        controller: _yardScrollController,
+                        padding: EdgeInsets.fromLTRB(12.w, 0, 12.w, 12.h),
+                        child: Column(
+                          children: readyList.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final item = entry.value;
+                            final v = item['vehicle'] as VtrackingVehicle;
+                            final distance = item['distance'] as num;
+                            final order = item['order'] as OrderModel?;
+                            
+                            String timeStr = '--:--:--';
+                            String dateStr = '--/--/----';
+                            if (order != null && order.orderInitDatetime.isNotEmpty) {
+                              try {
+                                final dt = DateTime.parse(order.orderInitDatetime);
+                                timeStr = DateFormat('HH:mm:ss').format(dt);
+                                dateStr = DateFormat('dd/MM/yyyy').format(dt);
+                              } catch (_) {}
+                            }
+
+                            return Container(
+                              margin: EdgeInsets.only(bottom: index == readyList.length - 1 ? 0 : 6.h),
+                              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                              decoration: BoxDecoration(
+                                color: colorScheme.surface,
+                                borderRadius: BorderRadius.circular(8.r),
+                                border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: colorScheme.shadow.withValues(alpha: 0.03),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
-                              if (order != null && _showYardEntryTime)
-                                Padding(
-                                  padding: EdgeInsets.only(top: 2.h),
-                                  child: Row(
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '${v.licensePlate}${v.vehicleName.isNotEmpty ? ' | ${v.vehicleName}' : ''}',
+                                      style: theme.textTheme.titleSmall?.copyWith(
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 13.sp,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Column(
                                     mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Text(
-                                        timeStr,
+                                        distance >= 1000 ? '${(distance / 1000).toStringAsFixed(1)} km' : '${distance.round()} m',
                                         style: theme.textTheme.labelSmall?.copyWith(
-                                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 9.sp,
+                                          color: colorScheme.onSurfaceVariant,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 10.sp,
                                         ),
                                       ),
-                                      SizedBox(width: 8.w),
-                                      Text(
-                                        dateStr,
-                                        style: theme.textTheme.labelSmall?.copyWith(
-                                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 9.sp,
+                                      if (order != null && _showYardEntryTime)
+                                        Padding(
+                                          padding: EdgeInsets.only(top: 2.h),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                timeStr,
+                                                style: theme.textTheme.labelSmall?.copyWith(
+                                                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 9.sp,
+                                                ),
+                                              ),
+                                              SizedBox(width: 8.w),
+                                              Text(
+                                                dateStr,
+                                                style: theme.textTheme.labelSmall?.copyWith(
+                                                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 9.sp,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                      ),
                                     ],
                                   ),
-                                ),
-                            ],
-                          ),
-                        ],
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
-                    );
-                  }).toList(),
-                ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-        ],
+        ),
       ),
-    ),
-  ),
-];
+    ];
 }
 
   List<Widget> _buildStationSliver() {
@@ -451,6 +457,7 @@ class _HomePageState extends State<HomePage> {
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return [
       SliverToBoxAdapter(
@@ -470,7 +477,7 @@ class _HomePageState extends State<HomePage> {
                     Icon(Icons.business_rounded, size: 18.sp, color: colorScheme.primary),
                     SizedBox(width: 8.w),
                     Text(
-                      'Các trạm đang hoạt động',
+                      l10n.activeStations,
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),

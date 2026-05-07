@@ -50,7 +50,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get confirmLogoutContent => 'Bạn có chắc chắn muốn đăng xuất không?';
 
   @override
-  String get noData => 'Chưa có dữ liệu';
+  String get noData => 'Không có dữ liệu';
 
   @override
   String get loginInvalidCredentials => 'Sai tài khoản hoặc mật khẩu';
@@ -161,7 +161,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get activeTrips => 'Đang chạy';
 
   @override
-  String get completedStatus => 'Hoàn thành';
+  String get completedStatus => 'hoàn thành';
 
   @override
   String get noTripsForVehicle => 'Không có chuyến cho xe này hôm nay';
@@ -317,13 +317,16 @@ class AppLocalizationsVi extends AppLocalizations {
   String get vehicleQueue => 'Thứ tự lốt xe';
 
   @override
-  String get homeTab => 'HOME';
+  String get homeTab => 'Trang chủ';
 
   @override
-  String get tripsTab => 'TRIPS';
+  String get tripsTab => 'Chuyến đi';
 
   @override
-  String get profileTab => 'PROFILE';
+  String get profileTab => 'Cá nhân';
+
+  @override
+  String get reportsTab => 'Báo cáo';
 
   @override
   String get vietnamese => 'Tiếng Việt (VN)';
@@ -453,4 +456,186 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get live => 'Trực tiếp';
+
+  @override
+  String get deleteAccount => 'Xóa tài khoản';
+
+  @override
+  String get deleteAccountWarning =>
+      'Hành động này không thể hoàn tác. Tất cả dữ liệu cá nhân của bạn sẽ bị xóa vĩnh viễn.';
+
+  @override
+  String get confirmDeleteAccount => 'Xác nhận xóa tài khoản';
+
+  @override
+  String get accountDeleted => 'Tài khoản của bạn đã được xóa';
+
+  @override
+  String get donotHaveAccount => 'Chưa có tài khoản?';
+
+  @override
+  String get contactAdmin =>
+      'Liên hệ quản trị viên để được cấp quyền truy cập.';
+
+  @override
+  String get partnershipContact => 'Liên hệ hợp tác';
+
+  @override
+  String get checkLog => 'NHẬT KÝ';
+
+  @override
+  String get cameraConnected => 'Camera kết nối';
+
+  @override
+  String get cameraDisconnected => 'Camera ngắt kết nối';
+
+  @override
+  String get parkedVehicles => 'XE TRONG BÃI';
+
+  @override
+  String get transportReport => 'Báo cáo Vận tải';
+
+  @override
+  String get production => 'Sản lượng';
+
+  @override
+  String get vehicleRanking => 'Xếp hạng xe';
+
+  @override
+  String get byDay => 'Theo ngày';
+
+  @override
+  String get byWeek => 'Theo tuần';
+
+  @override
+  String get byMonth => 'Theo tháng';
+
+  @override
+  String get exportReportBtn => 'XUẤT BÁO CÁO';
+
+  @override
+  String get avgProduction => 'SẢN LƯỢNG TB';
+
+  @override
+  String get totalTrips => 'TỔNG CHUYẾN';
+
+  @override
+  String get completedUpper => 'HOÀN THÀNH';
+
+  @override
+  String get totalKm => 'TỔNG KM';
+
+  @override
+  String get productionChart => 'Biểu đồ sản lượng';
+
+  @override
+  String productionChartDesc(Object groupBy) {
+    return 'Sản lượng vận chuyển theo $groupBy';
+  }
+
+  @override
+  String get hours => 'giờ';
+
+  @override
+  String get minutes => 'phút';
+
+  @override
+  String get transportingStatus => 'Đang di chuyển';
+
+  @override
+  String get mixLabel => 'Trộn';
+
+  @override
+  String get totalProduction => 'Tổng sản lượng';
+
+  @override
+  String get averageLevel => 'Mức trung bình';
+
+  @override
+  String get detailsUpper => 'CHI TIẾT';
+
+  @override
+  String get stationPerformance => 'Hiệu suất Trạm';
+
+  @override
+  String get seeAll => 'Xem tất cả';
+
+  @override
+  String get trips => 'chuyến';
+
+  @override
+  String get tons => 'Tấn';
+
+  @override
+  String get productionRecent => 'Sản lượng theo kỳ gần nhất';
+
+  @override
+  String get clickToOpenDetails => 'Nhấn vào từng kỳ để mở chi tiết chuyến';
+
+  @override
+  String get dayUpper => 'NGÀY';
+
+  @override
+  String get periodUpper => 'KỲ';
+
+  @override
+  String get vehicleRankingTitle => 'Xếp hạng xe năng suất';
+
+  @override
+  String get vehicleRankingDesc => 'Dựa trên tổng số chuyến và quãng đường';
+
+  @override
+  String get vehicleCode => 'MÃ XE';
+
+  @override
+  String get licensePlate => 'BIỂN SỐ';
+
+  @override
+  String get tripsUpper => 'CHUYẾN';
+
+  @override
+  String get operationalLog => 'Nhật ký vận hành';
+
+  @override
+  String totalVehicles(Object count) {
+    return 'Tổng: $count xe';
+  }
+
+  @override
+  String get delivering => 'Đang giao hàng';
+
+  @override
+  String get startedAt => 'bắt đầu lúc';
+
+  @override
+  String get statusInDay => 'Trạng thái trong ngày';
+
+  @override
+  String get searchVehicleHint => 'Tìm xe, biển số...';
+
+  @override
+  String get noStationData => 'Chưa có dữ liệu trạm';
+
+  @override
+  String get noTripsFound => 'Không tìm thấy chuyến xe nào';
+
+  @override
+  String get tripDetail => 'Chi tiết chuyến';
+
+  @override
+  String tripsInPeriod(Object count) {
+    return '$count chuyến trong kỳ này';
+  }
+
+  @override
+  String get otherStatus => 'Khác';
+
+  @override
+  String get noResultsFound => 'Không tìm thấy kết quả';
+
+  @override
+  String get noTripsYet => 'Chưa có chuyến nào';
+
+  @override
+  String get featureUnderDevelopment => 'Tính năng đang phát triển';
 }

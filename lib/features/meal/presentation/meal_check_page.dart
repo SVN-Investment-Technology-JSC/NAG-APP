@@ -391,7 +391,12 @@ class _MealCheckPageState extends State<MealCheckPage> {
       await file.writeAsBytes(byteData.buffer.asUint8List());
 
       if (!mounted) return;
-      await Share.shareXFiles([XFile(file.path)], subject: 'Com Ca ${DateFormat('dd/MM').format(_fromDate)} - ${DateFormat('dd/MM').format(_toDate)}');
+      final size = MediaQuery.of(context).size;
+      await Share.shareXFiles(
+        [XFile(file.path)], 
+        subject: 'Com Ca ${DateFormat('dd/MM').format(_fromDate)} - ${DateFormat('dd/MM').format(_toDate)}',
+        sharePositionOrigin: Rect.fromLTWH(0, 0, size.width, size.height / 2),
+      );
     } catch (e) {
       debugPrint('Share image error: $e');
       if (mounted) {

@@ -9,6 +9,7 @@ import 'package:nguyenanh/features/auth/data/services/auth_service.dart';
 import 'package:nguyenanh/features/auth/data/services/auth_storage_service.dart';
 import 'package:nguyenanh/features/shell/presentation/main_shell.dart';
 import 'package:nguyenanh/l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SelectionPage extends StatefulWidget {
   const SelectionPage({super.key});
@@ -423,7 +424,53 @@ class _SelectionPageState extends State<SelectionPage> {
                     ),
                   ),
 
-                  SizedBox(height: 20.h),
+                  SizedBox(height: 32.h),
+
+                  // REGISTRATION HELP (For Apple Review)
+                  Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20.w),
+                      child: Column(
+                        children: [
+                          Text(
+                            l10n.donotHaveAccount,
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.onSurface.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            l10n.contactAdmin,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w500,
+                              color: colorScheme.onSurface.withValues(alpha: 0.4),
+                            ),
+                          ),
+                          SizedBox(height: 12.h),
+                          TextButton.icon(
+                            onPressed: () async {
+                              final uri = Uri.parse('https://nguyenanhgroup.vn/');
+                              if (await canLaunchUrl(uri)) {
+                                await launchUrl(uri, mode: LaunchMode.externalApplication);
+                              }
+                            },
+                            icon: Icon(Icons.business_center_rounded, size: 18.sp),
+                            label: Text(l10n.partnershipContact),
+                            style: TextButton.styleFrom(
+                              foregroundColor: colorScheme.primary,
+                              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 32.h),
 
                   // FOOTER
                   Center(

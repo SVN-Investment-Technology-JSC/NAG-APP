@@ -50,7 +50,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirmLogoutContent => 'Are you sure you want to logout?';
 
   @override
-  String get noData => 'No data available';
+  String get noData => 'No data';
 
   @override
   String get loginInvalidCredentials => 'Incorrect username or password';
@@ -160,7 +160,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activeTrips => 'Running';
 
   @override
-  String get completedStatus => 'Completed';
+  String get completedStatus => 'completed';
 
   @override
   String get noTripsForVehicle => 'No trips for this vehicle today';
@@ -316,13 +316,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vehicleQueue => 'Vehicle Queue';
 
   @override
-  String get homeTab => 'HOME';
+  String get homeTab => 'Home';
 
   @override
-  String get tripsTab => 'TRIPS';
+  String get tripsTab => 'Trips';
 
   @override
-  String get profileTab => 'PROFILE';
+  String get profileTab => 'Profile';
+
+  @override
+  String get reportsTab => 'Reports';
 
   @override
   String get vietnamese => 'Tiếng Việt (VN)';
@@ -452,4 +455,185 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get live => 'Live';
+
+  @override
+  String get deleteAccount => 'Delete Account';
+
+  @override
+  String get deleteAccountWarning =>
+      'This action cannot be undone. All your personal data will be permanently deleted.';
+
+  @override
+  String get confirmDeleteAccount => 'Confirm Delete Account';
+
+  @override
+  String get accountDeleted => 'Your account has been deleted';
+
+  @override
+  String get donotHaveAccount => 'Don\'t have an account?';
+
+  @override
+  String get contactAdmin => 'Contact admin for access.';
+
+  @override
+  String get partnershipContact => 'Partnership Contact';
+
+  @override
+  String get checkLog => 'CHECK LOG';
+
+  @override
+  String get cameraConnected => 'Camera connected';
+
+  @override
+  String get cameraDisconnected => 'Camera disconnected';
+
+  @override
+  String get parkedVehicles => 'PARKED VEHICLES';
+
+  @override
+  String get transportReport => 'Transport Report';
+
+  @override
+  String get production => 'Production';
+
+  @override
+  String get vehicleRanking => 'Vehicle Ranking';
+
+  @override
+  String get byDay => 'By day';
+
+  @override
+  String get byWeek => 'By week';
+
+  @override
+  String get byMonth => 'By month';
+
+  @override
+  String get exportReportBtn => 'EXPORT REPORT';
+
+  @override
+  String get avgProduction => 'AVG PRODUCTION';
+
+  @override
+  String get totalTrips => 'TOTAL TRIPS';
+
+  @override
+  String get completedUpper => 'COMPLETED';
+
+  @override
+  String get totalKm => 'TOTAL KM';
+
+  @override
+  String get productionChart => 'Production Chart';
+
+  @override
+  String productionChartDesc(Object groupBy) {
+    return 'Transport production by $groupBy';
+  }
+
+  @override
+  String get hours => 'h';
+
+  @override
+  String get minutes => 'm';
+
+  @override
+  String get transportingStatus => 'Moving';
+
+  @override
+  String get mixLabel => 'Mix';
+
+  @override
+  String get totalProduction => 'Total production';
+
+  @override
+  String get averageLevel => 'Average';
+
+  @override
+  String get detailsUpper => 'DETAILS';
+
+  @override
+  String get stationPerformance => 'Station Performance';
+
+  @override
+  String get seeAll => 'See all';
+
+  @override
+  String get trips => 'trips';
+
+  @override
+  String get tons => 'Tons';
+
+  @override
+  String get productionRecent => 'Production by recent period';
+
+  @override
+  String get clickToOpenDetails => 'Click on each period to open trip details';
+
+  @override
+  String get dayUpper => 'DAY';
+
+  @override
+  String get periodUpper => 'PERIOD';
+
+  @override
+  String get vehicleRankingTitle => 'Productive Vehicle Ranking';
+
+  @override
+  String get vehicleRankingDesc => 'Based on total trips and distance';
+
+  @override
+  String get vehicleCode => 'VEHICLE CODE';
+
+  @override
+  String get licensePlate => 'LICENSE PLATE';
+
+  @override
+  String get tripsUpper => 'TRIPS';
+
+  @override
+  String get operationalLog => 'Operational Log';
+
+  @override
+  String totalVehicles(Object count) {
+    return 'Total: $count vehicles';
+  }
+
+  @override
+  String get delivering => 'Delivering';
+
+  @override
+  String get startedAt => 'started at';
+
+  @override
+  String get statusInDay => 'Status in day';
+
+  @override
+  String get searchVehicleHint => 'Find vehicle, license plate...';
+
+  @override
+  String get noStationData => 'No station data yet';
+
+  @override
+  String get noTripsFound => 'No trips found';
+
+  @override
+  String get tripDetail => 'Trip detail';
+
+  @override
+  String tripsInPeriod(Object count) {
+    return '$count trips in this period';
+  }
+
+  @override
+  String get otherStatus => 'Other';
+
+  @override
+  String get noResultsFound => 'No results found';
+
+  @override
+  String get noTripsYet => 'No trips yet';
+
+  @override
+  String get featureUnderDevelopment => 'Feature under development';
 }

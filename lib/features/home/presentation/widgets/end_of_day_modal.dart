@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:nguyenanh/core/theme/app_spacing.dart';
 import 'package:nguyenanh/features/vehicle/data/models/end_of_day_model.dart';
 import 'package:nguyenanh/features/vehicle/data/services/vehicle_service.dart';
+import 'package:nguyenanh/l10n/app_localizations.dart';
 
 class EndOfDayModal extends StatefulWidget {
   final VehicleService vehicleService;
@@ -20,6 +21,7 @@ class _EndOfDayModalState extends State<EndOfDayModal> {
   DateTime _selectedDate = DateTime.now();
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+  AppLocalizations get l10n => AppLocalizations.of(context)!;
 
   @override
   void dispose() {
@@ -146,7 +148,7 @@ class _EndOfDayModalState extends State<EndOfDayModal> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Nhật ký vận hành',
+                    l10n.operationalLog,
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       fontSize: 20.sp,
@@ -154,7 +156,7 @@ class _EndOfDayModalState extends State<EndOfDayModal> {
                   ),
                   if (_data != null)
                     Text(
-                      'Tổng: ${_data!.total} xe',
+                      l10n.totalVehicles(_data!.total),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w500,
@@ -248,8 +250,8 @@ class _EndOfDayModalState extends State<EndOfDayModal> {
             SizedBox(height: 16.h),
             Text(
               _searchQuery.isEmpty
-                  ? 'Không có dữ liệu ngày ${DateFormat('dd/MM/yyyy').format(_selectedDate)}'
-                  : 'Không tìm thấy xe phù hợp',
+                  ? '${l10n.noData} ${DateFormat('dd/MM/yyyy').format(_selectedDate)}'
+                  : l10n.noTripsFound,
               style: theme.textTheme.bodyLarge?.copyWith(color: colorScheme.onSurfaceVariant),
             ),
           ],
@@ -318,7 +320,7 @@ class _EndOfDayModalState extends State<EndOfDayModal> {
                 SizedBox(width: 6.w),
                 Text(
                   vehicle.finishedAt != null
-                      ? DateFormat('HH:mm').format(DateTime.parse(vehicle.finishedAt!))
+                      ? DateFormat('HH:mm').format(DateTime.parse(vehicle.finishedAt!.endsWith('Z') ? vehicle.finishedAt! : '${vehicle.finishedAt!}Z').toLocal())
                       : '-',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
@@ -417,7 +419,7 @@ class _EndOfDayModalState extends State<EndOfDayModal> {
         onChanged: (val) => setState(() => _searchQuery = val.trim().toLowerCase()),
         style: theme.textTheme.bodyMedium,
         decoration: InputDecoration(
-          hintText: 'Tìm xe, biển số...',
+          hintText: l10n.searchVehicleHint,
           prefixIcon: Icon(Icons.search, size: 18.sp, color: colorScheme.onSurfaceVariant),
           contentPadding: EdgeInsets.symmetric(horizontal: 12.w),
           filled: true,

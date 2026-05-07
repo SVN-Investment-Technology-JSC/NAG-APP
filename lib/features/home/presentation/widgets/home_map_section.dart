@@ -118,8 +118,8 @@ class _HomeMapSectionState extends State<HomeMapSection> {
 
       return Marker(
         point: LatLng(v.latitude, v.longitude),
-        width: 100,
-        height: 80,
+        width: 100.w,
+        height: 100.h,
         alignment: Alignment.topCenter, // Align so the tip points at the coordinate
         child: GestureDetector(
           onTap: () => VehicleDetailSheet.show(context, v, widget.stations),

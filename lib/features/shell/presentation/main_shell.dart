@@ -10,6 +10,7 @@ import 'package:nguyenanh/features/attendance/presentation/attendance_page.dart'
 import 'package:nguyenanh/features/home/presentation/home_page.dart';
 import 'package:nguyenanh/features/meal/presentation/meal_check_page.dart';
 import 'package:nguyenanh/features/profile/presentation/profile_page.dart';
+import 'package:nguyenanh/features/reports/presentation/pages/report_page.dart';
 import 'package:nguyenanh/features/order/data/models/order_model.dart';
 import 'package:nguyenanh/features/order/order_service.dart';
 import 'package:nguyenanh/features/stations/data/models/station_model.dart';
@@ -51,6 +52,7 @@ class _MainShellState extends State<MainShell> {
   List<VehicleModel> _vehicles = [];
   bool _isLoading = true;
   String? _error;
+  DateTime? _targetTripDate;
 
   @override
   void initState() {
@@ -270,6 +272,11 @@ class _MainShellState extends State<MainShell> {
                 label: l10n.tripsTab,
               ),
               NavigationDestination(
+                icon: const Icon(Icons.bar_chart_outlined),
+                selectedIcon: const Icon(Icons.bar_chart_rounded),
+                label: l10n.reportsTab,
+              ),
+              NavigationDestination(
                 icon: const Icon(Icons.person_outline_rounded),
                 selectedIcon: const Icon(Icons.person_rounded),
                 label: l10n.profileTab,
@@ -300,6 +307,15 @@ class _MainShellState extends State<MainShell> {
             vehicles: _vehicles,
             vtrackingVehicles: _vtrackingVehicles,
             stations: _stations,
+            initialDate: _targetTripDate,
+          ),
+          ReportPage(
+            onNavigateTrips: (date) {
+              setState(() {
+                _targetTripDate = date;
+                _currentIndex = 1;
+              });
+            },
           ),
           ProfilePage(
             onNavigateHome: () => setState(() => _currentIndex = 0),

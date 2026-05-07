@@ -153,9 +153,11 @@ class _AttendancePageState extends State<AttendancePage> {
     await file.writeAsBytes(fileBytes);
 
     if (!mounted) return;
+    final size = MediaQuery.of(context).size;
     await Share.shareXFiles(
       [XFile(file.path)],
       subject: 'Cham cong $sheetName',
+      sharePositionOrigin: Rect.fromLTWH(0, 0, size.width, size.height / 2),
     );
   }
 
