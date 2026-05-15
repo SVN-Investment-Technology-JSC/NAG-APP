@@ -14,7 +14,7 @@ class AppEndpoints {
   // VTracking
   static const String vtrackingBaseUrl = 'https://vtracking2.viettel.vn';
   static const String vtrackingUsername = 'nguyenanh2_qbh';
-  static const String vtrackingPassword = 'Nguyenanh@123';
+  static const String vtrackingPassword = 'Nguyenanh2@2026';
   static const String vtrackingOrgId = '5a98e365-b805-475c-8fea-6e863d502d72';
 
   // Reports
