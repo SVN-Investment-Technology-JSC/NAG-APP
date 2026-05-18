@@ -170,6 +170,8 @@
   "contactAdmin": "Liên hệ quản trị viên để được cấp quyền truy cập.",
   "partnershipContact": "Liên hệ hợp tác",
   "checkLog": "NHẬT KÝ",
+  "queueHistory": "LỊCH SỬ LỐT XE",
+  "syncSlots": "ĐỒNG BỘ LỐT XE",
   "cameraConnected": "Camera kết nối",
   "cameraDisconnected": "Camera ngắt kết nối",
   "parkedVehicles": "XE TRONG BÃI",
