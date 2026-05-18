@@ -20,4 +20,7 @@ class AppEndpoints {
   // Reports
   static const String reportProduction = 'reports/production';
   static const String vehicleTypes = 'vehicle-types';
+  
+  // Multi
+  static const String tankerQueueSnapshot = 'multi/tanker-queue-snapshot';
 }

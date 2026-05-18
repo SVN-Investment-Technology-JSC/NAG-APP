@@ -170,6 +170,8 @@
   "contactAdmin": "Contact admin for access.",
   "partnershipContact": "Partnership Contact",
   "checkLog": "CHECK LOG",
+  "queueHistory": "QUEUE HISTORY",
+  "syncSlots": "SYNC SLOTS",
   "cameraConnected": "Camera connected",
   "cameraDisconnected": "Camera disconnected",
   "parkedVehicles": "PARKED VEHICLES",

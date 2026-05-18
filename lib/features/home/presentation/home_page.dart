@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:nguyenanh/features/vehicle/data/services/vehicle_service.dart';
 import 'package:nguyenanh/features/home/presentation/widgets/end_of_day_modal.dart';
+import 'package:nguyenanh/features/home/presentation/widgets/queue_history_modal.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 import 'package:intl/intl.dart';
@@ -210,7 +211,7 @@ class _HomePageState extends State<HomePage> {
         centerTitle: false,
         actions: [
           Padding(
-            padding: EdgeInsets.only(right: 16.w),
+            padding: EdgeInsets.only(right: 8.w),
             child: OutlinedButton.icon(
               onPressed: () {
                 showDialog(
@@ -236,6 +237,59 @@ class _HomePageState extends State<HomePage> {
                 minimumSize: Size(0, 32.h),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
               ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(right: 8.w),
+            child: PopupMenuButton<String>(
+              icon: Icon(Icons.menu, color: colorScheme.primary),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+              color: colorScheme.surface,
+              elevation: 4,
+              onSelected: (value) {
+                if (value == 'queue_history') {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const QueueHistoryModal(),
+                  );
+                } else if (value == 'sync_slots') {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${l10n.syncSlots} - Tính năng đang phát triển')),
+                  );
+                }
+              },
+              itemBuilder: (BuildContext context) => [
+                PopupMenuItem<String>(
+                  value: 'sync_slots',
+                  child: Row(
+                    children: [
+                      Icon(Icons.sync, color: colorScheme.primary, size: 20.sp),
+                      SizedBox(width: 12.w),
+                      Text(
+                        l10n.syncSlots,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'queue_history',
+                  child: Row(
+                    children: [
+                      Icon(Icons.history, color: colorScheme.primary, size: 20.sp),
+                      SizedBox(width: 12.w),
+                      Text(
+                        l10n.queueHistory,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ],

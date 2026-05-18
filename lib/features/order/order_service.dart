@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:nguyenanh/core/network/app_endpoints.dart';
 import 'package:nguyenanh/features/order/data/models/order_model.dart';
+import 'package:nguyenanh/features/order/data/models/tanker_queue_snapshot_item.dart';
 
 class OrderService {
   final Dio dio;
@@ -116,5 +117,29 @@ class OrderService {
   Future<void> shiftClose(String operationDate) async {
     final String fullUrl = '${AppEndpoints.apiBaseUrl}orders/shift-close';
     await dio.post(fullUrl, data: {'operation_date': operationDate});
+  }
+
+  Future<List<TankerQueueSnapshotItem>> getTankerQueueSnapshot(String date) async {
+    try {
+      final String fullUrl = '${AppEndpoints.apiBaseUrl}${AppEndpoints.tankerQueueSnapshot}';
+      final response = await dio.get(
+        fullUrl,
+        queryParameters: {'date': date},
+      );
+
+      if (response.statusCode == 200 && response.data['multi_data'] != null) {
+        final multiData = response.data['multi_data'];
+        if (multiData['items'] != null) {
+          final List<dynamic> items = multiData['items'];
+          final parsedItems = items.map((json) => TankerQueueSnapshotItem.fromJson(json)).toList();
+          parsedItems.sort((a, b) => a.position.compareTo(b.position));
+          return parsedItems;
+        }
+      }
+      return [];
+    } catch (e) {
+      debugPrint('[ORDER SERVICE] getTankerQueueSnapshot Error: $e');
+      rethrow;
+    }
   }
 }

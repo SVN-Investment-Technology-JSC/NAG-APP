@@ -196,15 +196,29 @@ class _ProfilePageState extends State<ProfilePage> {
             // User Profile Section
             Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 450),
+                constraints: const BoxConstraints(maxWidth: 800),
                 child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.w),
+                  padding: EdgeInsets.all(20.w),
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest,
+                    gradient: LinearGradient(
+                      colors: [
+                        colorScheme.primaryContainer.withValues(alpha: 0.5),
+                        colorScheme.surface,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     borderRadius: BorderRadius.circular(24.r),
+                    border: Border.all(color: colorScheme.primary.withValues(alpha: 0.1), width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.shadow.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                  child: Row(
                     children: [
                       InkWell(
                         onTap: () {
@@ -215,21 +229,25 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           );
                         },
-                        borderRadius: BorderRadius.circular(36.r),
+                        borderRadius: BorderRadius.circular(40.r),
                         child: Stack(
                           alignment: Alignment.bottomRight,
                           children: [
                             CircleAvatar(
                               radius: 36.r,
-                              backgroundColor: colorScheme.primaryContainer,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(36.r),
-                                child: Image.network(
-                                  'https://ui-avatars.com/api/?name=${Uri.encodeComponent(displayName)}&background=0D8ABC&color=fff',
-                                  errorBuilder: (context, error, stackTrace) => Icon(
-                                    Icons.person_rounded,
-                                    size: 36.sp,
-                                    color: colorScheme.primary,
+                              backgroundColor: colorScheme.primary,
+                              child: CircleAvatar(
+                                radius: 34.r,
+                                backgroundColor: colorScheme.surface,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(34.r),
+                                  child: Image.network(
+                                    'https://ui-avatars.com/api/?name=${Uri.encodeComponent(displayName)}&background=0D8ABC&color=fff',
+                                    errorBuilder: (context, error, stackTrace) => Icon(
+                                      Icons.person_rounded,
+                                      size: 36.sp,
+                                      color: colorScheme.primary,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -244,25 +262,27 @@ class _ProfilePageState extends State<ProfilePage> {
                                   shape: BoxShape.circle,
                                   border: Border.all(color: colorScheme.surface, width: 2.w),
                                 ),
-                                child: Icon(Icons.edit, color: colorScheme.onPrimary, size: 12.sp),
+                                child: Icon(Icons.camera_alt, color: colorScheme.onPrimary, size: 12.sp),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      SizedBox(height: 12.h),
-                      Text(
-                        displayName,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                      SizedBox(height: 2.h),
-                      Text(
-                        l10n.defaultRoleDesc,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
+                      SizedBox(width: 20.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              displayName,
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: colorScheme.onSurface,
+                                fontSize: 22.sp,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
