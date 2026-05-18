@@ -103,9 +103,7 @@ class _StationHeader extends StatelessWidget {
               ),
             ),
           ),
-          _CameraBadge(isConnected: isCameraConnected, station: station),
-          SizedBox(width: 6.w),
-          if (hasCollecting)
+          if (hasCollecting) ...[
             Container(
               padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 3.h),
               decoration: BoxDecoration(
@@ -120,6 +118,9 @@ class _StationHeader extends StatelessWidget {
                 ),
               ),
             ),
+            SizedBox(width: 6.w),
+          ],
+          _CameraBadge(isConnected: isCameraConnected, station: station),
         ],
       ),
     );
@@ -130,7 +131,10 @@ class _CameraBadge extends StatefulWidget {
   final bool isConnected;
   final Station station;
 
-  const _CameraBadge({required this.isConnected, required this.station});
+  const _CameraBadge({
+    required this.isConnected, 
+    required this.station,
+  });
 
   @override
   State<_CameraBadge> createState() => _CameraBadgeState();

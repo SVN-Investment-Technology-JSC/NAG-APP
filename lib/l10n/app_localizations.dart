@@ -1028,6 +1028,18 @@ abstract class AppLocalizations {
   /// **'CHECK LOG'**
   String get checkLog;
 
+  /// No description provided for @queueHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'QUEUE HISTORY'**
+  String get queueHistory;
+
+  /// No description provided for @syncSlots.
+  ///
+  /// In en, this message translates to:
+  /// **'SYNC SLOTS'**
+  String get syncSlots;
+
   /// No description provided for @cameraConnected.
   ///
   /// In en, this message translates to:

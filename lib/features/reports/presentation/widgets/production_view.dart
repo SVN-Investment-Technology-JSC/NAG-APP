@@ -809,7 +809,7 @@ class _ProductionViewState extends State<ProductionView> {
                       style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      '${station.totalOrders} ${l10n.trips} • ${(station.totalOrders * 5.5).toStringAsFixed(1)} ${l10n.tons}',
+                      '${station.totalOrders} ${l10n.trips}',
                       style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                     ),
                   ],

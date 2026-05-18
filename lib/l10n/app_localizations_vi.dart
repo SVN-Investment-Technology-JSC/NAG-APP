@@ -484,6 +484,12 @@ class AppLocalizationsVi extends AppLocalizations {
   String get checkLog => 'NHẬT KÝ';
 
   @override
+  String get queueHistory => 'LỊCH SỬ LỐT XE';
+
+  @override
+  String get syncSlots => 'ĐỒNG BỘ LỐT XE';
+
+  @override
   String get cameraConnected => 'Camera kết nối';
 
   @override

@@ -482,6 +482,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checkLog => 'CHECK LOG';
 
   @override
+  String get queueHistory => 'QUEUE HISTORY';
+
+  @override
+  String get syncSlots => 'SYNC SLOTS';
+
+  @override
   String get cameraConnected => 'Camera connected';
 
   @override
