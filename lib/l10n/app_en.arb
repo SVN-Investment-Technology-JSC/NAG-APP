@@ -1,6 +1,9 @@
 {
   "@@locale": "en",
   "appTitle": "Nguyên Anh",
+  "allFilter": "All",
+  "mixerFilter": "Mixers",
+  "otherFilter": "Others",
   "selectLanguage": "Language / Ngôn ngữ",
   "fleetSelection": "Login",
   "username": "Username",
