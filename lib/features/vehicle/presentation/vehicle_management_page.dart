@@ -47,6 +47,7 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
 
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  String _categoryFilter = 'all';
 
   @override
   void dispose() {
@@ -976,8 +977,16 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
       );
     }
 
+    final totalAll = _sortedVehicles.length;
+    final totalMixers = _sortedVehicles.where((v) => v.vehicleName.toUpperCase().startsWith('X')).length;
+    final totalOthers = _sortedVehicles.where((v) => !v.vehicleName.toUpperCase().startsWith('X')).length;
+
     final query = _searchQuery.trim().toLowerCase();
     final filteredVehicles = _sortedVehicles.where((v) {
+      final isMixer = v.vehicleName.toUpperCase().startsWith('X');
+      if (_categoryFilter == 'mixer' && !isMixer) return false;
+      if (_categoryFilter == 'other' && isMixer) return false;
+
       if (query.isEmpty) return true;
       return v.vehicleLicensePlate.toLowerCase().contains(query) ||
              v.vehicleName.toLowerCase().contains(query);
@@ -1003,6 +1012,19 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
               ),
               isDense: true,
             ),
+          ),
+        ),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+          child: Row(
+            children: [
+              _buildCategoryPill('all', '${l10n.allFilter} ($totalAll)', theme, colorScheme),
+              SizedBox(width: 8.w),
+              _buildCategoryPill('mixer', '${l10n.mixerFilter} ($totalMixers)', theme, colorScheme),
+              SizedBox(width: 8.w),
+              _buildCategoryPill('other', '${l10n.otherFilter} ($totalOthers)', theme, colorScheme),
+            ],
           ),
         ),
         Expanded(
@@ -1153,6 +1175,45 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryPill(String filterType, String label, ThemeData theme, ColorScheme colorScheme) {
+    final isSelected = _categoryFilter == filterType;
+    final primaryColor = colorScheme.primary;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20.r),
+        onTap: () => setState(() => _categoryFilter = filterType),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+          decoration: BoxDecoration(
+            color: isSelected ? primaryColor : colorScheme.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(20.r),
+            border: Border.all(
+              color: isSelected ? Colors.transparent : colorScheme.outlineVariant,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isSelected) ...[
+                Icon(Icons.check_rounded, color: Colors.white, size: 14.sp),
+                SizedBox(width: 4.w),
+              ],
+              Text(
+                label,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: isSelected ? Colors.white : colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
           ),
         ),
       ),

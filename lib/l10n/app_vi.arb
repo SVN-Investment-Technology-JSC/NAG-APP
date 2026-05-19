@@ -1,6 +1,9 @@
 {
   "@@locale": "vi",
   "appTitle": "Nguyên Anh",
+  "allFilter": "Tất cả",
+  "mixerFilter": "Xe bồn",
+  "otherFilter": "Xe khác",
   "selectLanguage": "Ngôn ngữ / Language",
   "fleetSelection": "Đăng Nhập",
   "username": "Tên đăng nhập",

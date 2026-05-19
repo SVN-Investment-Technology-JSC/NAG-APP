@@ -50,6 +50,8 @@ class _MainShellState extends State<MainShell> {
   List<Station> _stations = [];
   List<VtrackingVehicle> _vtrackingVehicles = [];
   List<VehicleModel> _vehicles = [];
+  List<VtrackingVehicle> _allVtrackingVehicles = [];
+  List<VehicleModel> _allVehicles = [];
   bool _isLoading = true;
   String? _error;
   DateTime? _targetTripDate;
@@ -107,6 +109,7 @@ class _MainShellState extends State<MainShell> {
       final vehicles = await _vtrackingService.fetchVehicles();
       if (!mounted) return;
       setState(() {
+        _allVtrackingVehicles = vehicles;
         _vtrackingVehicles =
             vehicles.where((v) => v.vehicleName.startsWith('X')).toList();
       });
@@ -163,8 +166,10 @@ class _MainShellState extends State<MainShell> {
       if (!mounted) return;
 
       final allVehicles = results[6] as List<VehicleModel>;
+      final activeVehicles =
+          allVehicles.where((v) => v.vehicleStatus != 'maintenance').toList();
       final mixerVehicles =
-          allVehicles.where((v) => v.vehicleName.startsWith('X') && v.vehicleStatus != 'maintenance').toList();
+          activeVehicles.where((v) => v.vehicleName.startsWith('X')).toList();
       final mixerVehicleIds =
           mixerVehicles.map((v) => v.vehicleId).toSet();
 
@@ -218,6 +223,8 @@ class _MainShellState extends State<MainShell> {
         _stations = results[4] as List<Station>;
         _vtrackingVehicles = mixerVtracking;
         _vehicles = mixerVehicles;
+        _allVtrackingVehicles = allVtracking;
+        _allVehicles = activeVehicles;
         _isLoading = false;
         _error = null;
       });
@@ -304,8 +311,8 @@ class _MainShellState extends State<MainShell> {
           ),
           VehicleManagementPage(
             pendingOrders: _pendingOrders,
-            vehicles: _vehicles,
-            vtrackingVehicles: _vtrackingVehicles,
+            vehicles: _allVehicles,
+            vtrackingVehicles: _allVtrackingVehicles,
             stations: _stations,
             initialDate: _targetTripDate,
           ),

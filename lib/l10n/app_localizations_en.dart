@@ -12,6 +12,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'Nguyên Anh';
 
   @override
+  String get allFilter => 'All';
+
+  @override
+  String get mixerFilter => 'Mixers';
+
+  @override
+  String get otherFilter => 'Others';
+
+  @override
   String get selectLanguage => 'Language / Ngôn ngữ';
 
   @override

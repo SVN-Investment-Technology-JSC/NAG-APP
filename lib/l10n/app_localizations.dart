@@ -104,6 +104,24 @@ abstract class AppLocalizations {
   /// **'Nguyên Anh'**
   String get appTitle;
 
+  /// No description provided for @allFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get allFilter;
+
+  /// No description provided for @mixerFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Mixers'**
+  String get mixerFilter;
+
+  /// No description provided for @otherFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Others'**
+  String get otherFilter;
+
   /// No description provided for @selectLanguage.
   ///
   /// In en, this message translates to:
