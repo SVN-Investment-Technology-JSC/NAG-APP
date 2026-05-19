@@ -12,6 +12,15 @@ class AppLocalizationsVi extends AppLocalizations {
   String get appTitle => 'Nguyên Anh';
 
   @override
+  String get allFilter => 'Tất cả';
+
+  @override
+  String get mixerFilter => 'Xe bồn';
+
+  @override
+  String get otherFilter => 'Xe khác';
+
+  @override
   String get selectLanguage => 'Ngôn ngữ / Language';
 
   @override
