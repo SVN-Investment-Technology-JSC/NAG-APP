@@ -4,7 +4,7 @@ class AppEndpoints {
   static const String apiBaseUrl = '$baseUrl/api/v1/';
 
   // Next.js web app (Google Sheets API proxy)
-  static const String webBaseUrl = 'https://na.savinatestinghub.com';
+  static const String webBaseUrl = 'https://nguyenanhdonghoi.com';
 
   // Google Sheets
   static const String attendanceSheetUrl =

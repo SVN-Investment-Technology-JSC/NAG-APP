@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import 'package:nguyenanh/features/vehicle/data/services/vehicle_service.dart';
 import 'package:nguyenanh/features/home/presentation/widgets/end_of_day_modal.dart';
 import 'package:nguyenanh/features/home/presentation/widgets/queue_history_modal.dart';
+import 'package:nguyenanh/features/home/presentation/widgets/sync_slots_modal.dart';
+import 'package:nguyenanh/features/order/order_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 import 'package:intl/intl.dart';
@@ -37,6 +39,7 @@ class HomePage extends StatefulWidget {
   final VehicleService vehicleService;
   final SocketService socketService;
   final NotificationSocketService notificationService;
+  final OrderService orderService;
   final bool isLoading;
   final String? error;
   final Future<void> Function() onRefresh;
@@ -52,6 +55,7 @@ class HomePage extends StatefulWidget {
     required this.vehicleService,
     required this.socketService,
     required this.notificationService,
+    required this.orderService,
     required this.isLoading,
     this.error,
     required this.onRefresh,
@@ -253,8 +257,17 @@ class _HomePageState extends State<HomePage> {
                     builder: (context) => const QueueHistoryModal(),
                   );
                 } else if (value == 'sync_slots') {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${l10n.syncSlots} - Tính năng đang phát triển')),
+                  final activeFlowOrders = widget.pendingOrders.where((o) {
+                    final vStatus = o.vehicles?.vehicleStatus.toLowerCase();
+                    return vStatus != 'maintenance' && vStatus != 'incident' && vStatus != 'other';
+                  }).toList();
+                  showDialog(
+                    context: context,
+                    builder: (context) => SyncSlotsModal(
+                      orderService: widget.orderService,
+                      activeFlowOrders: activeFlowOrders,
+                      onRefresh: widget.onRefresh,
+                    ),
                   );
                 }
               },

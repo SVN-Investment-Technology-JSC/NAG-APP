@@ -305,6 +305,7 @@ class _MainShellState extends State<MainShell> {
             vehicleService: _vehicleService,
             socketService: _socketService,
             notificationService: _notificationService,
+            orderService: _orderService,
             isLoading: _isLoading,
             error: _error,
             onRefresh: _loadData,
