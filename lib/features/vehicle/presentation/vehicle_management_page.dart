@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:excel/excel.dart' hide Border;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,6 +11,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'package:nguyenanh/core/network/api_client.dart';
+import 'package:nguyenanh/features/user_manage/data/services/user_manage_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nguyenanh/features/home/presentation/widgets/home_order_item.dart';
 import 'package:nguyenanh/features/order/data/models/order_model.dart';
 import 'package:nguyenanh/features/order/order_service.dart';
@@ -24,6 +28,7 @@ class VehicleManagementPage extends StatefulWidget {
   final List<VtrackingVehicle> vtrackingVehicles;
   final List<Station> stations;
   final DateTime? initialDate;
+  final VoidCallback? onRefresh;
 
   const VehicleManagementPage({
     super.key,
@@ -32,13 +37,14 @@ class VehicleManagementPage extends StatefulWidget {
     required this.vtrackingVehicles,
     required this.stations,
     this.initialDate,
+    this.onRefresh,
   });
 
   @override
   State<VehicleManagementPage> createState() => _VehicleManagementPageState();
 }
 
-class _VehicleManagementPageState extends State<VehicleManagementPage> {
+class _VehicleManagementPageState extends State<VehicleManagementPage> with SingleTickerProviderStateMixin {
   AppLocalizations get l10n => AppLocalizations.of(context)!;
   final OrderService _orderService = OrderService(ApiClient.dio);
   DateTime _selectedDate = DateTime.now();
@@ -48,16 +54,29 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _categoryFilter = 'all';
+  
+  final UserManageService _userManageService = UserManageService();
+  String _userRole = '';
+  bool _canManualSort = false;
+  bool _isManualMode = false;
+  bool _isReordering = false;
+  late AnimationController _reloadAnimController;
 
   @override
   void dispose() {
     _searchController.dispose();
+    _reloadAnimController.dispose();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
+    _reloadAnimController = AnimationController(
+      duration: const Duration(milliseconds: 700),
+      vsync: this,
+    );
+    _loadUserInfo();
     if (widget.initialDate != null) {
       _selectedDate = widget.initialDate!;
     }
@@ -77,6 +96,24 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
     } else if (oldWidget.vehicles.isEmpty && widget.vehicles.isNotEmpty) {
       _loadOrders();
     }
+  }
+
+  Future<void> _loadUserInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _userRole = prefs.getString('user_role') ?? '';
+    });
+
+    try {
+      final perms = await _userManageService.getPermissions();
+      final myPerms = perms[_userRole] ?? [];
+      if (mounted) {
+        setState(() {
+          _canManualSort = _userRole == 'admin' || myPerms.contains('/dashboard__manual_sort');
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadOrders() async {
@@ -393,34 +430,17 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
                         Divider(color: colorScheme.outlineVariant),
                         SizedBox(height: 8.h),
                         if (vtracking != null && vtracking.hasPosition) ...[
-                          _infoRow(
-                            Icons.speed_rounded,
-                            l10n.speedLabel,
-                            '${vtracking.speed.toStringAsFixed(0)} km/h',
-                            colorScheme,
-                            theme,
-                          ),
-                          SizedBox(height: 10.h),
-                          _infoRow(
-                            Icons.radar_rounded,
-                            l10n.distanceLabel,
-                            _distanceToNearestStation(vtracking),
-                            colorScheme,
-                            theme,
-                          ),
-                          if (vtracking.geocoding.isNotEmpty) ...[
-                            SizedBox(height: 10.h),
-                            _infoRow(
-                              Icons.location_on_outlined,
-                              l10n.locationLabel,
-                              vtracking.geocoding,
-                              colorScheme,
-                              theme,
+                          SizedBox(
+                            height: 250.h,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16.r),
+                              child: VehicleMapWidget(
+                                vtracking: vtracking,
+                                stations: widget.stations,
+                              ),
                             ),
-                          ],
-                          SizedBox(height: 12.h),
-                          Divider(color: colorScheme.outlineVariant),
-                          SizedBox(height: 8.h),
+                          ),
+                          SizedBox(height: 16.h),
                         ],
                         Row(
                           children: [
@@ -913,40 +933,219 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
     final sorted = List<OrderModel>.from(widget.pendingOrders)
       ..sort((a, b) => a.orderNumber.compareTo(b.orderNumber));
 
-    if (sorted.isEmpty) {
-      return Padding(
-        padding: EdgeInsets.symmetric(vertical: 24.h),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.inbox_rounded,
-                size: 64.sp,
-                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
-              ),
-              SizedBox(height: 16.h),
-              Text(
-                l10n.noPendingOrders,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
+    return Stack(
+      children: [
+        Column(
+          children: [
+            if (_canManualSort && sorted.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (widget.onRefresh != null)
+                      RotationTransition(
+                        turns: _reloadAnimController,
+                        child: IconButton(
+                          icon: Icon(Icons.refresh_rounded, size: 20.sp, color: colorScheme.primary),
+                          onPressed: () {
+                            if (widget.onRefresh != null) widget.onRefresh!();
+                            _reloadAnimController.forward(from: 0.0);
+                          },
+                          tooltip: 'Tải lại',
+                        ),
+                      ),
+                    SizedBox(width: 4.w),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(8.r),
+                        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          GestureDetector(
+                            onTap: () => setState(() => _isManualMode = false),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+                              decoration: BoxDecoration(
+                                color: !_isManualMode ? colorScheme.primary : Colors.transparent,
+                                borderRadius: BorderRadius.horizontal(left: Radius.circular(7.r)),
+                              ),
+                              child: Text(
+                                'AUTO',
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: !_isManualMode ? colorScheme.onPrimary : colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                                ),
+                              ),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => setState(() => _isManualMode = true),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+                              decoration: BoxDecoration(
+                                color: _isManualMode ? colorScheme.primary : Colors.transparent,
+                                borderRadius: BorderRadius.horizontal(right: Radius.circular(7.r)),
+                              ),
+                              child: Text(
+                                'MANUAL',
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: _isManualMode ? colorScheme.onPrimary : colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-      );
-    }
+            Expanded(
+              child: sorted.isEmpty
+                  ? Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24.h),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.inbox_rounded,
+                              size: 64.sp,
+                              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
+                            ),
+                            SizedBox(height: 16.h),
+                            Text(
+                              l10n.noPendingOrders,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : (_isManualMode
+                      ? ReorderableListView.builder(
+                          padding: EdgeInsets.only(top: _canManualSort ? 4.h : 16.h, bottom: 24.h),
+                          itemCount: sorted.length,
+                          onReorder: (oldIndex, newIndex) async {
+                            if (oldIndex < newIndex) newIndex -= 1;
+                            if (oldIndex == newIndex) return;
 
-    return ListView.builder(
-      padding: EdgeInsets.zero,
-      itemCount: sorted.length,
-      itemBuilder: (context, index) {
-        return HomeOrderItem(
-          order: sorted[index],
-          orderNumber: index + 1,
-          vehicles: widget.vehicles,
+                            final order = sorted[oldIndex];
+                            final targetOrderNumber = newIndex + 1;
+
+                            setState(() => _isReordering = true);
+                            try {
+                              await _orderService.updateOrderNumber(order.orderId, targetOrderNumber);
+                              // Assuming a refresh might happen via socket or we can call some refresh function
+                              // Note: There's no onRefresh prop passed directly here, so we might rely on the main shell/socket to update pendingOrders.
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Lỗi khi sắp xếp: $e')),
+                                );
+                              }
+                            } finally {
+                              if (mounted) setState(() => _isReordering = false);
+                            }
+                          },
+                          itemBuilder: (context, index) {
+                            return ReorderableDelayedDragStartListener(
+                              key: ValueKey(sorted[index].orderId),
+                              index: index,
+                              child: GestureDetector(
+                                onTap: () => _showEditOrderNumberDialog(sorted[index], index + 1),
+                                child: HomeOrderItem(
+                                  order: sorted[index],
+                                  orderNumber: index + 1,
+                                  vehicles: widget.vehicles,
+                                ),
+                              ),
+                            );
+                          },
+                        )
+                      : ListView.builder(
+                          padding: EdgeInsets.only(top: _canManualSort ? 4.h : 16.h, bottom: 24.h),
+                          itemCount: sorted.length,
+                          itemBuilder: (context, index) {
+                            return HomeOrderItem(
+                              order: sorted[index],
+                              orderNumber: index + 1,
+                              vehicles: widget.vehicles,
+                            );
+                          },
+                        )),
+            ),
+          ],
+        ),
+        if (_isReordering)
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.1),
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _showEditOrderNumberDialog(OrderModel order, int currentNumber) {
+    final TextEditingController controller = TextEditingController(text: currentNumber.toString());
+    showDialog(
+      context: context,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return AlertDialog(
+          title: Text('Đổi thứ tự lốt xe',
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+          content: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: 'Nhập số thứ tự mới',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Hủy'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                final newNumber = int.tryParse(controller.text);
+                if (newNumber != null && newNumber != currentNumber) {
+                  Navigator.pop(context);
+                  setState(() => _isReordering = true);
+                  try {
+                    await _orderService.updateOrderNumber(order.orderId, newNumber);
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Lỗi khi cập nhật thứ tự: $e')),
+                      );
+                    }
+                  } finally {
+                    if (mounted) setState(() => _isReordering = false);
+                  }
+                } else {
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Lưu'),
+            ),
+          ],
         );
       },
     );
@@ -1019,11 +1218,11 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
           child: Row(
             children: [
-              _buildCategoryPill('all', '${l10n.allFilter} ($totalAll)', theme, colorScheme),
+              _buildCategoryPill('all', '${l10n.allFilter} ($totalAll)', theme, colorScheme, activeColor: const Color(0xFF334155)),
               SizedBox(width: 8.w),
-              _buildCategoryPill('mixer', '${l10n.mixerFilter} ($totalMixers)', theme, colorScheme),
+              _buildCategoryPill('mixer', '${l10n.mixerFilter} ($totalMixers)', theme, colorScheme, activeColor: colorScheme.primary),
               SizedBox(width: 8.w),
-              _buildCategoryPill('other', '${l10n.otherFilter} ($totalOthers)', theme, colorScheme),
+              _buildCategoryPill('other', '${l10n.otherFilter} ($totalOthers)', theme, colorScheme, activeColor: const Color(0xFF0EA5E9)),
             ],
           ),
         ),
@@ -1066,7 +1265,8 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
   Widget _buildVehicleItem(VehicleModel vehicle, int index, ThemeData theme,
       ColorScheme colorScheme) {
     final tripCount = _ordersForVehicle(vehicle.vehicleId).length;
-    final iconColor = colorScheme.primary;
+    final isMixer = vehicle.vehicleName.toUpperCase().startsWith('X');
+    final iconColor = isMixer ? colorScheme.primary : const Color(0xFF0EA5E9);
 
     return Center(
       child: ConstrainedBox(
@@ -1181,9 +1381,9 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
     );
   }
 
-  Widget _buildCategoryPill(String filterType, String label, ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildCategoryPill(String filterType, String label, ThemeData theme, ColorScheme colorScheme, {Color? activeColor}) {
     final isSelected = _categoryFilter == filterType;
-    final primaryColor = colorScheme.primary;
+    final primaryColor = activeColor ?? colorScheme.primary;
 
     return Material(
       color: Colors.transparent,
@@ -1217,6 +1417,175 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class VehicleMapWidget extends StatefulWidget {
+  final VtrackingVehicle vtracking;
+  final List<Station> stations;
+
+  const VehicleMapWidget({
+    super.key,
+    required this.vtracking,
+    required this.stations,
+  });
+
+  @override
+  State<VehicleMapWidget> createState() => _VehicleMapWidgetState();
+}
+
+class _VehicleMapWidgetState extends State<VehicleMapWidget> {
+  final MapController _mapController = MapController();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final center = LatLng(widget.vtracking.latitude, widget.vtracking.longitude);
+
+    final circles = widget.stations
+        .where((s) => s.stationTypeId == 2 && s.getLat != null && s.getLng != null)
+        .map((s) => CircleMarker(
+              point: LatLng(s.getLat!, s.getLng!),
+              radius: s.stationGpsGeofencing.toDouble(),
+              useRadiusInMeter: true,
+              color: const Color(0x1406B6D4),
+              borderColor: const Color(0xFF06B6D4),
+              borderStrokeWidth: 1.5,
+            ))
+        .toList();
+
+    Color dotColor;
+    if (widget.vtracking.status == 'run') {
+      dotColor = const Color(0xFFFF1744);
+    } else if (widget.vtracking.status == 'park') {
+      dotColor = const Color(0xFFFFEA00);
+    } else {
+      dotColor = const Color(0xFF9E9E9E);
+    }
+
+    final marker = Marker(
+      point: center,
+      width: 100.w,
+      height: 100.h,
+      alignment: Alignment.topCenter,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(4.r),
+              border: Border.all(color: colorScheme.outlineVariant),
+              boxShadow: [
+                BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.15), blurRadius: 4, offset: const Offset(0, 2)),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  widget.vtracking.vehicleName.isNotEmpty ? widget.vtracking.vehicleName : '---',
+                  style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800, fontSize: 10.sp),
+                ),
+                if (widget.vtracking.licensePlate.isNotEmpty)
+                  Text(
+                    widget.vtracking.licensePlate,
+                    style: theme.textTheme.labelSmall?.copyWith(fontSize: 8.sp, color: colorScheme.onSurfaceVariant),
+                  ),
+              ],
+            ),
+          ),
+          SizedBox(height: 2.h),
+          Transform.rotate(
+            angle: widget.vtracking.direction * (3.1415926535897932 / 180),
+            child: ColorFiltered(
+              colorFilter: ColorFilter.mode(dotColor, BlendMode.modulate),
+              child: ColorFiltered(
+                colorFilter: const ColorFilter.matrix([
+                  0.33, 0.59, 0.11, 0, 30,
+                  0.33, 0.59, 0.11, 0, 30,
+                  0.33, 0.59, 0.11, 0, 30,
+                  0, 0, 0, 1, 0,
+                ]),
+                child: SvgPicture.asset('assets/images/car.svg', width: 32.w, height: 32.w, fit: BoxFit.contain),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return Stack(
+      children: [
+        FlutterMap(
+          mapController: _mapController,
+          options: MapOptions(initialCenter: center, initialZoom: 16),
+          children: [
+            TileLayer(
+              urlTemplate: theme.brightness == Brightness.dark
+                  ? 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png'
+                  : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+              subdomains: const ['a', 'b', 'c', 'd'],
+              retinaMode: RetinaMode.isHighDensity(context),
+            ),
+            CircleLayer(circles: circles),
+            MarkerLayer(markers: [marker]),
+          ],
+        ),
+        Positioned(
+          bottom: 8.h,
+          left: 8.w,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 32.w,
+                height: 32.w,
+                margin: EdgeInsets.only(bottom: 4.h),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(8.r),
+                  boxShadow: [BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.1), blurRadius: 4, offset: const Offset(0, 2))],
+                ),
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  iconSize: 20.sp,
+                  icon: Icon(Icons.add_rounded, color: colorScheme.onSurface),
+                  onPressed: () => _mapController.move(_mapController.camera.center, _mapController.camera.zoom + 1),
+                ),
+              ),
+              Container(
+                width: 32.w,
+                height: 32.w,
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(8.r),
+                  boxShadow: [BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.1), blurRadius: 4, offset: const Offset(0, 2))],
+                ),
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  iconSize: 20.sp,
+                  icon: Icon(Icons.remove_rounded, color: colorScheme.onSurface),
+                  onPressed: () => _mapController.move(_mapController.camera.center, _mapController.camera.zoom - 1),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Positioned(
+          bottom: 8.h,
+          right: 8.w,
+          child: FilledButton.tonalIcon(
+            onPressed: () => _mapController.move(center, 16),
+            icon: Icon(Icons.my_location_rounded, size: 14.sp),
+            label: Text('Vị trí ban đầu', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700)),
+            style: FilledButton.styleFrom(padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 0), minimumSize: Size(0, 32.h)),
+          ),
+        ),
+      ],
     );
   }
 }
