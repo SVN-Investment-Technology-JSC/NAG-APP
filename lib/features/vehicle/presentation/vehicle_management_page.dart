@@ -1456,50 +1456,27 @@ class _VehicleMapWidgetState extends State<VehicleMapWidget> {
 
     Color dotColor;
     if (widget.vtracking.status == 'run') {
-      dotColor = const Color(0xFFFF1744);
+      dotColor = const Color(0xFF2979FF); // Blue (đang di chuyển)
+    } else if (widget.vtracking.status == 'stop') {
+      dotColor = const Color(0xFFFF9100); // Orange (dừng)
     } else if (widget.vtracking.status == 'park') {
-      dotColor = const Color(0xFFFFEA00);
+      dotColor = const Color(0xFF9E9E9E); // Grey (đỗ)
     } else {
-      dotColor = const Color(0xFF9E9E9E);
+      dotColor = const Color(0xFFFF1744); // Red (mất kết nối)
     }
 
     final marker = Marker(
       point: center,
-      width: 100.w,
-      height: 100.h,
-      alignment: Alignment.topCenter,
-      child: GestureDetector(
-        onTap: () => VehicleDetailSheet.show(context, widget.vtracking, widget.stations),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-              decoration: BoxDecoration(
-                color: colorScheme.surface,
-                borderRadius: BorderRadius.circular(4.r),
-                border: Border.all(color: colorScheme.outlineVariant),
-                boxShadow: [
-                  BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.15), blurRadius: 4, offset: const Offset(0, 2)),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    widget.vtracking.vehicleName.isNotEmpty ? widget.vtracking.vehicleName : '---',
-                    style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800, fontSize: 10.sp),
-                  ),
-                  if (widget.vtracking.licensePlate.isNotEmpty)
-                    Text(
-                      widget.vtracking.licensePlate,
-                      style: theme.textTheme.labelSmall?.copyWith(fontSize: 8.sp, color: colorScheme.onSurfaceVariant),
-                    ),
-                ],
-              ),
-            ),
-            SizedBox(height: 2.h),
-            Transform.rotate(
+      width: 48.w,
+      height: 48.w,
+      alignment: Alignment.center,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          GestureDetector(
+            onTap: () => VehicleDetailSheet.show(context, widget.vtracking, widget.stations),
+            child: Transform.rotate(
               angle: widget.vtracking.direction * (3.1415926535897932 / 180),
               child: ColorFiltered(
                 colorFilter: ColorFilter.mode(dotColor, BlendMode.modulate),
@@ -1510,12 +1487,43 @@ class _VehicleMapWidgetState extends State<VehicleMapWidget> {
                     0.33, 0.59, 0.11, 0, 30,
                     0, 0, 0, 1, 0,
                   ]),
-                  child: SvgPicture.asset('assets/images/car.svg', width: 32.w, height: 32.w, fit: BoxFit.contain),
+                  child: SvgPicture.asset('assets/images/car.svg', width: 48.w, height: 48.w, fit: BoxFit.contain),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+          Positioned(
+            bottom: 48.w + 2.h,
+            child: GestureDetector(
+              onTap: () => VehicleDetailSheet.show(context, widget.vtracking, widget.stations),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(4.r),
+                  border: Border.all(color: colorScheme.outlineVariant),
+                  boxShadow: [
+                    BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.15), blurRadius: 4, offset: const Offset(0, 2)),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.vtracking.vehicleName.isNotEmpty ? widget.vtracking.vehicleName : '---',
+                      style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800, fontSize: 10.sp),
+                    ),
+                    if (widget.vtracking.licensePlate.isNotEmpty)
+                      Text(
+                        widget.vtracking.licensePlate,
+                        style: theme.textTheme.labelSmall?.copyWith(fontSize: 8.sp, color: colorScheme.onSurfaceVariant),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
 
@@ -1528,7 +1536,7 @@ class _VehicleMapWidgetState extends State<VehicleMapWidget> {
             children: [
         FlutterMap(
           mapController: _mapController,
-          options: MapOptions(initialCenter: center, initialZoom: 16),
+          options: MapOptions(initialCenter: center, initialZoom: 16, maxZoom: 20.0),
           children: [
             TileLayer(
               urlTemplate: theme.brightness == Brightness.dark

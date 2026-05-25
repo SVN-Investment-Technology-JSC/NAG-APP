@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -176,9 +177,28 @@ class _PermissionsPageState extends State<PermissionsPage> {
 
   Future<void> _savePermissions() async {
     setState(() => _isSaving = true);
+
+    final normalizedPermissions = <String, List<String>>{};
+    for (final role in _permissions.keys) {
+      final rolePerms = _permissions[role]?.toSet() ?? {};
+      for (final entry in _allModules.entries) {
+        final moduleKey = entry.key;
+        final modulePerms = entry.value;
+        if (modulePerms.isEmpty) continue;
+        
+        // Unconditionally remove the parent key, we only send children
+        rolePerms.remove(moduleKey);
+      }
+      normalizedPermissions[role] = rolePerms.toList();
+    }
+
     try {
-      await _userService.updatePermissions(_permissions);
+      await _userService.updatePermissions(normalizedPermissions);
       if (mounted) {
+        setState(() {
+          _permissions.clear();
+          _permissions.addAll(normalizedPermissions);
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Lưu quyền hạn thành công')),
         );
@@ -190,7 +210,9 @@ class _PermissionsPageState extends State<PermissionsPage> {
         );
       }
     } finally {
-      setState(() => _isSaving = false);
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
   }
 
