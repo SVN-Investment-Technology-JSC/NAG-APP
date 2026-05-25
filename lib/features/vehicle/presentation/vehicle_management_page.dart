@@ -14,6 +14,7 @@ import 'package:nguyenanh/core/network/api_client.dart';
 import 'package:nguyenanh/features/user_manage/data/services/user_manage_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nguyenanh/features/home/presentation/widgets/home_order_item.dart';
+import 'package:nguyenanh/features/home/presentation/widgets/vehicle_detail_sheet.dart';
 import 'package:nguyenanh/features/order/data/models/order_model.dart';
 import 'package:nguyenanh/features/order/order_service.dart';
 import 'package:nguyenanh/features/shell/presentation/main_shell.dart';
@@ -430,14 +431,11 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> with Sing
                         Divider(color: colorScheme.outlineVariant),
                         SizedBox(height: 8.h),
                         if (vtracking != null && vtracking.hasPosition) ...[
-                          SizedBox(
-                            height: 250.h,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(16.r),
-                              child: VehicleMapWidget(
-                                vtracking: vtracking,
-                                stations: widget.stations,
-                              ),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(16.r),
+                            child: VehicleMapWidget(
+                              vtracking: vtracking,
+                              stations: widget.stations,
                             ),
                           ),
                           SizedBox(height: 16.h),
@@ -1470,56 +1468,64 @@ class _VehicleMapWidgetState extends State<VehicleMapWidget> {
       width: 100.w,
       height: 100.h,
       alignment: Alignment.topCenter,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius: BorderRadius.circular(4.r),
-              border: Border.all(color: colorScheme.outlineVariant),
-              boxShadow: [
-                BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.15), blurRadius: 4, offset: const Offset(0, 2)),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  widget.vtracking.vehicleName.isNotEmpty ? widget.vtracking.vehicleName : '---',
-                  style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800, fontSize: 10.sp),
-                ),
-                if (widget.vtracking.licensePlate.isNotEmpty)
+      child: GestureDetector(
+        onTap: () => VehicleDetailSheet.show(context, widget.vtracking, widget.stations),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: BorderRadius.circular(4.r),
+                border: Border.all(color: colorScheme.outlineVariant),
+                boxShadow: [
+                  BoxShadow(color: colorScheme.shadow.withValues(alpha: 0.15), blurRadius: 4, offset: const Offset(0, 2)),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   Text(
-                    widget.vtracking.licensePlate,
-                    style: theme.textTheme.labelSmall?.copyWith(fontSize: 8.sp, color: colorScheme.onSurfaceVariant),
+                    widget.vtracking.vehicleName.isNotEmpty ? widget.vtracking.vehicleName : '---',
+                    style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800, fontSize: 10.sp),
                   ),
-              ],
-            ),
-          ),
-          SizedBox(height: 2.h),
-          Transform.rotate(
-            angle: widget.vtracking.direction * (3.1415926535897932 / 180),
-            child: ColorFiltered(
-              colorFilter: ColorFilter.mode(dotColor, BlendMode.modulate),
-              child: ColorFiltered(
-                colorFilter: const ColorFilter.matrix([
-                  0.33, 0.59, 0.11, 0, 30,
-                  0.33, 0.59, 0.11, 0, 30,
-                  0.33, 0.59, 0.11, 0, 30,
-                  0, 0, 0, 1, 0,
-                ]),
-                child: SvgPicture.asset('assets/images/car.svg', width: 32.w, height: 32.w, fit: BoxFit.contain),
+                  if (widget.vtracking.licensePlate.isNotEmpty)
+                    Text(
+                      widget.vtracking.licensePlate,
+                      style: theme.textTheme.labelSmall?.copyWith(fontSize: 8.sp, color: colorScheme.onSurfaceVariant),
+                    ),
+                ],
               ),
             ),
-          ),
-        ],
+            SizedBox(height: 2.h),
+            Transform.rotate(
+              angle: widget.vtracking.direction * (3.1415926535897932 / 180),
+              child: ColorFiltered(
+                colorFilter: ColorFilter.mode(dotColor, BlendMode.modulate),
+                child: ColorFiltered(
+                  colorFilter: const ColorFilter.matrix([
+                    0.33, 0.59, 0.11, 0, 30,
+                    0.33, 0.59, 0.11, 0, 30,
+                    0.33, 0.59, 0.11, 0, 30,
+                    0, 0, 0, 1, 0,
+                  ]),
+                  child: SvgPicture.asset('assets/images/car.svg', width: 32.w, height: 32.w, fit: BoxFit.contain),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
 
-    return Stack(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
+        SizedBox(
+          height: 250.h,
+          child: Stack(
+            children: [
         FlutterMap(
           mapController: _mapController,
           options: MapOptions(initialCenter: center, initialZoom: 16),
@@ -1583,6 +1589,9 @@ class _VehicleMapWidgetState extends State<VehicleMapWidget> {
             icon: Icon(Icons.my_location_rounded, size: 14.sp),
             label: Text('Vị trí ban đầu', style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700)),
             style: FilledButton.styleFrom(padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 0), minimumSize: Size(0, 32.h)),
+          ),
+        ),
+            ],
           ),
         ),
       ],
