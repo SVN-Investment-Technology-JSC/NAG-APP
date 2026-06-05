@@ -12,12 +12,14 @@ class HomeStationCard extends StatelessWidget {
   final Station station;
   final List<OrderModel> collectingVehicles;
   final bool isCameraConnected;
+  final bool canManualCamera;
 
   const HomeStationCard({
     super.key,
     required this.station,
     required this.collectingVehicles,
     required this.isCameraConnected,
+    this.canManualCamera = true,
   });
 
   bool get _hasCollecting => collectingVehicles.isNotEmpty;
@@ -40,6 +42,7 @@ class HomeStationCard extends StatelessWidget {
             isCameraConnected: isCameraConnected,
             collectingCount: collectingVehicles.length,
             collectingLabel: l10n.collecting,
+            canManualCamera: canManualCamera,
           ),
           if (_hasCollecting)
             _CollectingList(
@@ -68,6 +71,7 @@ class _StationHeader extends StatelessWidget {
   final bool isCameraConnected;
   final int collectingCount;
   final String collectingLabel;
+  final bool canManualCamera;
 
   const _StationHeader({
     required this.station,
@@ -75,6 +79,7 @@ class _StationHeader extends StatelessWidget {
     required this.isCameraConnected,
     required this.collectingCount,
     required this.collectingLabel,
+    required this.canManualCamera,
   });
 
   @override
@@ -120,7 +125,7 @@ class _StationHeader extends StatelessWidget {
             ),
             SizedBox(width: 6.w),
           ],
-          _CameraBadge(isConnected: isCameraConnected, station: station),
+          _CameraBadge(isConnected: isCameraConnected, station: station, canManualCamera: canManualCamera),
         ],
       ),
     );
@@ -130,10 +135,12 @@ class _StationHeader extends StatelessWidget {
 class _CameraBadge extends StatefulWidget {
   final bool isConnected;
   final Station station;
+  final bool canManualCamera;
 
   const _CameraBadge({
     required this.isConnected, 
     required this.station,
+    required this.canManualCamera,
   });
 
   @override
@@ -190,8 +197,10 @@ class _CameraBadgeState extends State<_CameraBadge> with SingleTickerProviderSta
     final label = widget.isConnected ? AppLocalizations.of(context)!.cameraConnected : AppLocalizations.of(context)!.cameraDisconnected;
 
     return GestureDetector(
-      onTap: () => CameraDialog.show(context, widget.station),
-      child: FadeTransition(
+      onTap: widget.canManualCamera ? () => CameraDialog.show(context, widget.station) : () {},
+      child: Opacity(
+        opacity: widget.canManualCamera ? 1.0 : 0.5,
+        child: FadeTransition(
         opacity: _pulseAnimation,
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
@@ -218,6 +227,7 @@ class _CameraBadgeState extends State<_CameraBadge> with SingleTickerProviderSta
                 ),
               ),
             ],
+          ),
           ),
         ),
       ),

@@ -122,11 +122,13 @@ class OrderUser {
 class OrderVehicle {
   final int vehicleId;
   final String vehicleLicensePlate;
+  final String vehicleName;
   final String vehicleStatus;
 
   OrderVehicle({
     required this.vehicleId,
     required this.vehicleLicensePlate,
+    this.vehicleName = '',
     required this.vehicleStatus,
   });
 
@@ -134,6 +136,7 @@ class OrderVehicle {
     return OrderVehicle(
       vehicleId: json['vehicle_id'] ?? 0,
       vehicleLicensePlate: json['vehicle_license_plate'] ?? '',
+      vehicleName: json['vehicle_name'] ?? '',
       vehicleStatus: json['vehicle_status'] ?? '',
     );
   }

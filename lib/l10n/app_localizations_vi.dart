@@ -248,10 +248,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get mealCheckTotal => 'Tổng';
 
   @override
-  String get mealCheckMorning => 'Sáng';
+  String get mealCheckMorning => 'Trưa';
 
   @override
-  String get mealCheckLunch => 'Trưa';
+  String get mealCheckLunch => 'Chiều';
 
   @override
   String get mealCheckDinner => 'Tối';

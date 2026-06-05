@@ -266,4 +266,36 @@ class MealService {
       onError?.call('$historyErrors lỗi khi lấy lịch sử GPS');
     }
   }
+
+  Future<Map<String, dynamic>?> syncSheet(Map<String, dynamic> payload) async {
+    try {
+      final res = await _webDio.post(
+        '${AppEndpoints.webBaseUrl}/api/google-sheets/sync',
+        data: payload,
+        options: Options(headers: {'Accept': 'application/json'}),
+      );
+      if (res.statusCode == 200 && res.data != null) {
+        return res.data as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('[MEAL] Sync sheet error: $e');
+      rethrow;
+    }
+    return null;
+  }
+
+  Future<String?> getSheetUrl() async {
+    try {
+      final res = await _webDio.get(
+        '${AppEndpoints.webBaseUrl}/api/google-sheets/sync',
+        options: Options(headers: {'Accept': 'application/json'}),
+      );
+      if (res.statusCode == 200 && res.data != null) {
+        return res.data['sheetUrl']?.toString();
+      }
+    } catch (e) {
+      debugPrint('[MEAL] Get sheet url error: $e');
+    }
+    return null;
+  }
 }

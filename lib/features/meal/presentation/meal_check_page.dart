@@ -6,7 +6,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:excel/excel.dart' hide Border, TextSpan;
+import 'package:url_launcher/url_launcher.dart';
 
+import 'package:nguyenanh/core/utils/number_utils.dart';
 import 'package:nguyenanh/features/meal/data/models/meal_model.dart';
 import 'package:nguyenanh/features/meal/data/services/meal_service.dart';
 import 'package:nguyenanh/features/shell/presentation/main_shell.dart';
@@ -29,6 +32,8 @@ class _MealCheckPageState extends State<MealCheckPage> {
   String? _error;
   int _progressCurrent = 0;
   int _progressTotal = 0;
+  bool _isSyncing = false;
+  String? _sheetUrl;
 
   List<Personnel> _personnel = [];
   MealDataMap _mealData = {};
@@ -407,6 +412,248 @@ class _MealCheckPageState extends State<MealCheckPage> {
     }
   }
 
+  List<Map<String, dynamic>> _buildFlatRows() {
+    final activeSlots = mealSlots.where((s) => _selectedSlots.contains(s.key)).toList();
+    final days = <DateTime>[];
+    var d = DateTime(_fromDate.year, _fromDate.month, _fromDate.day);
+    final end = DateTime(_toDate.year, _toDate.month, _toDate.day);
+    while (!d.isAfter(end)) {
+      days.add(d);
+      d = d.add(const Duration(days: 1));
+    }
+    
+    final groups = _groupedPersonnel;
+    final flatRows = <Map<String, dynamic>>[];
+    int stt = 1;
+    
+    for (final g in groups) {
+      if (g.members.isEmpty) continue;
+      
+      flatRows.add({
+        'stt': g.config.key,
+        'hoTen': g.config.ten,
+        'licensePlate': '',
+        'meals': {},
+        'total': 0,
+        'isSection': true,
+        'sectionName': g.config.ten,
+      });
+      
+      for (final member in g.members) {
+        int personTotal = 0;
+        final personMeals = <String, dynamic>{};
+        
+        for (final day in days) {
+          final dateKey = DateFormat('yyyy-MM-dd').format(day);
+          final dateStr = DateFormat('dd').format(day);
+          final dm = _mealData[member.hoTen]?[dateKey];
+          
+          final slotMap = <String, bool>{};
+          for (final s in activeSlots) {
+            slotMap[s.key] = false;
+          }
+          
+          if (dm != null) {
+            if (activeSlots.any((s) => s.key == 'sang') && dm.sang) { slotMap['sang'] = true; personTotal++; }
+            if (activeSlots.any((s) => s.key == 'trua') && dm.trua) { slotMap['trua'] = true; personTotal++; }
+            if (activeSlots.any((s) => s.key == 'toi') && dm.toi) { slotMap['toi'] = true; personTotal++; }
+          }
+          personMeals[dateStr] = slotMap;
+        }
+        
+        String plate = '';
+        for (final entry in _plateToNames.entries) {
+          if (entry.value.contains(member.hoTen)) {
+            plate = entry.key;
+            break;
+          }
+        }
+        
+        flatRows.add({
+          'stt': stt++,
+          'hoTen': member.hoTen,
+          'licensePlate': plate,
+          'meals': personMeals,
+          'total': personTotal,
+          'isSection': false,
+        });
+      }
+    }
+    
+    return flatRows;
+  }
+
+  Future<void> _syncSheet() async {
+    if (!_checked || _personnel.isEmpty) return;
+    
+    setState(() => _isSyncing = true);
+    try {
+      final days = <DateTime>[];
+      var d = DateTime(_fromDate.year, _fromDate.month, _fromDate.day);
+      final end = DateTime(_toDate.year, _toDate.month, _toDate.day);
+      while (!d.isAfter(end)) {
+        days.add(d);
+        d = d.add(const Duration(days: 1));
+      }
+      
+      final daysStr = days.map((day) => DateFormat('dd').format(day)).toList();
+      final dateRangeStr = [
+        DateFormat('dd/MM/yyyy').format(_fromDate),
+        DateFormat('dd/MM/yyyy').format(_toDate)
+      ];
+      
+      final flatRows = _buildFlatRows();
+      final grandTotal = _totalMeals;
+      
+      final payload = {
+        'flatRows': flatRows,
+        'days': daysStr,
+        'dateRange': dateRangeStr,
+        'grandTotal': grandTotal,
+        'grandTotalText': numberToVietnamese(grandTotal),
+      };
+      
+      final res = await _mealService.syncSheet(payload);
+      if (res != null && res['sheetUrl'] != null) {
+        setState(() => _sheetUrl = res['sheetUrl']);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Đồng bộ thành công (${res['rowCount']} dòng)')),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('[MEAL] Sync error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi đồng bộ: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSyncing = false);
+    }
+  }
+
+  Future<void> _openSheet() async {
+    try {
+      String? url = _sheetUrl;
+      if (url == null) {
+        url = await _mealService.getSheetUrl();
+        if (url != null && mounted) {
+          setState(() => _sheetUrl = url);
+        }
+      }
+      
+      if (url != null && url.isNotEmpty) {
+        final uri = Uri.parse(url);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          if (mounted) {
+             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Không thể mở URL')));
+          }
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Chưa có link sheet. Hãy đồng bộ trước.')),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('[MEAL] Open sheet error: $e');
+    }
+  }
+
+  Future<void> _exportExcel() async {
+    if (!_checked || _personnel.isEmpty) return;
+    
+    try {
+      var excel = Excel.createExcel();
+      var sheet = excel['Cơm ca'];
+      excel.delete('Sheet1');
+      excel.setDefaultSheet('Cơm ca');
+      
+      final activeSlots = mealSlots.where((s) => _selectedSlots.contains(s.key)).toList();
+      final days = <DateTime>[];
+      var d = DateTime(_fromDate.year, _fromDate.month, _fromDate.day);
+      final end = DateTime(_toDate.year, _toDate.month, _toDate.day);
+      while (!d.isAfter(end)) {
+        days.add(d);
+        d = d.add(const Duration(days: 1));
+      }
+      
+      List<CellValue> header = [TextCellValue('STT'), TextCellValue('Họ và tên')];
+      for (final day in days) {
+        for (final slot in activeSlots) {
+          header.add(TextCellValue('${day.day} - ${slot.label[0]}'));
+        }
+      }
+      header.add(TextCellValue('Tổng'));
+      sheet.appendRow(header);
+      
+      final flatRows = _buildFlatRows();
+      
+      for (final row in flatRows) {
+        if (row['isSection'] == true) {
+          sheet.appendRow([
+            TextCellValue(row['stt'].toString()),
+            TextCellValue(row['hoTen'].toString())
+          ]);
+        } else {
+          List<CellValue> r = [
+            TextCellValue(row['stt'].toString()),
+            TextCellValue(row['hoTen'].toString())
+          ];
+          
+          for (final day in days) {
+            final dateStr = DateFormat('dd').format(day);
+            final meals = row['meals'][dateStr] as Map<String, dynamic>?;
+            for (final slot in activeSlots) {
+              if (meals != null && meals[slot.key] == true) {
+                r.add(TextCellValue('/'));
+              } else {
+                r.add(TextCellValue(''));
+              }
+            }
+          }
+          r.add(IntCellValue(row['total'] as int));
+          sheet.appendRow(r);
+        }
+      }
+      
+      List<CellValue> totalRow = [TextCellValue('Tổng cộng'), TextCellValue('')];
+      for (int i=0; i<days.length * activeSlots.length; i++) {
+        totalRow.add(TextCellValue(''));
+      }
+      totalRow.add(IntCellValue(_totalMeals));
+      sheet.appendRow(totalRow);
+      
+      final bytes = excel.encode();
+      if (bytes == null) return;
+      
+      final dir = await getTemporaryDirectory();
+      final fileName = 'com_ca_${DateFormat('dd-MM-yyyy').format(_fromDate)}_${DateFormat('dd-MM-yyyy').format(_toDate)}.xlsx';
+      final file = File('${dir.path}/$fileName');
+      await file.writeAsBytes(bytes);
+      
+      if (!mounted) return;
+      final size = MediaQuery.of(context).size;
+      await Share.shareXFiles(
+        [XFile(file.path)], 
+        subject: 'Bảng Cơm Ca ${DateFormat('dd/MM').format(_fromDate)} - ${DateFormat('dd/MM').format(_toDate)}',
+        sharePositionOrigin: Rect.fromLTWH(0, 0, size.width, size.height / 2),
+      );
+    } catch (e) {
+      debugPrint('[MEAL] Excel export error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi xuất Excel: $e')),
+        );
+      }
+    }
+  }
+
   // ──────────── Build ────────────
 
   @override
@@ -423,7 +670,7 @@ class _MealCheckPageState extends State<MealCheckPage> {
 
     String dateLabel;
     if (isToday) {
-      dateLabel = l10n.todayOrders;
+      dateLabel = 'Nhập ngày chấm cơm';
     } else if (isSameDay) {
       dateLabel = dateFmt.format(_fromDate);
     } else {
@@ -439,12 +686,59 @@ class _MealCheckPageState extends State<MealCheckPage> {
               theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.share_rounded, color: colorScheme.primary),
-            onPressed: () => _shareImage(),
-            tooltip: l10n.mealShareTooltip,
+          PopupMenuButton<String>(
+            icon: Icon(Icons.menu_rounded, color: colorScheme.primary),
+            tooltip: 'Thao tác',
+            onSelected: (value) {
+              if (value == 'excel') _exportExcel();
+              if (value == 'image') _shareImage();
+              if (value == 'sync') _syncSheet();
+              if (value == 'open') _openSheet();
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'excel',
+                child: Row(
+                  children: [
+                    Icon(Icons.download_rounded, size: 20.sp, color: colorScheme.onSurface),
+                    SizedBox(width: 12.w),
+                    const Text('Xuất Excel'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'image',
+                child: Row(
+                  children: [
+                    Icon(Icons.image_rounded, size: 20.sp, color: colorScheme.onSurface),
+                    SizedBox(width: 12.w),
+                    const Text('Xuất Ảnh'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'sync',
+                child: Row(
+                  children: [
+                    Icon(Icons.sync_rounded, size: 20.sp, color: colorScheme.onSurface),
+                    SizedBox(width: 12.w),
+                    const Text('Đồng bộ Sheet'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'open',
+                child: Row(
+                  children: [
+                    Icon(Icons.open_in_new_rounded, size: 20.sp, color: colorScheme.onSurface),
+                    SizedBox(width: 12.w),
+                    const Text('Mở Sheet'),
+                  ],
+                ),
+              ),
+            ],
           ),
-          SizedBox(width: 8.w),
+          SizedBox(width: 4.w),
         ],
       ),
       body: _buildBody(theme, colorScheme, l10n, dateLabel),
@@ -996,4 +1290,6 @@ class _MealCheckPageState extends State<MealCheckPage> {
       ),
     );
   }
+
+
 }

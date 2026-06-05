@@ -9,6 +9,8 @@ import 'package:nguyenanh/core/network/api_client.dart';
 import 'package:nguyenanh/features/reports/data/models/report_model.dart';
 import 'package:nguyenanh/features/reports/data/services/report_service.dart';
 import 'package:nguyenanh/features/reports/presentation/widgets/production_view.dart';
+import 'package:nguyenanh/features/user_manage/data/services/user_manage_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nguyenanh/features/reports/presentation/widgets/vehicle_ranking_view.dart';
 import 'package:nguyenanh/features/vehicle/data/models/vehicle_model.dart';
 import 'package:nguyenanh/features/vehicle/data/services/vehicle_service.dart';
@@ -26,6 +28,10 @@ class _ReportPageState extends State<ReportPage> with SingleTickerProviderStateM
   late TabController _tabController;
   final ReportService _reportService = ReportService(ApiClient.dio);
   final VehicleService _vehicleService = VehicleService(ApiClient.dio);
+  final UserManageService _userManageService = UserManageService();
+
+  bool _canViewProduction = false;
+  bool _isLoadingPerms = true;
 
   DateTimeRange _dateRange = DateTimeRange(
     start: DateTime(DateTime.now().year, DateTime.now().month, 1),
@@ -51,7 +57,30 @@ class _ReportPageState extends State<ReportPage> with SingleTickerProviderStateM
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadReport();
+    _checkPermissions();
+  }
+
+  Future<void> _checkPermissions() async {
+    final prefs = await SharedPreferences.getInstance();
+    final role = prefs.getString('user_role') ?? '';
+    
+    try {
+      final perms = await _userManageService.getPermissions();
+      final myPerms = perms[role] ?? [];
+      if (mounted) {
+        setState(() {
+          _canViewProduction = role == 'admin' || myPerms.contains('/reports/production');
+          _isLoadingPerms = false;
+        });
+        if (_canViewProduction) {
+          _loadReport();
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isLoadingPerms = false);
+      }
+    }
   }
 
   DateTimeRange _buildPreviousRange(DateTimeRange current, String groupBy) {
@@ -275,15 +304,15 @@ class _ReportPageState extends State<ReportPage> with SingleTickerProviderStateM
           l10n.transportReport,
           style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
         ),
-        actions: [
+        actions: _canViewProduction ? [
           IconButton(
             onPressed: _exportReport,
             icon: Icon(Icons.download_rounded, color: colorScheme.primary),
             tooltip: l10n.exportReportBtn,
           ),
           SizedBox(width: 8.w),
-        ],
-        bottom: TabBar(
+        ] : null,
+        bottom: _canViewProduction ? TabBar(
           controller: _tabController,
           labelColor: colorScheme.primary,
           unselectedLabelColor: colorScheme.onSurfaceVariant,
@@ -293,12 +322,14 @@ class _ReportPageState extends State<ReportPage> with SingleTickerProviderStateM
             Tab(text: l10n.production),
             Tab(text: l10n.vehicleRanking),
           ],
-        ),
+        ) : null,
       ),
-      body: _isLoading
+      body: _isLoadingPerms || _isLoading
           ? Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
+          : (!_canViewProduction)
+              ? Center(child: Text('Không có quyền truy cập báo cáo', style: theme.textTheme.titleMedium))
+              : Column(
+                  children: [
                 Center(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(maxWidth: 800.w),
@@ -426,8 +457,8 @@ class _ReportPageState extends State<ReportPage> with SingleTickerProviderStateM
                     ],
                   ),
                 ),
-              ],
-            ),
+                  ],
+                ),
     );
   }
 }

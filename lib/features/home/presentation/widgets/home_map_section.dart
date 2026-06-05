@@ -109,85 +109,91 @@ class _HomeMapSectionState extends State<HomeMapSection> {
     return widget.vtrackingVehicles.map((v) {
       Color dotColor;
       if (v.status == 'run') {
-        dotColor = const Color(0xFFFF1744); // Vibrant Red Accent
+        dotColor = const Color(0xFF2979FF); // Blue (đang di chuyển)
+      } else if (v.status == 'stop') {
+        dotColor = const Color(0xFFFF9100); // Orange (dừng)
       } else if (v.status == 'park') {
-        dotColor = const Color(0xFFFFEA00); // Vibrant Yellow
+        dotColor = const Color(0xFF9E9E9E); // Grey (đỗ)
       } else {
-        dotColor = const Color(0xFF9E9E9E); // Grey for offline
+        dotColor = const Color(0xFFFF1744); // Red (mất kết nối)
       }
 
       return Marker(
         point: LatLng(v.latitude, v.longitude),
-        width: 100.w,
-        height: 100.h,
-        alignment: Alignment.topCenter, // Align so the tip points at the coordinate
-        child: GestureDetector(
-          onTap: () => VehicleDetailSheet.show(context, v, widget.stations),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Label Tooltip
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-                decoration: BoxDecoration(
-                  color: colorScheme.surface,
-                  borderRadius: BorderRadius.circular(4.r),
-                  border: Border.all(color: colorScheme.outlineVariant),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colorScheme.shadow.withValues(alpha: 0.15),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      v.vehicleName.isNotEmpty ? v.vehicleName : '---',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 10.sp,
-                          ),
-                    ),
-                    if (v.licensePlate.isNotEmpty)
-                      Text(
-                        v.licensePlate,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              fontSize: 8.sp,
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                      ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 2.h),
-              // Car Icon (SVG)
-              Transform.rotate(
+        width: 48.w,
+        height: 48.w,
+        alignment: Alignment.center,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.center,
+          children: [
+            // Car Icon (SVG)
+            GestureDetector(
+              onTap: () => VehicleDetailSheet.show(context, v, widget.stations),
+              child: Transform.rotate(
                 angle: v.direction * (3.1415926535897932 / 180),
-                child: Container(
+                child: ColorFiltered(
+                  colorFilter: ColorFilter.mode(dotColor, BlendMode.modulate),
                   child: ColorFiltered(
-                    colorFilter: ColorFilter.mode(dotColor, BlendMode.modulate),
-                    child: ColorFiltered(
-                      colorFilter: const ColorFilter.matrix([
-                        0.33, 0.59, 0.11, 0, 30,
-                        0.33, 0.59, 0.11, 0, 30,
-                        0.33, 0.59, 0.11, 0, 30,
-                        0, 0, 0, 1, 0,
-                      ]),
-                      child: SvgPicture.asset(
-                        'assets/images/car.svg',
-                        width: 24.w,
-                        height: 24.w,
-                        fit: BoxFit.contain,
-                      ),
+                    colorFilter: const ColorFilter.matrix([
+                      0.33, 0.59, 0.11, 0, 30,
+                      0.33, 0.59, 0.11, 0, 30,
+                      0.33, 0.59, 0.11, 0, 30,
+                      0, 0, 0, 1, 0,
+                    ]),
+                    child: SvgPicture.asset(
+                      'assets/images/car.svg',
+                      width: 48.w,
+                      height: 48.w,
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+            // Label Tooltip
+            Positioned(
+              bottom: 48.w + 2.h,
+              child: GestureDetector(
+                onTap: () => VehicleDetailSheet.show(context, v, widget.stations),
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface,
+                    borderRadius: BorderRadius.circular(4.r),
+                    border: Border.all(color: colorScheme.outlineVariant),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.shadow.withValues(alpha: 0.15),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        v.vehicleName.isNotEmpty ? v.vehicleName : '---',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 10.sp,
+                            ),
+                      ),
+                      if (v.licensePlate.isNotEmpty)
+                        Text(
+                          v.licensePlate,
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                fontSize: 8.sp,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       );
     }).toList();
@@ -279,6 +285,7 @@ class _MapView extends StatelessWidget {
           options: MapOptions(
             initialCenter: center,
             initialZoom: 16,
+            maxZoom: 20.0,
           ),
           children: [
             TileLayer(

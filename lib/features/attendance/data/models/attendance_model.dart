@@ -23,6 +23,12 @@ class AttendanceRecord {
   bool get isWorking => status == '1';
   bool get isOff => status == '0';
   bool get isHalf => status == '0.5';
+  Map<String, dynamic> toJson() => {
+        'tenVT': tenVT,
+        'hoTen': hoTen,
+        'boPhan': boPhan,
+        'status': status,
+      };
 }
 
 class AttendanceGroup {
@@ -46,6 +52,11 @@ class AttendanceGroup {
           [],
     );
   }
+  Map<String, dynamic> toJson() => {
+        'key': key,
+        'ten': ten,
+        'nhanSu': nhanSu,
+      };
 }
 
 class AttendanceSummary {

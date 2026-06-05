@@ -563,13 +563,13 @@ abstract class AppLocalizations {
   /// No description provided for @mealCheckMorning.
   ///
   /// In en, this message translates to:
-  /// **'Morning'**
+  /// **'Lunch'**
   String get mealCheckMorning;
 
   /// No description provided for @mealCheckLunch.
   ///
   /// In en, this message translates to:
-  /// **'Lunch'**
+  /// **'Afternoon'**
   String get mealCheckLunch;
 
   /// No description provided for @mealCheckDinner.

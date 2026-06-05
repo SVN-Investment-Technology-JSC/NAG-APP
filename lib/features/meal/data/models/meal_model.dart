@@ -17,8 +17,8 @@ class MealSlot {
 }
 
 const mealSlots = [
-  MealSlot(key: 'sang', label: 'Sáng', fromH: 11, fromM: 30, toH: 13, toM: 0),
-  MealSlot(key: 'trua', label: 'Trưa', fromH: 19, fromM: 0, toH: 22, toM: 0),
+  MealSlot(key: 'sang', label: 'Trưa', fromH: 11, fromM: 30, toH: 13, toM: 0),
+  MealSlot(key: 'trua', label: 'Chiều', fromH: 19, fromM: 0, toH: 22, toM: 0),
   MealSlot(key: 'toi', label: 'Tối', fromH: 22, fromM: 0, toH: 23, toM: 59),
 ];
 
