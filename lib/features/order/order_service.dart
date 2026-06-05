@@ -114,6 +114,20 @@ class OrderService {
     await updateOrder(orderId, stationId: stationId, orderNumber: 1);
   }
 
+  Future<void> arrangeTime({required List<int> vehicleIds}) async {
+    final String fullUrl = '${AppEndpoints.apiBaseUrl}orders/arrange-time';
+    await dio.put(fullUrl, data: {'vehicle_ids': vehicleIds});
+  }
+
+  Future<Map<String, dynamic>> syncLot({required Map<String, int> maToStt}) async {
+    final String fullUrl = '${AppEndpoints.webBaseUrl}/api/google-sheets/bo-tri-cv/sync-lot';
+    final response = await dio.post(
+      fullUrl,
+      data: {'maToStt': maToStt},
+    );
+    return response.data as Map<String, dynamic>;
+  }
+
   Future<void> shiftClose(String operationDate) async {
     final String fullUrl = '${AppEndpoints.apiBaseUrl}orders/shift-close';
     await dio.post(fullUrl, data: {'operation_date': operationDate});

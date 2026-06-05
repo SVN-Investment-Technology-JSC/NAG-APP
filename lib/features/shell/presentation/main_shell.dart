@@ -198,11 +198,11 @@ class _MainShellState extends State<MainShell> {
           .toList();
 
       // Combine all orders for the yard list to find the correct init_datetime
+      // (only active statuses, exclude today's completed orders to avoid incorrect timestamps)
       final allActiveOrders = [
         ...pendingOrders, 
         ...collectingOrders, 
         ...transportingOrders,
-        ...todayOrders,
       ];
       // Sort and remove duplicates based on orderId
       final Map<int, OrderModel> uniqueOrders = {};
@@ -305,6 +305,7 @@ class _MainShellState extends State<MainShell> {
             vehicleService: _vehicleService,
             socketService: _socketService,
             notificationService: _notificationService,
+            orderService: _orderService,
             isLoading: _isLoading,
             error: _error,
             onRefresh: _loadData,
@@ -315,6 +316,7 @@ class _MainShellState extends State<MainShell> {
             vtrackingVehicles: _allVtrackingVehicles,
             stations: _stations,
             initialDate: _targetTripDate,
+            onRefresh: _loadData,
           ),
           ReportPage(
             onNavigateTrips: (date) {

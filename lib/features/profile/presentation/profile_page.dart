@@ -10,6 +10,8 @@ import 'package:nguyenanh/features/attendance/presentation/attendance_page.dart'
 import 'package:nguyenanh/features/meal/presentation/meal_check_page.dart';
 import 'package:nguyenanh/features/setup/presentation/selection_page.dart';
 import 'package:nguyenanh/l10n/app_localizations.dart';
+import 'package:nguyenanh/features/user_manage/presentation/user_manage_main_page.dart';
+import 'package:nguyenanh/features/user_manage/data/services/user_manage_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:nguyenanh/core/network/app_endpoints.dart';
 
@@ -32,6 +34,10 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   String _userFullName = '';
   String _userRole = '';
+  final UserManageService _userManageService = UserManageService();
+  bool _canMealCheck = false;
+  bool _canAttendance = false;
+  bool _canUserManage = false;
 
   @override
   void initState() {
@@ -46,6 +52,18 @@ class _ProfilePageState extends State<ProfilePage> {
       _userFullName = prefs.getString('user_full_name') ?? 'Người dùng';
       _userRole = prefs.getString('user_role') ?? 'Admin';
     });
+
+    try {
+      final perms = await _userManageService.getPermissions();
+      final myPerms = perms[_userRole] ?? [];
+      if (mounted) {
+        setState(() {
+          _canMealCheck = _userRole == 'admin' || myPerms.contains('/meal-check');
+          _canAttendance = _userRole == 'admin' || myPerms.contains('/attendance');
+          _canUserManage = _userRole == 'admin' || myPerms.contains('/user-manage__view');
+        });
+      }
+    } catch (_) {}
   }
 
   void _showLanguagePicker() {
@@ -310,6 +328,25 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             SizedBox(height: 16.h),
 
+            if (_canUserManage) ...[
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: _buildListCard(
+                    context,
+                    theme,
+                    colorScheme,
+                    icon: Icons.admin_panel_settings_rounded,
+                    iconColor: Colors.deepPurple,
+                    title: 'Quản lý người dùng',
+                    subtitle: 'Phân quyền & Tài khoản',
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserManageMainPage())),
+                  ),
+                ),
+              ),
+              SizedBox(height: 16.h),
+            ],
+
             // Grid Options
             GridView.count(
               physics: const NeverScrollableScrollPhysics(),
@@ -329,26 +366,28 @@ class _ProfilePageState extends State<ProfilePage> {
                   subtitle: l10n.tripsDesc,
                   onTap: widget.onNavigateTrips,
                 ),
-                _buildGridCard(
-                  context,
-                  theme,
-                  colorScheme,
-                  icon: Icons.event_available_rounded,
-                  iconColor: Colors.green,
-                  title: l10n.attendance,
-                  subtitle: l10n.attendanceDesc,
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendancePage())),
-                ),
-                _buildGridCard(
-                  context,
-                  theme,
-                  colorScheme,
-                  icon: Icons.restaurant_rounded,
-                  iconColor: Colors.purple,
-                  title: l10n.mealCheck,
-                  subtitle: l10n.mealDesc,
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MealCheckPage())),
-                ),
+                if (_canAttendance)
+                  _buildGridCard(
+                    context,
+                    theme,
+                    colorScheme,
+                    icon: Icons.event_available_rounded,
+                    iconColor: Colors.green,
+                    title: l10n.attendance,
+                    subtitle: l10n.attendanceDesc,
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendancePage())),
+                  ),
+                if (_canMealCheck)
+                  _buildGridCard(
+                    context,
+                    theme,
+                    colorScheme,
+                    icon: Icons.restaurant_rounded,
+                    iconColor: Colors.purple,
+                    title: l10n.mealCheck,
+                    subtitle: l10n.mealDesc,
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MealCheckPage())),
+                  ),
                 _buildGridCard(
                   context,
                   theme,

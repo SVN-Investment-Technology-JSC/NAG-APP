@@ -38,6 +38,28 @@ class AttendanceService {
     }
   }
 
+  Future<String> syncSheet(Map<String, dynamic> payload) async {
+    try {
+      final url = 'https://nguyenanhdonghoi.com/api/google-sheets/attendance/sync';
+      final response = await dio.post(
+        url,
+        data: payload,
+        options: Options(
+          headers: {'Content-Type': 'application/json'},
+          sendTimeout: const Duration(seconds: 15),
+          receiveTimeout: const Duration(seconds: 15),
+        ),
+      );
+      if (response.statusCode == 200) {
+        return response.data['sheetUrl'] ?? '';
+      }
+      return '';
+    } catch (e) {
+      debugPrint('[ATTENDANCE] Sync Error: $e');
+      rethrow;
+    }
+  }
+
   AttendanceResponse _empty() => const AttendanceResponse(
         sheetDate: '',
         results: [],

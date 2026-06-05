@@ -247,10 +247,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mealCheckTotal => 'Total';
 
   @override
-  String get mealCheckMorning => 'Morning';
+  String get mealCheckMorning => 'Lunch';
 
   @override
-  String get mealCheckLunch => 'Lunch';
+  String get mealCheckLunch => 'Afternoon';
 
   @override
   String get mealCheckDinner => 'Dinner';

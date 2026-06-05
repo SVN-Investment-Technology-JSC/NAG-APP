@@ -5,9 +5,12 @@ import 'package:provider/provider.dart';
 import 'package:nguyenanh/features/vehicle/data/services/vehicle_service.dart';
 import 'package:nguyenanh/features/home/presentation/widgets/end_of_day_modal.dart';
 import 'package:nguyenanh/features/home/presentation/widgets/queue_history_modal.dart';
+import 'package:nguyenanh/features/home/presentation/widgets/sync_slots_modal.dart';
+import 'package:nguyenanh/features/order/order_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 import 'package:intl/intl.dart';
+import 'package:nguyenanh/features/user_manage/data/services/user_manage_service.dart';
 
 import 'package:nguyenanh/core/l10n/language_provider.dart';
 import 'package:nguyenanh/core/network/notification_socket_service.dart';
@@ -37,6 +40,7 @@ class HomePage extends StatefulWidget {
   final VehicleService vehicleService;
   final SocketService socketService;
   final NotificationSocketService notificationService;
+  final OrderService orderService;
   final bool isLoading;
   final String? error;
   final Future<void> Function() onRefresh;
@@ -52,6 +56,7 @@ class HomePage extends StatefulWidget {
     required this.vehicleService,
     required this.socketService,
     required this.notificationService,
+    required this.orderService,
     required this.isLoading,
     this.error,
     required this.onRefresh,
@@ -62,10 +67,16 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final UserManageService _userManageService = UserManageService();
   String _userFullName = '';
   String _userRole = '';
   bool _showYardEntryTime = true;
   final ScrollController _yardScrollController = ScrollController();
+
+  bool _canCheckLog = false;
+  bool _canViewMap = false;
+  bool _canSyncSlots = false;
+  bool _canHistory = false;
 
   double _haversineDistance(double lat1, double lon1, double lat2, double lon2) {
     const double r = 6371000; // Earth radius in meters
@@ -100,6 +111,19 @@ class _HomePageState extends State<HomePage> {
       _userFullName = prefs.getString('user_full_name') ?? '';
       _userRole = prefs.getString('user_role') ?? '';
     });
+
+    try {
+      final perms = await _userManageService.getPermissions();
+      final myPerms = perms[_userRole] ?? [];
+      if (mounted) {
+        setState(() {
+          _canCheckLog = _userRole == 'admin' || myPerms.contains('/dashboard__checklog');
+          _canViewMap = _userRole == 'admin' || myPerms.contains('/dashboard__view_map');
+          _canSyncSlots = _userRole == 'admin' || myPerms.contains('/dashboard__sync_slots');
+          _canHistory = _userRole == 'admin' || myPerms.contains('/dashboard__history');
+        });
+      }
+    } catch (_) {}
   }
 
   List<Station> get _workingStations =>
@@ -210,8 +234,9 @@ class _HomePageState extends State<HomePage> {
         automaticallyImplyLeading: false,
         centerTitle: false,
         actions: [
-          Padding(
-            padding: EdgeInsets.only(right: 8.w),
+          if (_canCheckLog)
+            Padding(
+              padding: EdgeInsets.only(right: 8.w),
             child: OutlinedButton.icon(
               onPressed: () {
                 showDialog(
@@ -239,9 +264,10 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          Padding(
-            padding: EdgeInsets.only(right: 8.w),
-            child: PopupMenuButton<String>(
+          if (_canSyncSlots || _canHistory)
+            Padding(
+              padding: EdgeInsets.only(right: 8.w),
+              child: PopupMenuButton<String>(
               icon: Icon(Icons.menu, color: colorScheme.primary),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
               color: colorScheme.surface,
@@ -253,14 +279,24 @@ class _HomePageState extends State<HomePage> {
                     builder: (context) => const QueueHistoryModal(),
                   );
                 } else if (value == 'sync_slots') {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${l10n.syncSlots} - Tính năng đang phát triển')),
+                  final activeFlowOrders = widget.pendingOrders.where((o) {
+                    final vStatus = o.vehicles?.vehicleStatus.toLowerCase();
+                    return vStatus != 'maintenance' && vStatus != 'incident' && vStatus != 'other';
+                  }).toList();
+                  showDialog(
+                    context: context,
+                    builder: (context) => SyncSlotsModal(
+                      orderService: widget.orderService,
+                      activeFlowOrders: activeFlowOrders,
+                      onRefresh: widget.onRefresh,
+                    ),
                   );
                 }
               },
               itemBuilder: (BuildContext context) => [
-                PopupMenuItem<String>(
-                  value: 'sync_slots',
+                if (_canSyncSlots)
+                  PopupMenuItem<String>(
+                    value: 'sync_slots',
                   child: Row(
                     children: [
                       Icon(Icons.sync, color: colorScheme.primary, size: 20.sp),
@@ -272,10 +308,11 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                     ],
+                    ),
                   ),
-                ),
-                PopupMenuItem<String>(
-                  value: 'queue_history',
+                if (_canHistory)
+                  PopupMenuItem<String>(
+                    value: 'queue_history',
                   child: Row(
                     children: [
                       Icon(Icons.history, color: colorScheme.primary, size: 20.sp),
@@ -311,13 +348,14 @@ class _HomePageState extends State<HomePage> {
         child: CustomScrollView(
           slivers: [
             ..._buildStationSliver(),
-            SliverToBoxAdapter(
-              child: HomeMapSection(
-                stations: widget.stations,
-                vtrackingVehicles: widget.vtrackingVehicles,
-                collectingOrders: _collectingOrders,
+            if (_canViewMap)
+              SliverToBoxAdapter(
+                child: HomeMapSection(
+                  stations: widget.stations,
+                  vtrackingVehicles: widget.vtrackingVehicles,
+                  collectingOrders: _collectingOrders,
+                ),
               ),
-            ),
             ..._buildReadyVehiclesSliver(theme, colorScheme, l10n),
             SliverToBoxAdapter(child: SizedBox(height: 24.h)),
           ],
@@ -414,7 +452,7 @@ class _HomePageState extends State<HomePage> {
                             String dateStr = '--/--/----';
                             if (order != null && order.orderInitDatetime.isNotEmpty) {
                               try {
-                                final dt = DateTime.parse(order.orderInitDatetime);
+                                final dt = DateTime.parse(order.orderInitDatetime).toLocal();
                                 timeStr = DateFormat('HH:mm:ss').format(dt);
                                 dateStr = DateFormat('dd/MM/yyyy').format(dt);
                               } catch (_) {}
@@ -594,6 +632,7 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     }
+
 
     return SliverList(
       delegate: SliverChildBuilderDelegate(

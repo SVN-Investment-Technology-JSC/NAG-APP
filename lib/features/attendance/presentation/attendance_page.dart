@@ -28,6 +28,8 @@ class _AttendancePageState extends State<AttendancePage> {
   AttendanceResponse? _data;
   bool _isLoading = true;
   String? _error;
+  bool _isSyncing = false;
+  String? _sheetUrl;
 
   @override
   void initState() {
@@ -161,10 +163,47 @@ class _AttendancePageState extends State<AttendancePage> {
     );
   }
 
+  Future<void> _syncSheet() async {
+    if (_data == null || _data!.results.isEmpty) return;
+    setState(() => _isSyncing = true);
+    try {
+      final payload = {
+        'date': _data!.sheetDate,
+        'results': _data!.results.map((e) => e.toJson()).toList(),
+        'nhomNS': _data!.nhomNS.map((e) => e.toJson()).toList(),
+      };
+
+      final url = await _service.syncSheet(payload);
+      if (mounted) {
+        setState(() {
+          _sheetUrl = url.isNotEmpty ? url : null;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đồng bộ thành công!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi đồng bộ: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSyncing = false);
+    }
+  }
+
   Future<void> _openSheet() async {
-    final uri = Uri.parse(AppEndpoints.attendanceSheetUrl);
+    final url = _sheetUrl ?? AppEndpoints.attendanceSheetUrl;
+    final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Không thể mở URL')),
+        );
+      }
     }
   }
 
@@ -183,20 +222,49 @@ class _AttendancePageState extends State<AttendancePage> {
           style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
         ),
         actions: [
-          IconButton(
-            onPressed: (_data == null || _data!.results.isEmpty) ? null : _exportExcel,
-            icon: Icon(
-              Icons.table_chart_outlined,
-              color: (_data == null || _data!.results.isEmpty)
-                  ? colorScheme.outlineVariant
-                  : colorScheme.primary,
-            ),
-            tooltip: l10n.exportExcel,
-          ),
-          IconButton(
-            onPressed: _openSheet,
-            icon: Icon(Icons.open_in_new_rounded, color: colorScheme.primary),
-            tooltip: l10n.openGoogleSheet,
+          PopupMenuButton<String>(
+            icon: Icon(Icons.menu_rounded, color: colorScheme.primary),
+            tooltip: 'Thao tác',
+            enabled: _data != null && _data!.results.isNotEmpty,
+            onSelected: (value) {
+              if (value == 'excel') _exportExcel();
+              if (value == 'sync') _syncSheet();
+              if (value == 'open') _openSheet();
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'excel',
+                child: Row(
+                  children: [
+                    Icon(Icons.download_rounded, size: 20.sp, color: colorScheme.onSurface),
+                    SizedBox(width: 12.w),
+                    const Text('Xuất Excel'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'sync',
+                child: Row(
+                  children: [
+                    _isSyncing
+                      ? SizedBox(width: 20.sp, height: 20.sp, child: const CircularProgressIndicator(strokeWidth: 2))
+                      : Icon(Icons.sync_rounded, size: 20.sp, color: colorScheme.onSurface),
+                    SizedBox(width: 12.w),
+                    const Text('Đồng bộ Sheet'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'open',
+                child: Row(
+                  children: [
+                    Icon(Icons.open_in_new_rounded, size: 20.sp, color: colorScheme.onSurface),
+                    SizedBox(width: 12.w),
+                    const Text('Mở Sheet'),
+                  ],
+                ),
+              ),
+            ],
           ),
           SizedBox(width: 4.w),
         ],
