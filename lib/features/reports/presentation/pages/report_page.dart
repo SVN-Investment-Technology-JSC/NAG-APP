@@ -148,25 +148,41 @@ class _ReportPageState extends State<ReportPage> with SingleTickerProviderStateM
       
       debugPrint('[ReportPage] Found ${tankerVehicles.length} tankers');
 
-      // 4. Fetch Individual Reports in parallel
-      final currentReports = await Future.wait(tankerVehicles.map((v) => _reportService.getProduction(
-            vehicleId: v.vehicleId,
-            from: from,
-            to: to,
-            groupBy: _groupBy,
-          )));
+      // 4. Fetch Individual Reports in chunks to avoid 429 Too Many Requests
+      final currentReports = <ProductionReportResponse>[];
+      for (var i = 0; i < tankerVehicles.length; i += 5) {
+        final chunk = tankerVehicles.skip(i).take(5);
+        final res = await Future.wait(chunk.map((v) => _reportService.getProduction(
+              vehicleId: v.vehicleId,
+              from: from,
+              to: to,
+              groupBy: _groupBy,
+            )));
+        currentReports.addAll(res);
+        if (i + 5 < tankerVehicles.length) {
+          await Future.delayed(const Duration(milliseconds: 300));
+        }
+      }
 
       // 5. Fetch Previous Period Reports (for comparison)
       final prevRange = _buildPreviousRange(_dateRange, _groupBy);
       final prevFrom = DateFormat('yyyy-MM-dd').format(prevRange.start);
       final prevTo = DateFormat('yyyy-MM-dd').format(prevRange.end);
 
-      final prevReports = await Future.wait(tankerVehicles.map((v) => _reportService.getProduction(
-            vehicleId: v.vehicleId,
-            from: prevFrom,
-            to: prevTo,
-            groupBy: _groupBy,
-          )));
+      final prevReports = <ProductionReportResponse>[];
+      for (var i = 0; i < tankerVehicles.length; i += 5) {
+        final chunk = tankerVehicles.skip(i).take(5);
+        final res = await Future.wait(chunk.map((v) => _reportService.getProduction(
+              vehicleId: v.vehicleId,
+              from: prevFrom,
+              to: prevTo,
+              groupBy: _groupBy,
+            )));
+        prevReports.addAll(res);
+        if (i + 5 < tankerVehicles.length) {
+          await Future.delayed(const Duration(milliseconds: 300));
+        }
+      }
 
       // 6. Aggregate
       final aggregatedCurrent = ProductionReportResponse.aggregate(currentReports, from, to, _groupBy);

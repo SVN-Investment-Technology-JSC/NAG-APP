@@ -24,23 +24,46 @@ const mealSlots = [
 
 class DayMeals {
   bool sang;
+  String? sangSource;
   bool trua;
+  String? truaSource;
   bool toi;
+  String? toiSource;
 
-  DayMeals({this.sang = false, this.trua = false, this.toi = false});
+  DayMeals({
+    this.sang = false,
+    this.sangSource,
+    this.trua = false,
+    this.truaSource,
+    this.toi = false,
+    this.toiSource,
+  });
 
   int get total => (sang ? 1 : 0) + (trua ? 1 : 0) + (toi ? 1 : 0);
+
+  DayMeals clone() {
+    return DayMeals(
+      sang: sang,
+      sangSource: sangSource,
+      trua: trua,
+      truaSource: truaSource,
+      toi: toi,
+      toiSource: toiSource,
+    );
+  }
 }
 
 /// Multi-day meal data: name → { dateStr → DayMeals }
 typedef MealDataMap = Map<String, Map<String, DayMeals>>;
 
 class Personnel {
+  final int? userId;
   final String tenVT;
   final String hoTen;
   final String boPhan;
 
   const Personnel({
+    this.userId,
     required this.tenVT,
     required this.hoTen,
     required this.boPhan,
@@ -48,6 +71,9 @@ class Personnel {
 
   factory Personnel.fromJson(Map<String, dynamic> json) {
     return Personnel(
+      userId: json['userId'] is int
+          ? json['userId']
+          : (json['userId'] != null ? int.tryParse(json['userId'].toString()) : null),
       tenVT: json['tenVT']?.toString() ?? '',
       hoTen: json['hoTen']?.toString() ?? '',
       boPhan: json['boPhan']?.toString() ?? '',
@@ -55,24 +81,50 @@ class Personnel {
   }
 }
 
-class NhomConfig {
-  final String key;
-  final String ten;
-  final List<String> boPhanMatch;
+class UserAssignment {
+  final int userAssignmentId;
+  final int userId;
+  final String userFullName;
+  final String? userShortName;
+  final int? departmentId;
+  final String? departmentName;
+  final int? skillId;
+  final String? skillName;
+  final bool deleteFlag;
 
-  const NhomConfig({
-    required this.key,
-    required this.ten,
-    required this.boPhanMatch,
+  const UserAssignment({
+    required this.userAssignmentId,
+    required this.userId,
+    required this.userFullName,
+    this.userShortName,
+    this.departmentId,
+    this.departmentName,
+    this.skillId,
+    this.skillName,
+    this.deleteFlag = false,
   });
+
+  factory UserAssignment.fromJson(Map<String, dynamic> json) {
+    return UserAssignment(
+      userAssignmentId: json['user_assignment_id'] is int
+          ? json['user_assignment_id'] as int
+          : (json['user_assignment_id'] != null ? int.tryParse(json['user_assignment_id'].toString()) ?? 0 : 0),
+      userId: json['user_id'] is int
+          ? json['user_id'] as int
+          : (json['user_id'] != null ? int.tryParse(json['user_id'].toString()) ?? 0 : 0),
+      userFullName: json['user_full_name']?.toString() ?? '',
+      userShortName: json['user_short_name']?.toString(),
+      departmentId: json['department_id'] is int
+          ? json['department_id'] as int
+          : (json['department_id'] != null ? int.tryParse(json['department_id'].toString()) : null),
+      departmentName: json['department_name']?.toString(),
+      skillId: json['skill_id'] is int
+          ? json['skill_id'] as int
+          : (json['skill_id'] != null ? int.tryParse(json['skill_id'].toString()) : null),
+      skillName: json['skill_name']?.toString(),
+      deleteFlag: json['delete_flag'] == true || json['delete_flag'] == 1,
+    );
+  }
 }
 
-const nhomConfigs = [
-  NhomConfig(key: 'A', ten: 'Quản lý sản xuất', boPhanMatch: ['BLD', 'QLSX']),
-  NhomConfig(key: 'B', ten: 'Văn phòng', boPhanMatch: ['VP', 'Văn phòng']),
-  NhomConfig(key: 'C', ten: 'Vận hành trạm', boPhanMatch: ['VHT']),
-  NhomConfig(key: 'D', ten: 'QA/QC', boPhanMatch: ['QA/QC']),
-  NhomConfig(key: 'E', ten: 'Tổ xe bơm', boPhanMatch: ['Tổ bơm']),
-  NhomConfig(key: 'F', ten: 'Tổ bơm tĩnh', boPhanMatch: ['Bơm tĩnh']),
-  NhomConfig(key: '', ten: 'Tổ xe bồn', boPhanMatch: ['Xe bồn']),
-];
+

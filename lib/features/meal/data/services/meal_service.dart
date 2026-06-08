@@ -1,12 +1,9 @@
-import 'dart:math';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:intl/intl.dart';
 
+import 'package:nguyenanh/core/network/api_client.dart';
 import 'package:nguyenanh/core/network/app_endpoints.dart';
 import 'package:nguyenanh/features/meal/data/models/meal_model.dart';
-import 'package:nguyenanh/features/vtracking/data/models/vtracking_vehicle.dart';
 
 class MealService {
   static final Dio _webDio = Dio(BaseOptions(
@@ -57,245 +54,191 @@ class MealService {
     return {};
   }
 
-  /// Fetch GPS history for a vehicle on a specific day and time slot
-  Future<List<Map<String, dynamic>>> _fetchHistory(
-      String vehicleId, DateTime day, MealSlot slot) async {
+  Future<Map<String, dynamic>?> getReport(String fromDate, String toDate) async {
     try {
-      final dayStr = DateFormat('dd-MM-yyyy').format(day);
-      final fromDate =
-          '$dayStr,${slot.fromH.toString().padLeft(2, '0')}:${slot.fromM.toString().padLeft(2, '0')}';
-      final toDate =
-          '$dayStr,${slot.toH.toString().padLeft(2, '0')}:${slot.toM.toString().padLeft(2, '0')}';
-
-      final res = await _webDio.post(
-        '${AppEndpoints.webBaseUrl}/api/vtracking/history',
-        data: {
-          'vehicleId': vehicleId,
-          'fromDate': fromDate,
-          'toDate': toDate,
-        },
+      final res = await ApiClient.dio.get(
+        'user-meal-status/report',
+        queryParameters: {'from': fromDate, 'to': toDate},
         options: Options(headers: {'Accept': 'application/json'}),
       );
-
-      if (res.statusCode == 200 && res.data != null) {
-        return (res.data['logs'] as List<dynamic>?)
-                ?.map((e) => e as Map<String, dynamic>)
-                .toList() ??
-            [];
+      if (res.statusCode != null && res.statusCode! >= 200 && res.statusCode! < 300 && res.data != null) {
+        final data = res.data['data'] ?? res.data;
+        return data as Map<String, dynamic>;
       }
     } catch (e) {
-      debugPrint('[MEAL] History fetch error: $e');
+      debugPrint('[MEAL] getReport error: $e');
+      if (e is DioException) {
+        debugPrint('[MEAL] getReport error status: ${e.response?.statusCode}');
+        debugPrint('[MEAL] getReport error response: ${e.response?.data}');
+      }
     }
-    return [];
+    return null;
   }
 
-  Future<List<VtrackingVehicle>> _fetchVehiclesViaProxy() async {
+  Future<dynamic> createRun(Map<String, dynamic> payload) async {
     try {
-      final res = await _webDio.get(
-        '${AppEndpoints.webBaseUrl}/api/vtracking/gps',
-        options: Options(headers: {'Accept': 'application/json'}),
-      );
-      if (res.statusCode == 200 && res.data != null) {
-        final list = res.data['vehicles'] as List<dynamic>? ?? [];
-        return list.map((v) {
-          final m = v as Map<String, dynamic>;
-          return VtrackingVehicle(
-            id: (m['id'] ?? '').toString(),
-            deviceId: (m['device_id'] ?? '').toString(),
-            vehicleName: (m['vehicle_name'] ?? '').toString(),
-            licensePlate: (m['license_plate'] ?? '').toString(),
-            latitude: (m['latitude'] as num?)?.toDouble() ?? 0,
-            longitude: (m['longitude'] as num?)?.toDouble() ?? 0,
-            speed: (m['speed'] as num?)?.toDouble() ?? 0,
-            status: (m['status'] ?? 'unknown').toString(),
-            geocoding: (m['geocoding'] ?? '').toString(),
-            direction: (m['direction'] as num?)?.toInt() ?? 0,
-            timestamp: (m['timestamp'] as num?)?.toInt() ?? 0,
-          );
-        }).toList();
-      }
-    } catch (e) {
-      debugPrint('[MEAL] VTracking GPS proxy error: $e');
-    }
-    return [];
-  }
-
-  /// Haversine distance in meters
-  static double _haversine(double lat1, double lng1, double lat2, double lng2) {
-    const R = 6371000.0;
-    final dLat = _toRad(lat2 - lat1);
-    final dLng = _toRad(lng2 - lng1);
-    final a = sin(dLat / 2) * sin(dLat / 2) +
-        cos(_toRad(lat1)) * cos(_toRad(lat2)) * sin(dLng / 2) * sin(dLng / 2);
-    return R * 2 * atan2(sqrt(a), sqrt(1 - a));
-  }
-
-  static double _toRad(double d) => d * pi / 180;
-
-  static String _normPlate(String plate) {
-    final digits = plate.replaceAll(RegExp(r'\D'), '');
-    return digits.length <= 5 ? digits : digits.substring(digits.length - 5);
-  }
-
-  /// Generate list of days between [from] and [to] inclusive
-  static List<DateTime> _daysBetween(DateTime from, DateTime to) {
-    final days = <DateTime>[];
-    var d = DateTime(from.year, from.month, from.day);
-    final end = DateTime(to.year, to.month, to.day);
-    while (!d.isAfter(end)) {
-      days.add(d);
-      d = d.add(const Duration(days: 1));
-    }
-    return days;
-  }
-
-  /// Check meals for a date range, fetching one vehicle/day/slot at a time.
-  ///
-  /// [onProgress]: (current, total) — called after each fetch
-  /// [onDataUpdate]: called after each meal found with the latest mealData
-  ///   so UI can rebuild progressively.
-  /// [onError]: called with error message when something goes wrong
-  Future<void> checkMeals({
-    required DateTime fromDate,
-    required DateTime toDate,
-    required List<MealSlot> slots,
-    required List<Personnel> personnel,
-    required Map<String, List<String>> plateToNames,
-    required MealDataMap mealData,
-    void Function(int current, int total)? onProgress,
-    void Function()? onDataUpdate,
-    void Function(String error)? onError,
-  }) async {
-    final vehicles = await _fetchVehiclesViaProxy();
-    if (vehicles.isEmpty) {
-      debugPrint('[MEAL] No vehicles returned from VTracking proxy');
-      onError?.call('Không lấy được danh sách xe từ VTracking');
-    }
-    final allDays = _daysBetween(fromDate, toDate);
-    final dateFmt = DateFormat('yyyy-MM-dd');
-
-    // Init meal data for all personnel × all days
-    for (final p in personnel) {
-      mealData.putIfAbsent(p.hoTen, () => {});
-      for (final day in allDays) {
-        final ds = dateFmt.format(day);
-        mealData[p.hoTen]!.putIfAbsent(ds, () => DayMeals());
-      }
-    }
-
-    final normMap = <String, List<String>>{};
-    for (final entry in plateToNames.entries) {
-      normMap[_normPlate(entry.key)] = entry.value;
-    }
-
-    final totalSteps = vehicles.length * allDays.length * slots.length;
-    var step = 0;
-    var matchedVehicles = 0;
-    var historyErrors = 0;
-    onProgress?.call(0, totalSteps);
-
-    for (final vehicle in vehicles) {
-      final driverNames = normMap[_normPlate(vehicle.licensePlate)];
-      if (driverNames == null || driverNames.isEmpty) {
-        step += allDays.length * slots.length;
-        onProgress?.call(step, totalSteps);
-        continue;
-      }
-      matchedVehicles++;
-
-      // Ensure driver names exist in mealData
-      for (final name in driverNames) {
-        mealData.putIfAbsent(name, () => {});
-        for (final day in allDays) {
-          final ds = dateFmt.format(day);
-          mealData[name]!.putIfAbsent(ds, () => DayMeals());
-        }
-      }
-
-      for (final day in allDays) {
-        final ds = dateFmt.format(day);
-
-        for (final slot in slots) {
-          step++;
-          onProgress?.call(step, totalSteps);
-
-          // Skip if all drivers already have this slot for this day
-          final allHaveSlot = driverNames.every((name) {
-            final dm = mealData[name]?[ds];
-            if (dm == null) return true;
-            if (slot.key == 'sang') return dm.sang;
-            if (slot.key == 'trua') return dm.trua;
-            return dm.toi;
-          });
-          if (allHaveSlot) continue;
-
-          try {
-            final logs = await _fetchHistory(vehicle.id, day, slot);
-            for (final log in logs) {
-              final val = log['value'] as Map<String, dynamic>? ?? {};
-              final lat = (val['latitude'] as num?)?.toDouble() ?? 0;
-              final lng = (val['longitude'] as num?)?.toDouble() ?? 0;
-              if (lat == 0 || lng == 0) continue;
-
-              final dist = _haversine(stationLat, stationLng, lat, lng);
-              if (dist > radiusMeters) {
-                // Vehicle was away from station -> had meal
-                for (final name in driverNames) {
-                  final dm = mealData.putIfAbsent(name, () => {})[ds] ??= DayMeals();
-                  if (slot.key == 'sang') dm.sang = true;
-                  if (slot.key == 'trua') dm.trua = true;
-                  if (slot.key == 'toi') dm.toi = true;
-                }
-                onDataUpdate?.call();
-                break;
-              }
-            }
-          } catch (e) {
-            historyErrors++;
-            debugPrint('[MEAL] Check error for ${vehicle.licensePlate} on ${dateFmt.format(day)} ${slot.key}: $e');
-          }
-        }
-      }
-    }
-
-    debugPrint('[MEAL] Done: ${vehicles.length} vehicles, $matchedVehicles matched plates, $historyErrors errors, ${allDays.length} days, ${slots.length} slots');
-    if (matchedVehicles == 0 && vehicles.isNotEmpty) {
-      onError?.call('Không có xe nào khớp biển số với bảng phân công (${vehicles.length} xe, ${normMap.length} biển số trong bảng)');
-    }
-    if (historyErrors > 0) {
-      onError?.call('$historyErrors lỗi khi lấy lịch sử GPS');
-    }
-  }
-
-  Future<Map<String, dynamic>?> syncSheet(Map<String, dynamic> payload) async {
-    try {
-      final res = await _webDio.post(
-        '${AppEndpoints.webBaseUrl}/api/google-sheets/sync',
+      final res = await ApiClient.dio.post(
+        'meal-check/runs',
         data: payload,
         options: Options(headers: {'Accept': 'application/json'}),
       );
-      if (res.statusCode == 200 && res.data != null) {
-        return res.data as Map<String, dynamic>;
+      if (res.statusCode != null && res.statusCode! >= 200 && res.statusCode! < 300 && res.data != null) {
+        final data = res.data['data'] ?? res.data;
+        return data['meal_check_run_id'];
       }
     } catch (e) {
-      debugPrint('[MEAL] Sync sheet error: $e');
+      debugPrint('[MEAL] createRun error: $e');
+      if (e is DioException) {
+        debugPrint('[MEAL] createRun error status: ${e.response?.statusCode}');
+        debugPrint('[MEAL] createRun error response: ${e.response?.data}');
+      }
       rethrow;
     }
     return null;
   }
 
-  Future<String?> getSheetUrl() async {
+  Future<Map<String, dynamic>?> getRun(dynamic runId) async {
     try {
-      final res = await _webDio.get(
-        '${AppEndpoints.webBaseUrl}/api/google-sheets/sync',
+      final res = await ApiClient.dio.get(
+        'meal-check/runs/$runId',
         options: Options(headers: {'Accept': 'application/json'}),
       );
-      if (res.statusCode == 200 && res.data != null) {
-        return res.data['sheetUrl']?.toString();
+      if (res.statusCode != null && res.statusCode! >= 200 && res.statusCode! < 300 && res.data != null) {
+        final data = res.data['data'] ?? res.data;
+        return data as Map<String, dynamic>;
       }
     } catch (e) {
-      debugPrint('[MEAL] Get sheet url error: $e');
+      debugPrint('[MEAL] getRun error: $e');
+      if (e is DioException) {
+        debugPrint('[MEAL] getRun error status: ${e.response?.statusCode}');
+        debugPrint('[MEAL] getRun error response: ${e.response?.data}');
+      }
     }
     return null;
+  }
+
+  Future<Map<String, bool>> checkConfigOk(String dateStr) async {
+    bool hasPump = false;
+    bool hasMixer = false;
+    bool hasTask = false;
+
+    try {
+      // 1. Check arrangement (Pump & Mixer)
+      final dayRes = await ApiClient.dio.get(
+        'work-arrangement-days',
+        queryParameters: {'arrangement_date': dateStr, 'limit': 10},
+        options: Options(
+          headers: {'Accept': 'application/json'},
+          validateStatus: (status) => status != null && (status == 200 || status == 404),
+        ),
+      );
+      
+      if (dayRes.statusCode == 200 && dayRes.data != null) {
+        final days = dayRes.data['data'] ?? dayRes.data['work_arrangement_days'] ?? dayRes.data['items'] ?? [];
+        if (days.isNotEmpty) {
+          final dayId = days.first['work_arrangement_day_id'] ?? days.first['id'];
+          if (dayId != null) {
+            final itemsRes = await ApiClient.dio.get(
+              'work-arrangement-items',
+              queryParameters: {'work_arrangement_day_id': dayId, 'limit': 1000},
+              options: Options(
+                headers: {'Accept': 'application/json'},
+                validateStatus: (status) => status != null && (status == 200 || status == 404),
+              ),
+            );
+            if (itemsRes.statusCode == 200 && itemsRes.data != null) {
+              final items = itemsRes.data['data'] ?? itemsRes.data['work_arrangement_items'] ?? itemsRes.data['items'] ?? [];
+              if (items.isNotEmpty) {
+                 hasPump = true; // simplified check
+                 hasMixer = true; 
+              }
+            }
+          }
+        }
+      }
+
+      // 2. Check task
+      final taskRes = await ApiClient.dio.get(
+        'work-tasks',
+        queryParameters: {'work_date': dateStr, 'limit': 1000},
+        options: Options(
+          headers: {'Accept': 'application/json'},
+          validateStatus: (status) => status != null && (status == 200 || status == 404),
+        ),
+      );
+      if (taskRes.statusCode != null && taskRes.statusCode! >= 200 && taskRes.statusCode! < 300 && taskRes.data != null) {
+        final tasks = taskRes.data['data'] ?? taskRes.data['work_tasks'] ?? taskRes.data['items'] ?? [];
+        if (tasks.isNotEmpty) {
+           hasTask = true; 
+        }
+      }
+    } catch (e) {
+      debugPrint('[MEAL] checkConfigOk error: $e');
+      if (e is DioException) {
+        debugPrint('[MEAL] checkConfigOk error status: ${e.response?.statusCode}');
+        debugPrint('[MEAL] checkConfigOk error response: ${e.response?.data}');
+      }
+    }
+
+    return {
+      'hasPump': hasPump,
+      'hasMixer': hasMixer,
+      'hasTask': hasTask,
+    };
+  }
+
+  Future<Map<String, dynamic>?> upsertUserMealStatus({
+    required int userId,
+    required String workDate,
+    required String mealSlot,
+    required bool isAllowance,
+  }) async {
+    try {
+      final res = await ApiClient.dio.post(
+        'user-meal-status',
+        data: {
+          'user_id': userId,
+          'work_date': workDate,
+          'meal_slot': mealSlot,
+          'is_allowance': isAllowance,
+        },
+        options: Options(headers: {'Accept': 'application/json'}),
+      );
+      if (res.statusCode != null && res.statusCode! >= 200 && res.statusCode! < 300 && res.data != null) {
+        final data = res.data['data'] ?? res.data;
+        return data as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('[MEAL] upsertUserMealStatus error: $e');
+      if (e is DioException) {
+        debugPrint('[MEAL] upsertUserMealStatus error status: ${e.response?.statusCode}');
+        debugPrint('[MEAL] upsertUserMealStatus error response: ${e.response?.data}');
+      }
+    }
+    return null;
+  }
+
+  Future<List<UserAssignment>> fetchUserAssignments() async {
+    try {
+      final res = await ApiClient.dio.get(
+        'user-assignments',
+        queryParameters: {'limit': 1000},
+        options: Options(headers: {'Accept': 'application/json'}),
+      );
+      if (res.statusCode != null && res.statusCode! >= 200 && res.statusCode! < 300 && res.data != null) {
+        final list = (res.data['data'] ?? res.data['user_assignments'] ?? res.data['items'] ?? res.data) as List<dynamic>? ?? [];
+        return list
+            .map((e) => UserAssignment.fromJson(e as Map<String, dynamic>))
+            .where((u) => !u.deleteFlag)
+            .toList();
+      }
+    } catch (e) {
+      debugPrint('[MEAL] fetchUserAssignments error: $e');
+      if (e is DioException) {
+        debugPrint('[MEAL] fetchUserAssignments error status: ${e.response?.statusCode}');
+        debugPrint('[MEAL] fetchUserAssignments error response: ${e.response?.data}');
+      }
+    }
+    return [];
   }
 }

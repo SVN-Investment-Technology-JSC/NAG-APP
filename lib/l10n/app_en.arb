@@ -241,5 +241,8 @@
   "otherStatus": "Other",
   "noResultsFound": "No results found",
   "noTripsYet": "No trips yet",
-  "featureUnderDevelopment": "Feature under development"
+  "featureUnderDevelopment": "Feature under development",
+  "workArrangementAssign": "Work Assignment",
+  "workArrangementTasks": "Tasks",
+  "workArrangementStats": "Statistics"
 }

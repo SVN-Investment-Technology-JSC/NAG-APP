@@ -23,4 +23,13 @@ class AppEndpoints {
   
   // Multi
   static const String tankerQueueSnapshot = 'multi/tanker-queue-snapshot';
+
+  // Work Arrangement (Base Endpoints)
+  static const String userAssignments = 'user-assignments';
+  static const String userDayStatus = 'user-day-status';
+  static const String workArrangementDays = 'work-arrangement-days';
+  static const String workArrangementItems = 'work-arrangement-items';
+  static const String workArrangementPersonnel = 'work-arrangement-personnel';
+  static const String works = 'works';
+  static const String vehicles = 'vehicles';
 }
