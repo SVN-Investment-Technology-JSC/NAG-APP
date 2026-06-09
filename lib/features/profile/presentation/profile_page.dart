@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nguyenanh/core/l10n/language_provider.dart';
 import 'package:nguyenanh/core/theme/theme_toggle_button.dart';
 import 'package:nguyenanh/core/theme/app_spacing.dart';
-import 'package:nguyenanh/features/attendance/presentation/attendance_page.dart';
+import 'package:nguyenanh/features/work_arrangement/presentation/work_arrangement_page.dart';
 import 'package:nguyenanh/features/meal/presentation/meal_check_page.dart';
 import 'package:nguyenanh/features/setup/presentation/selection_page.dart';
 import 'package:nguyenanh/l10n/app_localizations.dart';
@@ -373,9 +373,9 @@ class _ProfilePageState extends State<ProfilePage> {
                     colorScheme,
                     icon: Icons.event_available_rounded,
                     iconColor: Colors.green,
-                    title: l10n.attendance,
-                    subtitle: l10n.attendanceDesc,
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AttendancePage())),
+                    title: 'Bố trí công việc',
+                    subtitle: 'Quản lý công việc và phân công',
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkArrangementPage())),
                   ),
                 if (_canMealCheck)
                   _buildGridCard(

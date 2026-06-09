@@ -653,4 +653,13 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get featureUnderDevelopment => 'Tính năng đang phát triển';
+
+  @override
+  String get workArrangementAssign => 'Phân công';
+
+  @override
+  String get workArrangementTasks => 'Công việc';
+
+  @override
+  String get workArrangementStats => 'Thống kê';
 }
