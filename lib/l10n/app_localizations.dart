@@ -1357,6 +1357,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Feature under development'**
   String get featureUnderDevelopment;
+
+  /// No description provided for @workArrangementAssign.
+  ///
+  /// In en, this message translates to:
+  /// **'Work Assignment'**
+  String get workArrangementAssign;
+
+  /// No description provided for @workArrangementTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks'**
+  String get workArrangementTasks;
+
+  /// No description provided for @workArrangementStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Statistics'**
+  String get workArrangementStats;
 }
 
 class _AppLocalizationsDelegate

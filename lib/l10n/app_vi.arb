@@ -241,5 +241,8 @@
   "otherStatus": "Khác",
   "noResultsFound": "Không tìm thấy kết quả",
   "noTripsYet": "Chưa có chuyến nào",
-  "featureUnderDevelopment": "Tính năng đang phát triển"
+  "featureUnderDevelopment": "Tính năng đang phát triển",
+  "workArrangementAssign": "Phân công",
+  "workArrangementTasks": "Công việc",
+  "workArrangementStats": "Thống kê"
 }

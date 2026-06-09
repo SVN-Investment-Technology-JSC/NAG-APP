@@ -651,4 +651,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get featureUnderDevelopment => 'Feature under development';
+
+  @override
+  String get workArrangementAssign => 'Work Assignment';
+
+  @override
+  String get workArrangementTasks => 'Tasks';
+
+  @override
+  String get workArrangementStats => 'Statistics';
 }
