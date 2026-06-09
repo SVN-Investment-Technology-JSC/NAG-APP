@@ -12,6 +12,7 @@ class OrderModel {
   final OrderUser? users;
   final OrderVehicle? vehicles;
   final OrderStation? stations;
+  final OrderShiftClosing? shiftClosing;
   final String? updatedAt;
   final int? updatedBy;
 
@@ -29,6 +30,7 @@ class OrderModel {
     this.users,
     this.vehicles,
     this.stations,
+    this.shiftClosing,
     this.updatedAt,
     this.updatedBy,
   });
@@ -53,6 +55,9 @@ class OrderModel {
           : null,
       stations: json['stations'] != null
           ? OrderStation.fromJson(json['stations'])
+          : null,
+      shiftClosing: json['shift_closing'] != null
+          ? OrderShiftClosing.fromJson(json['shift_closing'])
           : null,
       updatedAt: json['updated_at'],
       updatedBy: json['updated_by'],
@@ -195,4 +200,18 @@ class OrderMulti {
 
   double get distanceKm => (distanceEnd - distanceStart).abs();
   int get stopCount => (nStopEnd - nStopStart).abs();
+}
+
+class OrderShiftClosing {
+  final int shiftStatus;
+
+  OrderShiftClosing({
+    required this.shiftStatus,
+  });
+
+  factory OrderShiftClosing.fromJson(Map<String, dynamic> json) {
+    return OrderShiftClosing(
+      shiftStatus: json['shift_status'] ?? 0,
+    );
+  }
 }

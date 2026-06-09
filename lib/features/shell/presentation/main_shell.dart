@@ -173,11 +173,14 @@ class _MainShellState extends State<MainShell> {
       final mixerVehicleIds =
           mixerVehicles.map((v) => v.vehicleId).toSet();
 
-      final pendingOrders = (results[0] as List<OrderModel>)
-          .where((o) =>
-              o.vehicles != null &&
-              mixerVehicleIds.contains(o.vehicles!.vehicleId))
-          .toList();
+      final pendingOrders = (results[0] as List<OrderModel>).where((o) {
+        if (o.vehicles == null) return false;
+        if (!mixerVehicleIds.contains(o.vehicles!.vehicleId)) return false;
+        
+        final vStatus = o.vehicles!.vehicleStatus.toLowerCase();
+        final isShiftClosed = o.shiftClosing?.shiftStatus == 1;
+        return !isShiftClosed && vStatus != 'maintenance' && vStatus != 'incident' && vStatus != 'other';
+      }).toList();
 
       final collectingOrders = (results[1] as List<OrderModel>)
           .where((o) =>
