@@ -2045,7 +2045,7 @@ class _MealCheckPageState extends State<MealCheckPage> {
                               spacing: 4.w,
                               children: u.slots.map((s) {
                                 final isManual = s['source'] == 'manual';
-                                final label = s['slot'] == 'sang' ? 'S' : s['slot'] == 'trua' ? 'Tr' : 'T';
+                                final label = s['slot'] == 'sang' ? 'Tr' : s['slot'] == 'trua' ? 'Ch' : 'T';
                                 return Container(
                                   padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                                   decoration: BoxDecoration(
@@ -2259,7 +2259,7 @@ class _MealCheckPageState extends State<MealCheckPage> {
           ),
           if (_selectedSlots.contains('sang'))
             _mealDot(
-              'S',
+              'Tr',
               isSang,
               const Color(0xFFF59E0B),
               theme,
@@ -2270,7 +2270,7 @@ class _MealCheckPageState extends State<MealCheckPage> {
           if (_selectedSlots.contains('trua')) ...[
             SizedBox(width: 4.w),
             _mealDot(
-              'Tr',
+              'Ch',
               isTrua,
               const Color(0xFF0EA5E9),
               theme,
@@ -2404,7 +2404,7 @@ class _MealCheckPageState extends State<MealCheckPage> {
           ),
           SizedBox(height: 6.h),
           Text(
-            '* Bấm vào các ký hiệu S, Tr, T để thêm/bỏ suất ăn của nhân viên, rồi nhấn Lưu.',
+            '* Bấm vào các ký hiệu Tr, Ch, T để thêm/bỏ suất ăn của nhân viên, rồi nhấn Lưu.',
             style: theme.textTheme.bodySmall?.copyWith(
               color: colorScheme.onSurfaceVariant,
               fontStyle: FontStyle.italic,

@@ -34,6 +34,50 @@ class _HomeMapSectionState extends State<HomeMapSection> {
   List<Station> get _stationsWithGps =>
       widget.stations.where((s) => s.getLat != null && s.getLng != null).toList();
 
+  void _openFullscreenMap() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          body: SafeArea(
+            child: Stack(
+              children: [
+                _MapView(
+                  mapController: MapController(),
+                  center: _mapCenter(),
+                  circles: _buildGeofenceCircles(),
+                  markers: _buildVehicleMarkers(context),
+                  isFullscreen: true,
+                  onToggleFullscreen: () => Navigator.of(context).pop(),
+                ),
+                Positioned(
+                  top: 16.h,
+                  left: 16.w,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_stationsWithGps.isEmpty) return const SizedBox.shrink();
@@ -66,6 +110,8 @@ class _HomeMapSectionState extends State<HomeMapSection> {
                       center: _mapCenter(),
                       circles: _buildGeofenceCircles(),
                       markers: _buildVehicleMarkers(context),
+                      isFullscreen: false,
+                      onToggleFullscreen: _openFullscreenMap,
                     )
                   : const SizedBox.shrink(),
             ),
@@ -107,21 +153,42 @@ class _HomeMapSectionState extends State<HomeMapSection> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return widget.vtrackingVehicles.map((v) {
-      Color dotColor;
-      if (v.status == 'run') {
-        dotColor = const Color(0xFF2979FF); // Blue (đang di chuyển)
-      } else if (v.status == 'stop') {
-        dotColor = const Color(0xFFFF9100); // Orange (dừng)
-      } else if (v.status == 'park') {
-        dotColor = const Color(0xFF9E9E9E); // Grey (đỗ)
-      } else {
-        dotColor = const Color(0xFFFF1744); // Red (mất kết nối)
+      Widget carSvg = SvgPicture.asset(
+        'assets/images/car.svg',
+        width: 36.w,
+        height: 36.w,
+        fit: BoxFit.contain,
+      );
+
+      if (v.status == 'stop' || v.status == 'park') {
+        carSvg = ColorFiltered(
+          colorFilter: const ColorFilter.matrix(<double>[
+            0, 0, 1, 0, 0, // R' = B
+            0, 1, 0, 0, 0, // G' = G
+            1, 0, 0, 0, 0, // B' = R
+            0, 0, 0, 1, 0, // A' = A
+          ]),
+          child: carSvg,
+        );
+      } else if (v.status == 'offline') {
+        carSvg = Opacity(
+          opacity: 0.6,
+          child: ColorFiltered(
+            colorFilter: const ColorFilter.matrix(<double>[
+              0.2126, 0.7152, 0.0722, 0, 0,
+              0.2126, 0.7152, 0.0722, 0, 0,
+              0.2126, 0.7152, 0.0722, 0, 0,
+              0,      0,      0,      1, 0,
+            ]),
+            child: carSvg,
+          ),
+        );
       }
 
       return Marker(
         point: LatLng(v.latitude, v.longitude),
-        width: 48.w,
-        height: 48.w,
+        width: 80.w,
+        height: 80.w,
         alignment: Alignment.center,
         child: Stack(
           clipBehavior: Clip.none,
@@ -132,23 +199,7 @@ class _HomeMapSectionState extends State<HomeMapSection> {
               onTap: () => VehicleDetailSheet.show(context, v, widget.stations),
               child: Transform.rotate(
                 angle: v.direction * (3.1415926535897932 / 180),
-                child: ColorFiltered(
-                  colorFilter: ColorFilter.mode(dotColor, BlendMode.modulate),
-                  child: ColorFiltered(
-                    colorFilter: const ColorFilter.matrix([
-                      0.33, 0.59, 0.11, 0, 30,
-                      0.33, 0.59, 0.11, 0, 30,
-                      0.33, 0.59, 0.11, 0, 30,
-                      0, 0, 0, 1, 0,
-                    ]),
-                    child: SvgPicture.asset(
-                      'assets/images/car.svg',
-                      width: 48.w,
-                      height: 48.w,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
+                child: carSvg,
               ),
             ),
             // Label Tooltip
@@ -265,12 +316,16 @@ class _MapView extends StatelessWidget {
   final LatLng center;
   final List<CircleMarker> circles;
   final List<Marker> markers;
+  final VoidCallback? onToggleFullscreen;
+  final bool isFullscreen;
 
   const _MapView({
     required this.mapController,
     required this.center,
     required this.circles,
     required this.markers,
+    this.onToggleFullscreen,
+    this.isFullscreen = false,
   });
 
   @override
@@ -289,11 +344,8 @@ class _MapView extends StatelessWidget {
           ),
           children: [
             TileLayer(
-              urlTemplate: theme.brightness == Brightness.dark
-                  ? 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png'
-                  : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-              subdomains: const ['a', 'b', 'c', 'd'],
-              retinaMode: RetinaMode.isHighDensity(context),
+              urlTemplate: 'https://mt0.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+              userAgentPackageName: 'com.nguyenanh.nagapp',
             ),
             CircleLayer(circles: circles),
             MarkerLayer(markers: markers),
@@ -377,6 +429,33 @@ class _MapView extends StatelessWidget {
             ),
           ),
         ),
+        // Fullscreen toggle
+        if (onToggleFullscreen != null && !isFullscreen)
+          Positioned(
+            top: 8.h,
+            right: 8.w,
+            child: Container(
+              width: 32.w,
+              height: 32.w,
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: BorderRadius.circular(8.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.shadow.withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                iconSize: 20.sp,
+                icon: Icon(Icons.fullscreen_rounded, color: colorScheme.onSurface),
+                onPressed: onToggleFullscreen,
+              ),
+            ),
+          ),
       ],
     );
   }

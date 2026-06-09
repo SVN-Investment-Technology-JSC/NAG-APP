@@ -12,6 +12,11 @@ import 'package:nguyenanh/features/setup/presentation/selection_page.dart';
 import 'package:nguyenanh/l10n/app_localizations.dart';
 import 'package:nguyenanh/features/user_manage/presentation/user_manage_main_page.dart';
 import 'package:nguyenanh/features/user_manage/data/services/user_manage_service.dart';
+import 'package:nguyenanh/features/catalog/presentation/screens/vehicle_type_screen.dart';
+import 'package:nguyenanh/features/catalog/presentation/screens/department_screen.dart';
+import 'package:nguyenanh/features/catalog/presentation/screens/skill_screen.dart';
+import 'package:nguyenanh/features/catalog/presentation/screens/user_assignment_screen.dart';
+import 'package:nguyenanh/features/catalog/presentation/screens/work_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:nguyenanh/core/network/app_endpoints.dart';
 
@@ -402,6 +407,46 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             SizedBox(height: 24.h),
 
+            // Danh mục Section (Admin Only)
+            if (_userRole == 'admin') ...[
+              Padding(
+                padding: EdgeInsets.only(left: 8.w, bottom: 8.h),
+                child: Text(
+                  'DANH MỤC',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
+                    color: colorScheme.outline,
+                  ),
+                ),
+              ),
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(16.r),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildListTile(context, theme, colorScheme, icon: Icons.layers_rounded, title: 'Loại phương tiện', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VehicleTypeScreen()))),
+                        Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w),
+                        _buildListTile(context, theme, colorScheme, icon: Icons.domain_rounded, title: 'Quản lý bộ phận', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DepartmentScreen()))),
+                        Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w),
+                        _buildListTile(context, theme, colorScheme, icon: Icons.workspace_premium_rounded, title: 'Quản lý tay nghề', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SkillScreen()))),
+                        Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w),
+                        _buildListTile(context, theme, colorScheme, icon: Icons.people_alt_outlined, title: 'Danh mục nhân sự', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserAssignmentScreen()))),
+                        Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w),
+                        _buildListTile(context, theme, colorScheme, icon: Icons.work_outline_rounded, title: 'Quản lý công việc', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkScreen()))),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 24.h),
+            ],
+
             // Support & Legal
             Padding(
               padding: EdgeInsets.only(left: 8.w, bottom: 8.h),
@@ -485,6 +530,15 @@ class _ProfilePageState extends State<ProfilePage> {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
+  }
+
+  void _showDevSnackbar(BuildContext context, AppLocalizations l10n) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l10n.featureUnderDevelopment),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Widget _buildListCard(BuildContext context, ThemeData theme, ColorScheme colorScheme, {required IconData icon, required Color iconColor, required String title, required String subtitle, required VoidCallback onTap}) {
