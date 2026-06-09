@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:latlong2/latlong.dart' hide Path;
@@ -8,7 +9,7 @@ import 'package:nguyenanh/features/stations/data/models/station_model.dart';
 import 'package:nguyenanh/features/vtracking/data/models/vtracking_vehicle.dart';
 import 'package:nguyenanh/l10n/app_localizations.dart';
 
-class VehicleDetailSheet extends StatelessWidget {
+class VehicleDetailSheet extends StatefulWidget {
   final VtrackingVehicle vehicle;
   final List<Station> stations;
 
@@ -32,6 +33,57 @@ class VehicleDetailSheet extends StatelessWidget {
   }
 
   @override
+  State<VehicleDetailSheet> createState() => _VehicleDetailSheetState();
+}
+
+class _VehicleDetailSheetState extends State<VehicleDetailSheet> {
+  String _address = '';
+  bool _isLoadingAddress = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _address = widget.vehicle.geocoding;
+    _fetchAddress();
+  }
+
+  Future<void> _fetchAddress() async {
+    try {
+      final dio = Dio();
+      final response = await dio.get(
+        'https://nguyenanhdonghoi.com/api/geocode/reverse',
+        queryParameters: {
+          'lat': widget.vehicle.latitude,
+          'lng': widget.vehicle.longitude,
+        },
+      );
+      if (response.statusCode == 200 && response.data['address'] != null) {
+        if (mounted) {
+          setState(() {
+            _address = _formatAddress(response.data['address']);
+            _isLoadingAddress = false;
+          });
+        }
+      } else {
+        if (mounted) setState(() => _isLoadingAddress = false);
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingAddress = false);
+    }
+  }
+
+  String _formatAddress(String? raw) {
+    if (raw == null || raw.isEmpty) return _address;
+    final cleaned = raw
+        .split(',')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty && s != 'null' && s != 'undefined')
+        .join(', ');
+    if (cleaned.isEmpty) return _address;
+    return cleaned;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -46,13 +98,13 @@ class VehicleDetailSheet extends StatelessWidget {
           children: [
             _DragHandle(),
             SizedBox(height: AppSpacing.mdH),
-            _VehicleHeaderRow(vehicle: vehicle, status: status),
+            _VehicleHeaderRow(vehicle: widget.vehicle, status: status),
             if (_showSubtitle) ...[
               SizedBox(height: AppSpacing.xsH),
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  vehicle.vehicleName,
+                  widget.vehicle.vehicleName,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -65,7 +117,7 @@ class VehicleDetailSheet extends StatelessWidget {
             _DetailRow(
               icon: Icons.speed_rounded,
               label: l10n.speedLabel,
-              value: '${vehicle.speed.toStringAsFixed(0)} km/h',
+              value: '${widget.vehicle.speed.toStringAsFixed(0)} km/h',
             ),
             SizedBox(height: 10.h),
             _DetailRow(
@@ -73,12 +125,12 @@ class VehicleDetailSheet extends StatelessWidget {
               label: l10n.distanceLabel,
               value: _distanceToNearestStation(),
             ),
-            if (vehicle.geocoding.isNotEmpty) ...[
+            if (_address.isNotEmpty || _isLoadingAddress) ...[
               SizedBox(height: 10.h),
               _DetailRow(
                 icon: Icons.location_on_outlined,
                 label: l10n.locationLabel,
-                value: vehicle.geocoding,
+                value: _isLoadingAddress ? 'Đang lấy địa chỉ...' : _address,
               ),
             ],
             SizedBox(height: 12.h),
@@ -89,9 +141,9 @@ class VehicleDetailSheet extends StatelessWidget {
   }
 
   bool get _showSubtitle =>
-      vehicle.vehicleName.isNotEmpty &&
-      vehicle.licensePlate.isNotEmpty &&
-      vehicle.vehicleName != vehicle.licensePlate;
+      widget.vehicle.vehicleName.isNotEmpty &&
+      widget.vehicle.licensePlate.isNotEmpty &&
+      widget.vehicle.vehicleName != widget.vehicle.licensePlate;
 
   _VehicleStatus _resolveStatus(BuildContext context) {
     final theme = Theme.of(context);
@@ -99,7 +151,7 @@ class VehicleDetailSheet extends StatelessWidget {
     final ext = theme.extension<AppColorsExtension>()!;
     final l10n = AppLocalizations.of(context)!;
 
-    switch (vehicle.status) {
+    switch (widget.vehicle.status) {
       case 'run':
         return _VehicleStatus(const Color(0xFF10B981), l10n.vehicleRunning);
       case 'park':
@@ -110,7 +162,7 @@ class VehicleDetailSheet extends StatelessWidget {
   }
 
   String _distanceToNearestStation() {
-    final type2 = stations
+    final type2 = widget.stations
         .where((s) => s.stationTypeId == 2 && s.getLat != null && s.getLng != null)
         .toList();
     if (type2.isEmpty) return '---';
@@ -121,7 +173,7 @@ class VehicleDetailSheet extends StatelessWidget {
     for (final s in type2) {
       final d = distance.as(
         LengthUnit.Meter,
-        LatLng(vehicle.latitude, vehicle.longitude),
+        LatLng(widget.vehicle.latitude, widget.vehicle.longitude),
         LatLng(s.getLat!, s.getLng!),
       );
       if (d < minDist) minDist = d;

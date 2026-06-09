@@ -402,6 +402,44 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             SizedBox(height: 24.h),
 
+            // Danh mục Section
+            Padding(
+              padding: EdgeInsets.only(left: 8.w, bottom: 8.h),
+              child: Text(
+                'DANH MỤC',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
+                  color: colorScheme.outline,
+                ),
+              ),
+            ),
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(16.r),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildListTile(context, theme, colorScheme, icon: Icons.layers_rounded, title: 'Loại phương tiện', onTap: () => _showDevSnackbar(context, l10n)),
+                      Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w),
+                      _buildListTile(context, theme, colorScheme, icon: Icons.domain_rounded, title: 'Quản lý bộ phận', onTap: () => _showDevSnackbar(context, l10n)),
+                      Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w),
+                      _buildListTile(context, theme, colorScheme, icon: Icons.workspace_premium_rounded, title: 'Quản lý tay nghề', onTap: () => _showDevSnackbar(context, l10n)),
+                      Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w),
+                      _buildListTile(context, theme, colorScheme, icon: Icons.people_alt_outlined, title: 'Danh mục nhân sự', onTap: () => _showDevSnackbar(context, l10n)),
+                      Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w),
+                      _buildListTile(context, theme, colorScheme, icon: Icons.work_outline_rounded, title: 'Quản lý công việc', onTap: () => _showDevSnackbar(context, l10n)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 24.h),
+
             // Support & Legal
             Padding(
               padding: EdgeInsets.only(left: 8.w, bottom: 8.h),
@@ -485,6 +523,15 @@ class _ProfilePageState extends State<ProfilePage> {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
+  }
+
+  void _showDevSnackbar(BuildContext context, AppLocalizations l10n) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l10n.featureUnderDevelopment),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Widget _buildListCard(BuildContext context, ThemeData theme, ColorScheme colorScheme, {required IconData icon, required Color iconColor, required String title, required String subtitle, required VoidCallback onTap}) {

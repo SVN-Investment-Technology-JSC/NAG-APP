@@ -1422,11 +1422,13 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> with Sing
 class VehicleMapWidget extends StatefulWidget {
   final VtrackingVehicle vtracking;
   final List<Station> stations;
+  final bool isFullscreen;
 
   const VehicleMapWidget({
     super.key,
     required this.vtracking,
     required this.stations,
+    this.isFullscreen = false,
   });
 
   @override
@@ -1454,21 +1456,42 @@ class _VehicleMapWidgetState extends State<VehicleMapWidget> {
             ))
         .toList();
 
-    Color dotColor;
-    if (widget.vtracking.status == 'run') {
-      dotColor = const Color(0xFF2979FF); // Blue (đang di chuyển)
-    } else if (widget.vtracking.status == 'stop') {
-      dotColor = const Color(0xFFFF9100); // Orange (dừng)
-    } else if (widget.vtracking.status == 'park') {
-      dotColor = const Color(0xFF9E9E9E); // Grey (đỗ)
-    } else {
-      dotColor = const Color(0xFFFF1744); // Red (mất kết nối)
+    Widget carSvg = SvgPicture.asset(
+      'assets/images/car.svg',
+      width: 36.w,
+      height: 36.w,
+      fit: BoxFit.contain,
+    );
+
+    if (widget.vtracking.status == 'stop' || widget.vtracking.status == 'park') {
+      carSvg = ColorFiltered(
+        colorFilter: const ColorFilter.matrix(<double>[
+          0, 0, 1, 0, 0, // R' = B
+          0, 1, 0, 0, 0, // G' = G
+          1, 0, 0, 0, 0, // B' = R
+          0, 0, 0, 1, 0, // A' = A
+        ]),
+        child: carSvg,
+      );
+    } else if (widget.vtracking.status == 'offline') {
+      carSvg = Opacity(
+        opacity: 0.6,
+        child: ColorFiltered(
+          colorFilter: const ColorFilter.matrix(<double>[
+            0.2126, 0.7152, 0.0722, 0, 0,
+            0.2126, 0.7152, 0.0722, 0, 0,
+            0.2126, 0.7152, 0.0722, 0, 0,
+            0,      0,      0,      1, 0,
+          ]),
+          child: carSvg,
+        ),
+      );
     }
 
     final marker = Marker(
       point: center,
-      width: 48.w,
-      height: 48.w,
+      width: 80.w,
+      height: 80.w,
       alignment: Alignment.center,
       child: Stack(
         clipBehavior: Clip.none,
@@ -1478,18 +1501,7 @@ class _VehicleMapWidgetState extends State<VehicleMapWidget> {
             onTap: () => VehicleDetailSheet.show(context, widget.vtracking, widget.stations),
             child: Transform.rotate(
               angle: widget.vtracking.direction * (3.1415926535897932 / 180),
-              child: ColorFiltered(
-                colorFilter: ColorFilter.mode(dotColor, BlendMode.modulate),
-                child: ColorFiltered(
-                  colorFilter: const ColorFilter.matrix([
-                    0.33, 0.59, 0.11, 0, 30,
-                    0.33, 0.59, 0.11, 0, 30,
-                    0.33, 0.59, 0.11, 0, 30,
-                    0, 0, 0, 1, 0,
-                  ]),
-                  child: SvgPicture.asset('assets/images/car.svg', width: 48.w, height: 48.w, fit: BoxFit.contain),
-                ),
-              ),
+              child: carSvg,
             ),
           ),
           Positioned(
@@ -1527,23 +1539,15 @@ class _VehicleMapWidgetState extends State<VehicleMapWidget> {
       ),
     );
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
+    Widget mapStack = Stack(
       children: [
-        SizedBox(
-          height: 250.h,
-          child: Stack(
-            children: [
         FlutterMap(
           mapController: _mapController,
           options: MapOptions(initialCenter: center, initialZoom: 16, maxZoom: 20.0),
           children: [
             TileLayer(
-              urlTemplate: theme.brightness == Brightness.dark
-                  ? 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png'
-                  : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-              subdomains: const ['a', 'b', 'c', 'd'],
-              retinaMode: RetinaMode.isHighDensity(context),
+              urlTemplate: 'https://mt0.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+              userAgentPackageName: 'com.nguyenanh.nagapp',
             ),
             CircleLayer(circles: circles),
             MarkerLayer(markers: [marker]),
@@ -1599,8 +1603,84 @@ class _VehicleMapWidgetState extends State<VehicleMapWidget> {
             style: FilledButton.styleFrom(padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 0), minimumSize: Size(0, 32.h)),
           ),
         ),
-            ],
+        if (!widget.isFullscreen)
+          Positioned(
+            top: 8.h,
+            right: 8.w,
+            child: Container(
+              width: 32.w,
+              height: 32.w,
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: BorderRadius.circular(8.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.shadow.withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                iconSize: 20.sp,
+                icon: Icon(Icons.fullscreen_rounded, color: colorScheme.onSurface),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => Scaffold(
+                        body: SafeArea(
+                          child: Stack(
+                            children: [
+                              VehicleMapWidget(
+                                vtracking: widget.vtracking,
+                                stations: widget.stations,
+                                isFullscreen: true,
+                              ),
+                              Positioned(
+                                top: 16.h,
+                                left: 16.w,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.surface,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: colorScheme.shadow.withValues(alpha: 0.1),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: IconButton(
+                                    icon: const Icon(Icons.arrow_back),
+                                    onPressed: () => Navigator.of(context).pop(),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
           ),
+      ],
+    );
+
+    if (widget.isFullscreen) {
+      return mapStack;
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: 250.h,
+          child: mapStack,
         ),
       ],
     );
