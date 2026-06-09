@@ -402,3 +402,62 @@ class WorkMixSlotItem {
     );
   }
 }
+
+class UserDayStatus {
+  final int userId;
+  final String status;
+
+  UserDayStatus({required this.userId, required this.status});
+
+  factory UserDayStatus.fromJson(Map<String, dynamic> json) {
+    return UserDayStatus(
+      userId: int.tryParse(json['user_id']?.toString() ?? '0') ?? 0,
+      status: json['status'] ?? 'working',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'user_id': userId,
+      'status': status,
+    };
+  }
+}
+
+class WorkAttendanceDraft {
+  final String workDate;
+  final List<UserDayStatus> userStatuses;
+
+  WorkAttendanceDraft({required this.workDate, required this.userStatuses});
+
+  factory WorkAttendanceDraft.fromJson(Map<String, dynamic> json) {
+    return WorkAttendanceDraft(
+      workDate: json['work_date'] ?? '',
+      userStatuses: (json['user_statuses'] as List<dynamic>?)
+              ?.map((e) => UserDayStatus.fromJson(e))
+              .toList() ??
+          [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'work_date': workDate,
+      'user_statuses': userStatuses.map((e) => e.toJson()).toList(),
+    };
+  }
+}
+
+class WorkAttendanceBootstrap {
+  final String workDate;
+  final List<WorkPersonnel> personnel;
+  final bool isAttendanceMarked;
+  final WorkAttendanceDraft draft;
+
+  WorkAttendanceBootstrap({
+    required this.workDate,
+    required this.personnel,
+    required this.isAttendanceMarked,
+    required this.draft,
+  });
+}

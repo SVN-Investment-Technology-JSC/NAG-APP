@@ -204,34 +204,35 @@ class _PumpAssignmentBoardState extends State<PumpAssignmentBoard> {
       );
     }
 
-    return ReorderableListView(
-      padding: EdgeInsets.all(16.w),
-      onReorder: (oldIndex, newIndex) {
-        if (oldIndex >= assignments.length) return;
-        if (newIndex > assignments.length) newIndex = assignments.length;
-        if (oldIndex < newIndex) newIndex -= 1;
-        if (oldIndex == newIndex) return;
-
-        final newAssignments = List<PumpAssignmentItem>.from(assignments);
-        final item = newAssignments.removeAt(oldIndex);
-        newAssignments.insert(newIndex, item);
-
-        widget.onChangeDraft(WorkAssignmentDraft(
-          workDate: widget.draft.workDate,
-          pumpAssignments: newAssignments,
-          updatedAt: widget.draft.updatedAt,
-        ));
-      },
+    return Stack(
       children: [
-        for (int index = 0; index < assignments.length; index++)
-          _buildAssignmentCard(assignments[index], index, theme, colorScheme),
-        Container(
-          key: const ValueKey('add_button'),
-          margin: EdgeInsets.only(top: 8.h),
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            icon: const Icon(Icons.add),
-            label: const Text('Thêm xe bơm'),
+        ReorderableListView(
+          padding: EdgeInsets.fromLTRB(16.w, 16.w, 16.w, 80.h),
+          onReorder: (oldIndex, newIndex) {
+            if (oldIndex >= assignments.length) return;
+            if (newIndex > assignments.length) newIndex = assignments.length;
+            if (oldIndex < newIndex) newIndex -= 1;
+            if (oldIndex == newIndex) return;
+
+            final newAssignments = List<PumpAssignmentItem>.from(assignments);
+            final item = newAssignments.removeAt(oldIndex);
+            newAssignments.insert(newIndex, item);
+
+            widget.onChangeDraft(WorkAssignmentDraft(
+              workDate: widget.draft.workDate,
+              pumpAssignments: newAssignments,
+              updatedAt: widget.draft.updatedAt,
+            ));
+          },
+          children: [
+            for (int index = 0; index < assignments.length; index++)
+              _buildAssignmentCard(assignments[index], index, theme, colorScheme),
+          ],
+        ),
+        Positioned(
+          bottom: 16.h,
+          right: 16.w,
+          child: FloatingActionButton.extended(
             onPressed: () {
               final assignedVehicleIds = widget.draft.pumpAssignments.map((e) => e.vehicleId).toSet();
               final available = widget.vehicles.where((v) => !assignedVehicleIds.contains(v.vehicleId)).toList();
@@ -249,6 +250,8 @@ class _PumpAssignmentBoardState extends State<PumpAssignmentBoard> {
                 ));
               });
             },
+            icon: const Icon(Icons.add),
+            label: const Text('Thêm xe bơm'),
           ),
         ),
       ],

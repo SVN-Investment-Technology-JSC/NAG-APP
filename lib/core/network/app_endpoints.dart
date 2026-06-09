@@ -32,4 +32,5 @@ class AppEndpoints {
   static const String workArrangementPersonnel = 'work-arrangement-personnel';
   static const String works = 'works';
   static const String vehicles = 'vehicles';
+  static const String attendanceDailyRecords = 'attendance-daily-records';
 }

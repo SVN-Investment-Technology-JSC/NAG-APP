@@ -18,6 +18,8 @@ class _WorkTaskManagerState extends State<WorkTaskManager> {
   final WorkArrangementService _service = WorkArrangementService(ApiClient.dio);
 
   DateTime _selectedDate = DateTime.now();
+  String _selectedView = 'assigned';
+  Set<int> _addedParentIds = {};
   bool _isLoading = true;
   bool _saving = false;
   bool _creating = false;
@@ -51,6 +53,7 @@ class _WorkTaskManagerState extends State<WorkTaskManager> {
           _personnel = bootstrap.personnel;
           _works = bootstrap.works;
           _draft = bootstrap.draft;
+          _addedParentIds.clear(); // Reset on load
           _dirty = false;
         });
       }
@@ -123,6 +126,64 @@ class _WorkTaskManagerState extends State<WorkTaskManager> {
     }
   }
 
+  void _showAddWorkSelector() {
+    final parentWorks = _works.where((w) => w.workRoot == null || w.workRoot == 0).toList();
+    final shownParentIds = _getShownParentIds();
+    final availableWorks = parentWorks.where((w) => !shownParentIds.contains(w.workId)).toList();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Container(
+          padding: EdgeInsets.all(16.w),
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Chọn nhóm công việc', style: Theme.of(context).textTheme.titleLarge),
+                  IconButton(
+                    icon: const Icon(Icons.add_circle_outline),
+                    tooltip: 'Tạo việc mới',
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _showCreateWorkDialog();
+                    },
+                  ),
+                ],
+              ),
+              const Divider(),
+              Expanded(
+                child: availableWorks.isEmpty 
+                  ? Center(child: Text('Không còn công việc nào để thêm.', style: Theme.of(context).textTheme.bodyMedium))
+                  : ListView.builder(
+                  itemCount: availableWorks.length,
+                  itemBuilder: (context, index) {
+                    final w = availableWorks[index];
+                    return ListTile(
+                      leading: Icon(Icons.work_outline, color: Theme.of(context).colorScheme.primary),
+                      title: Text(w.workName),
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        setState(() {
+                          _addedParentIds.add(w.workId);
+                          _dirty = true;
+                        });
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   void _showCreateWorkDialog() {
     final controller = TextEditingController();
     showDialog(
@@ -158,17 +219,27 @@ class _WorkTaskManagerState extends State<WorkTaskManager> {
     );
   }
 
-  void _showPersonnelSelector(TaskAssignmentItem assignment, int index) {
+  void _showPersonnelSelector(int targetWorkId) {
     final unassigned = _personnel.where((p) => !_assignedUserIds.contains(p.userId)).toList();
     PersonnelSelectorSheet.show(context, unassigned, (p) {
       final newAssignments = List<TaskAssignmentItem>.from(_draft.taskAssignments);
-      final newUserIds = List<int>.from(assignment.userIds)..add(p.userId);
+      final existingIndex = newAssignments.indexWhere((a) => a.workId == targetWorkId);
       
-      newAssignments[index] = TaskAssignmentItem(
-        assignmentId: assignment.assignmentId,
-        workId: assignment.workId,
-        userIds: newUserIds,
-      );
+      if (existingIndex >= 0) {
+        final existing = newAssignments[existingIndex];
+        final newUserIds = List<int>.from(existing.userIds)..add(p.userId);
+        newAssignments[existingIndex] = TaskAssignmentItem(
+          assignmentId: existing.assignmentId,
+          workId: existing.workId,
+          userIds: newUserIds,
+        );
+      } else {
+        newAssignments.add(TaskAssignmentItem(
+          assignmentId: 'new_${DateTime.now().millisecondsSinceEpoch}_$targetWorkId',
+          workId: targetWorkId,
+          userIds: [p.userId],
+        ));
+      }
 
       setState(() {
         _draft = WorkTaskAssignmentDraft(
@@ -181,6 +252,88 @@ class _WorkTaskManagerState extends State<WorkTaskManager> {
     });
   }
 
+  void _removeUserFromWork(int workId, int userId) {
+    final newAssignments = List<TaskAssignmentItem>.from(_draft.taskAssignments);
+    final idx = newAssignments.indexWhere((a) => a.workId == workId);
+    if (idx >= 0) {
+      final existing = newAssignments[idx];
+      final newUserIds = List<int>.from(existing.userIds)..remove(userId);
+      if (newUserIds.isEmpty && existing.assignmentId.startsWith('new_')) {
+        newAssignments.removeAt(idx);
+      } else {
+        newAssignments[idx] = TaskAssignmentItem(
+          assignmentId: existing.assignmentId,
+          workId: existing.workId,
+          userIds: newUserIds,
+        );
+      }
+      setState(() {
+        _draft = WorkTaskAssignmentDraft(
+          workDate: _draft.workDate,
+          taskAssignments: newAssignments,
+          updatedAt: _draft.updatedAt,
+        );
+        _dirty = true;
+      });
+    }
+  }
+
+  void _removeParentGroup(int parentId) {
+    final childIds = _works.where((w) => w.workRoot == parentId).map((w) => w.workId).toSet();
+    childIds.add(parentId);
+    
+    final newAssignments = _draft.taskAssignments.where((a) => !childIds.contains(a.workId)).toList();
+    
+    setState(() {
+      _addedParentIds.remove(parentId);
+      _draft = WorkTaskAssignmentDraft(
+        workDate: _draft.workDate,
+        taskAssignments: newAssignments,
+        updatedAt: _draft.updatedAt,
+      );
+      _dirty = true;
+    });
+  }
+
+  Set<int> _getShownParentIds() {
+    final set = Set<int>.from(_addedParentIds);
+    for (final task in _draft.taskAssignments) {
+      if (task.userIds.isEmpty) continue;
+      final work = _works.firstWhere((w) => w.workId == task.workId, orElse: () => WorkTaskItem(workId: 0, workName: ''));
+      if (work.workId != 0) {
+        set.add(work.workRoot ?? work.workId);
+      }
+    }
+    return set;
+  }
+
+  Widget _buildUnassignedPersonnel(ThemeData theme, ColorScheme colorScheme) {
+    final unassigned = _personnel.where((p) => !_assignedUserIds.contains(p.userId)).toList();
+
+    if (unassigned.isEmpty) {
+      return const Center(child: Text('Tất cả nhân sự đã được phân công'));
+    }
+
+    return ListView.builder(
+      padding: EdgeInsets.all(16.w),
+      itemCount: unassigned.length,
+      itemBuilder: (context, index) {
+        final p = unassigned[index];
+        return Card(
+          margin: EdgeInsets.only(bottom: 8.h),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: colorScheme.primaryContainer,
+              child: Text(p.userFullName.substring(0, 1).toUpperCase()),
+            ),
+            title: Text(p.userFullName),
+            subtitle: Text(p.departmentName ?? '---'),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -188,6 +341,160 @@ class _WorkTaskManagerState extends State<WorkTaskManager> {
     final l10n = AppLocalizations.of(context)!;
     final isToday = DateFormat('yyyy-MM-dd').format(_selectedDate) ==
         DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+    final shownParentIds = _getShownParentIds();
+    final parentWorks = _works.where((w) => (w.workRoot == null || w.workRoot == 0) && shownParentIds.contains(w.workId)).toList();
+    parentWorks.sort((a, b) => a.workName.compareTo(b.workName));
+
+    Widget content;
+    if (_isLoading || _creating) {
+      content = const Center(child: CircularProgressIndicator());
+    } else if (_selectedView == 'unassigned_personnel') {
+      content = _buildUnassignedPersonnel(theme, colorScheme);
+    } else {
+      content = Stack(
+        children: [
+          ListView.builder(
+            padding: EdgeInsets.fromLTRB(16.w, 16.w, 16.w, 80.h),
+            itemCount: parentWorks.length,
+            itemBuilder: (context, index) {
+              final parent = parentWorks[index];
+              final childWorks = _works.where((w) => w.workRoot == parent.workId).toList();
+              final tasks = childWorks.isNotEmpty ? childWorks : [parent];
+              
+              int totalAssigned = 0;
+              for (var t in tasks) {
+                final assignment = _draft.taskAssignments.firstWhere((a) => a.workId == t.workId, orElse: () => TaskAssignmentItem(assignmentId: '', workId: t.workId, userIds: []));
+                totalAssigned += assignment.userIds.length;
+              }
+
+              return Card(
+                key: ValueKey('parent_${parent.workId}'),
+                margin: EdgeInsets.only(bottom: 12.h),
+                elevation: 1,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                  side: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.5)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
+                        border: Border(bottom: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.5))),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.handyman, size: 18.sp, color: colorScheme.primary),
+                          SizedBox(width: 8.w),
+                          Expanded(
+                            child: Text(
+                              parent.workName.toUpperCase(),
+                              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+                            ),
+                          ),
+                          if (totalAssigned > 0)
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                              decoration: BoxDecoration(
+                                color: colorScheme.primaryContainer,
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                              child: Text(
+                                '$totalAssigned',
+                                style: TextStyle(color: colorScheme.onPrimaryContainer, fontSize: 12.sp, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          SizedBox(width: 4.w),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline, color: Colors.red),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            iconSize: 20.sp,
+                            onPressed: () => _removeParentGroup(parent.workId),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(12.w),
+                      child: Column(
+                        children: tasks.map((task) {
+                          final assignment = _draft.taskAssignments.firstWhere(
+                            (a) => a.workId == task.workId,
+                            orElse: () => TaskAssignmentItem(assignmentId: '', workId: task.workId, userIds: []),
+                          );
+                          final assignedUsers = _personnel.where((p) => assignment.userIds.contains(p.userId)).toList();
+
+                          return Container(
+                            margin: EdgeInsets.only(bottom: task == tasks.last ? 0 : 12.h),
+                            padding: EdgeInsets.all(12.w),
+                            decoration: BoxDecoration(
+                              color: colorScheme.surface,
+                              border: Border.all(color: colorScheme.outlineVariant, style: BorderStyle.solid),
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                if (childWorks.isNotEmpty)
+                                  Padding(
+                                    padding: EdgeInsets.only(bottom: 8.h),
+                                    child: Text(
+                                      task.workName,
+                                      style: theme.textTheme.labelMedium?.copyWith(
+                                        color: colorScheme.onSurfaceVariant,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                Wrap(
+                                  spacing: 8.w,
+                                  runSpacing: 8.h,
+                                  children: [
+                                    ...assignedUsers.map((u) => Chip(
+                                          label: Text(u.userFullName),
+                                          onDeleted: () => _removeUserFromWork(task.workId, u.userId),
+                                          deleteIcon: const Icon(Icons.close, size: 16),
+                                          backgroundColor: colorScheme.surfaceContainerHighest,
+                                          visualDensity: VisualDensity.compact,
+                                        )),
+                                    ActionChip(
+                                      label: Text(assignedUsers.isEmpty ? 'Thêm nhân sự vào' : 'Gán thêm', style: TextStyle(color: colorScheme.primary)),
+                                      avatar: Icon(Icons.add, size: 16, color: colorScheme.primary),
+                                      onPressed: () => _showPersonnelSelector(task.workId),
+                                      backgroundColor: Colors.transparent,
+                                      shape: StadiumBorder(side: BorderSide(color: colorScheme.primary.withOpacity(0.5))),
+                                      visualDensity: VisualDensity.compact,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          Positioned(
+            bottom: 16.h,
+            right: 16.w,
+            child: FloatingActionButton.extended(
+              onPressed: _showAddWorkSelector,
+              icon: const Icon(Icons.add),
+              label: const Text('Thêm việc'),
+            ),
+          ),
+        ],
+      );
+    }
 
     return Column(
       children: [
@@ -223,8 +530,34 @@ class _WorkTaskManagerState extends State<WorkTaskManager> {
                 padding: EdgeInsets.all(6.w),
                 tooltip: 'Tải lại',
               ),
-              const Spacer(),
+            ],
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+          child: Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: _selectedView,
+                  decoration: InputDecoration(
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    isDense: true,
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'assigned', child: Text('Bố trí công việc')),
+                    DropdownMenuItem(value: 'unassigned_personnel', child: Text('Nhân sự chưa phân công')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) setState(() => _selectedView = val);
+                  },
+                ),
+              ),
               if (_dirty) ...[
+                SizedBox(width: 12.w),
                 FilledButton(
                   onPressed: _saving ? null : _save,
                   child: _saving
@@ -239,120 +572,7 @@ class _WorkTaskManagerState extends State<WorkTaskManager> {
             ],
           ),
         ),
-        if (_isLoading || _creating)
-          const Expanded(child: Center(child: CircularProgressIndicator()))
-        else
-          Expanded(
-            child: ReorderableListView.builder(
-              padding: EdgeInsets.all(16.w),
-              itemCount: _draft.taskAssignments.length,
-              onReorder: (oldIndex, newIndex) {
-                if (oldIndex < newIndex) newIndex -= 1;
-                if (oldIndex == newIndex) return;
-
-                final newAssignments = List<TaskAssignmentItem>.from(_draft.taskAssignments);
-                final item = newAssignments.removeAt(oldIndex);
-                newAssignments.insert(newIndex, item);
-
-                setState(() {
-                  _draft = WorkTaskAssignmentDraft(
-                    workDate: _draft.workDate,
-                    taskAssignments: newAssignments,
-                    updatedAt: _draft.updatedAt,
-                  );
-                  _dirty = true;
-                });
-              },
-              itemBuilder: (context, index) {
-                final assignment = _draft.taskAssignments[index];
-                final work = _works.firstWhere(
-                  (w) => w.workId == assignment.workId,
-                  orElse: () => WorkTaskItem(workId: 0, workName: 'Unknown'),
-                );
-                
-                final assignedUsers = _personnel.where((p) => assignment.userIds.contains(p.userId)).toList();
-
-                return Card(
-                  key: ValueKey(assignment.assignmentId),
-                  margin: EdgeInsets.only(bottom: 12.h),
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                  child: Padding(
-                    padding: EdgeInsets.all(12.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.drag_indicator, color: colorScheme.outline),
-                            SizedBox(width: 8.w),
-                            Icon(Icons.handyman_outlined, color: colorScheme.primary),
-                            SizedBox(width: 8.w),
-                            Expanded(
-                              child: Text(
-                                work.workName,
-                                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline, color: Colors.red),
-                              onPressed: () {
-                                final newAssignments = List<TaskAssignmentItem>.from(_draft.taskAssignments);
-                                newAssignments.removeAt(index);
-                                setState(() {
-                                  _draft = WorkTaskAssignmentDraft(
-                                    workDate: _draft.workDate,
-                                    taskAssignments: newAssignments,
-                                    updatedAt: _draft.updatedAt,
-                                  );
-                                  _dirty = true;
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                        Divider(color: colorScheme.outlineVariant),
-                        Wrap(
-                          spacing: 8.w,
-                          runSpacing: 8.h,
-                          children: [
-                            ...assignedUsers.map((u) => Chip(
-                                  label: Text(u.userFullName),
-                                  onDeleted: () {
-                                    final newAssignments = List<TaskAssignmentItem>.from(_draft.taskAssignments);
-                                    final newUserIds = List<int>.from(assignment.userIds)..remove(u.userId);
-                                    newAssignments[index] = TaskAssignmentItem(
-                                      assignmentId: assignment.assignmentId,
-                                      workId: assignment.workId,
-                                      userIds: newUserIds,
-                                    );
-                                    setState(() {
-                                      _draft = WorkTaskAssignmentDraft(
-                                        workDate: _draft.workDate,
-                                        taskAssignments: newAssignments,
-                                        updatedAt: _draft.updatedAt,
-                                      );
-                                      _dirty = true;
-                                    });
-                                  },
-                                  deleteIcon: const Icon(Icons.close, size: 16),
-                                  backgroundColor: colorScheme.surfaceContainerHighest,
-                                )),
-                            ActionChip(
-                              label: const Text('Gán nhân sự'),
-                              avatar: const Icon(Icons.add, size: 16),
-                              onPressed: () => _showPersonnelSelector(assignment, index),
-                              backgroundColor: colorScheme.primaryContainer.withOpacity(0.5),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
+        Expanded(child: content),
       ],
     );
   }

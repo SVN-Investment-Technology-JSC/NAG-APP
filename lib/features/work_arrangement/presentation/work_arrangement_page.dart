@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:nguyenanh/features/attendance/presentation/attendance_page.dart';
 import 'package:nguyenanh/features/work_arrangement/presentation/widgets/work_assignment_manager.dart';
 import 'package:nguyenanh/features/work_arrangement/presentation/widgets/work_task_manager.dart';
+import 'package:nguyenanh/features/work_arrangement/presentation/widgets/work_attendance_manager.dart';
 import 'package:nguyenanh/l10n/app_localizations.dart';
 
 class WorkArrangementPage extends StatefulWidget {
@@ -90,7 +90,7 @@ class _WorkArrangementPageState extends State<WorkArrangementPage>
             },
           ),
           const WorkTaskManager(),
-          const AttendancePage(),
+          const WorkAttendanceManager(),
         ],
       ),
     );

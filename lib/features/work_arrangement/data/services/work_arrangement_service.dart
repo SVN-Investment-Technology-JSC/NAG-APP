@@ -604,4 +604,164 @@ class WorkArrangementService {
   Future<void> createWork(String workName, int? workRoot) async {
     await dio.post(AppEndpoints.works, data: {'work_name': workName, 'work_root': workRoot});
   }
+
+  // --- ATTENDANCE METHODS ---
+
+  Future<WorkAttendanceBootstrap> getAttendanceBootstrap(String date) async {
+    final personnel = await _getPersonnel();
+    
+    // Fetch day statuses
+    final statuses = <UserDayStatus>[];
+    try {
+      final res = await dio.get(AppEndpoints.userDayStatus, queryParameters: {'work_date': date, 'limit': 1000});
+      final list = _extractList(res.data);
+      for (var s in list) {
+        if (s['delete_flag'] != true && s['user_id'] != null) {
+          final uid = int.tryParse(s['user_id'].toString()) ?? 0;
+          if (uid > 0) {
+            String status = 'working';
+            if (s['day_status'] == 'off_morning') status = 'off_morning';
+            else if (s['day_status'] == 'off_afternoon') status = 'off_afternoon';
+            else if (s['day_status'] == 'off_full' || s['day_status'] == 'half_day') status = 'off_full'; // Map half_day to off_full or adapt
+            statuses.add(UserDayStatus(userId: uid, status: status));
+          }
+        }
+      }
+    } catch (_) {}
+
+    // Check if attendance is marked (e.g. is there an attendance_daily_record for this date)
+    bool isMarked = false;
+    try {
+      final res = await dio.get(AppEndpoints.attendanceDailyRecords, queryParameters: {'start_date': date, 'end_date': date, 'limit': 1000});
+      final list = _extractList(res.data);
+      isMarked = list.any((e) => e['delete_flag'] != true && (e['work_date'] ?? '').toString().startsWith(date));
+    } catch (_) {}
+
+    return WorkAttendanceBootstrap(
+      workDate: date,
+      personnel: personnel,
+      isAttendanceMarked: isMarked,
+      draft: WorkAttendanceDraft(
+        workDate: date,
+        userStatuses: statuses.where((e) => e.status != 'working').toList(),
+      ),
+    );
+  }
+
+  Future<WorkAttendanceDraft> saveAttendanceDraft(WorkAttendanceDraft draft) async {
+    // 1. Ensure attendance daily record
+    try {
+      await dio.post(AppEndpoints.attendanceDailyRecords, data: {'work_date': draft.workDate});
+    } catch (_) {} // Might already exist
+
+    // 2. Fetch existing day statuses
+    final existingStatuses = <int, Map<String, dynamic>>{};
+    try {
+      final res = await dio.get(AppEndpoints.userDayStatus, queryParameters: {'work_date': draft.workDate, 'limit': 1000});
+      final list = _extractList(res.data);
+      for (var s in list) {
+        if (s['delete_flag'] != true && s['user_id'] != null) {
+          final uid = int.tryParse(s['user_id'].toString()) ?? 0;
+          if (uid > 0) existingStatuses[uid] = s;
+        }
+      }
+    } catch (_) {}
+
+    // 3. Upsert desired statuses
+    final desiredStatuses = draft.userStatuses.where((e) => e.status != 'working').toList();
+    final desiredUserIds = desiredStatuses.map((e) => e.userId).toSet();
+
+    for (var entry in desiredStatuses) {
+      final existing = existingStatuses[entry.userId];
+      final existingId = existing != null ? _getId(existing, ['user_day_status_id', 'id']) : 0;
+      
+      final payload = {
+        'user_id': entry.userId,
+        'work_date': draft.workDate,
+        'day_status': entry.status, // React maps 'off_morning', etc.
+        'status_source': 'manual',
+        'status_reason': entry.status,
+      };
+
+      try {
+        if (existingId > 0) {
+          await dio.patch('${AppEndpoints.userDayStatus}/$existingId', data: payload);
+        } else {
+          await dio.post(AppEndpoints.userDayStatus, data: payload);
+        }
+      } catch (_) {}
+    }
+
+    // 4. Delete removed statuses
+    for (var existing in existingStatuses.values) {
+      final uid = int.tryParse(existing['user_id']?.toString() ?? '0') ?? 0;
+      if (uid > 0 && !desiredUserIds.contains(uid)) {
+        final existingId = _getId(existing, ['user_day_status_id', 'id']);
+        if (existingId > 0) {
+          try {
+            await dio.delete('${AppEndpoints.userDayStatus}/$existingId');
+          } catch (_) {}
+        }
+      }
+    }
+
+    return draft;
+  }
+
+  Future<Map<String, dynamic>> getMonthlyOverview(String fromDate, String toDate) async {
+    final personnel = await _getPersonnel();
+    final markedDates = <String, bool>{};
+    final statusesByDate = <String, Map<int, String>>{};
+
+    // 1. Fetch attendance daily records
+    try {
+      final res = await dio.get(AppEndpoints.attendanceDailyRecords, queryParameters: {
+        'start_date': fromDate,
+        'end_date': toDate,
+        'limit': 1000
+      });
+      final list = _extractList(res.data);
+      for (var e in list) {
+        if (e['delete_flag'] != true) {
+          final d = (e['work_date'] ?? '').toString();
+          if (d.length >= 10) {
+            markedDates[d.substring(0, 10)] = true;
+          }
+        }
+      }
+    } catch (_) {}
+
+    // 2. Fetch user day statuses
+    try {
+      final res = await dio.get(AppEndpoints.userDayStatus, queryParameters: {
+        'start_date': fromDate,
+        'end_date': toDate,
+        'limit': 5000
+      });
+      final list = _extractList(res.data);
+      for (var s in list) {
+        if (s['delete_flag'] != true && s['user_id'] != null) {
+          final uid = int.tryParse(s['user_id'].toString()) ?? 0;
+          final d = (s['work_date'] ?? '').toString();
+          if (uid > 0 && d.length >= 10) {
+            final dateKey = d.substring(0, 10);
+            String status = 'working';
+            if (s['day_status'] == 'off_morning') status = 'off_morning';
+            else if (s['day_status'] == 'off_afternoon') status = 'off_afternoon';
+            else if (s['day_status'] == 'off_full' || s['day_status'] == 'half_day') status = 'off_full';
+            
+            if (status != 'working') {
+              statusesByDate.putIfAbsent(dateKey, () => {})[uid] = status;
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    return {
+      'personnel': personnel,
+      'markedDates': markedDates,
+      'statusesByDate': statusesByDate,
+    };
+  }
 }
