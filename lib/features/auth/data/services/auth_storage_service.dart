@@ -52,6 +52,11 @@ class AuthStorageService {
     return prefs.getString(_keyAccessToken);
   }
 
+  Future<int?> getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_keyUserId);
+  }
+
   Future<String?> getUserFullName() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_keyUserFullName);

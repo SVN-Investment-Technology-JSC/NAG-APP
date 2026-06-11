@@ -2,7 +2,7 @@ name: nguyenanh
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.5+13
+version: 2.0.0+14
 
 environment:
   sdk: ^3.10.3
@@ -40,6 +40,8 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   crypto: ^3.0.7
+  image_picker: ^1.2.2
+  flutter_slidable: ^4.0.3
 
 dev_dependencies:
   flutter_test:

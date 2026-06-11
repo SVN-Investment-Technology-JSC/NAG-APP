@@ -100,31 +100,37 @@ class _StationHeader extends StatelessWidget {
           ),
           SizedBox(width: AppSpacing.sm),
           Expanded(
-            child: Text(
-              station.stationName,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: colorScheme.onSurface,
-              ),
+            child: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 6.w,
+              runSpacing: 4.h,
+              children: [
+                Text(
+                  station.stationName,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                if (hasCollecting)
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 3.h),
+                    decoration: BoxDecoration(
+                      color: colorScheme.secondaryContainer,
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Text(
+                      '$collectingCount $collectingLabel',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSecondaryContainer,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
-          if (hasCollecting) ...[
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 3.h),
-              decoration: BoxDecoration(
-                color: colorScheme.secondaryContainer,
-                borderRadius: BorderRadius.circular(10.r),
-              ),
-              child: Text(
-                '$collectingCount $collectingLabel',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: colorScheme.onSecondaryContainer,
-                ),
-              ),
-            ),
-            SizedBox(width: 6.w),
-          ],
+          SizedBox(width: 6.w),
           _CameraBadge(isConnected: isCameraConnected, station: station, canManualCamera: canManualCamera),
         ],
       ),

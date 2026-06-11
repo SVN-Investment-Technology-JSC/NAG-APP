@@ -9,6 +9,8 @@ import 'package:nguyenanh/core/theme/app_spacing.dart';
 import 'package:nguyenanh/features/work_arrangement/presentation/work_arrangement_page.dart';
 import 'package:nguyenanh/features/meal/presentation/meal_check_page.dart';
 import 'package:nguyenanh/features/setup/presentation/selection_page.dart';
+import 'package:nguyenanh/features/chatbot/presentation/chatbot_provider.dart';
+import 'package:nguyenanh/l10n/app_localizations.dart';
 import 'package:nguyenanh/l10n/app_localizations.dart';
 import 'package:nguyenanh/features/user_manage/presentation/user_manage_main_page.dart';
 import 'package:nguyenanh/features/user_manage/data/services/user_manage_service.dart';
@@ -19,6 +21,7 @@ import 'package:nguyenanh/features/catalog/presentation/screens/user_assignment_
 import 'package:nguyenanh/features/catalog/presentation/screens/work_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:nguyenanh/core/network/app_endpoints.dart';
+import 'package:nguyenanh/features/vehicle_maintenance/presentation/screens/vehicle_maintenance_list_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final VoidCallback onNavigateHome;
@@ -43,6 +46,7 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _canMealCheck = false;
   bool _canAttendance = false;
   bool _canUserManage = false;
+  bool _canVehicleMaintenance = false;
 
   @override
   void initState() {
@@ -66,6 +70,7 @@ class _ProfilePageState extends State<ProfilePage> {
           _canMealCheck = _userRole == 'admin' || myPerms.contains('/meal-check');
           _canAttendance = _userRole == 'admin' || myPerms.contains('/attendance');
           _canUserManage = _userRole == 'admin' || myPerms.contains('/user-manage__view');
+          _canVehicleMaintenance = _userRole == 'admin' || myPerms.contains('/vehicle-maintenances');
         });
       }
     } catch (_) {}
@@ -194,6 +199,21 @@ class _ProfilePageState extends State<ProfilePage> {
                 title: Text(l10n.themeMode),
                 trailing: const ThemeToggleButton(),
               ),
+              Consumer<ChatbotProvider>(
+                builder: (context, provider, child) {
+                  return ListTile(
+                    leading: Icon(Icons.smart_toy_rounded, color: Colors.blue),
+                    title: const Text('Bong bóng Trợ lý AI'),
+                    trailing: Switch(
+                      value: provider.isBubbleVisible,
+                      onChanged: (value) {
+                        provider.toggleBubbleVisibility();
+                      },
+                      activeColor: colorScheme.primary,
+                    ),
+                  );
+                },
+              ),
               SizedBox(height: 12.h),
             ],
           ),
@@ -315,23 +335,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             SizedBox(height: 24.h),
 
-            // Dashboard Button (Trang chủ)
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 800),
-                child: _buildListCard(
-                  context,
-                  theme,
-                  colorScheme,
-                  icon: Icons.home_rounded,
-                  iconColor: Colors.blue,
-                  title: l10n.home,
-                  subtitle: l10n.dashboardDesc,
-                  onTap: widget.onNavigateHome,
-                ),
-              ),
-            ),
-            SizedBox(height: 16.h),
+
 
             if (_canUserManage) ...[
               Center(
@@ -365,6 +369,22 @@ class _ProfilePageState extends State<ProfilePage> {
                   context,
                   theme,
                   colorScheme,
+                  icon: Icons.smart_toy_rounded,
+                  iconColor: Colors.blue,
+                  title: 'Trợ lý AI',
+                  subtitle: 'Mở cửa sổ AI Chatbot',
+                  onTap: () {
+                    final provider = context.read<ChatbotProvider>();
+                    if (!provider.isBubbleVisible) {
+                      provider.toggleBubbleVisibility();
+                    }
+                    provider.openPanel();
+                  },
+                ),
+                _buildGridCard(
+                  context,
+                  theme,
+                  colorScheme,
                   icon: Icons.local_shipping_rounded,
                   iconColor: Colors.deepOrange,
                   title: l10n.dailyTrips,
@@ -393,6 +413,23 @@ class _ProfilePageState extends State<ProfilePage> {
                     subtitle: l10n.mealDesc,
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MealCheckPage())),
                   ),
+                if (_canVehicleMaintenance)
+                  _buildGridCard(
+                    context,
+                    theme,
+                    colorScheme,
+                    icon: Icons.build_circle_rounded,
+                    iconColor: Colors.teal,
+                    title: 'Bảo trì xe',
+                    subtitle: 'Quản lý bảo trì bảo dưỡng',
+                    onTap: () {
+                      Navigator.push(
+                        context, 
+                        MaterialPageRoute(builder: (_) => const VehicleMaintenanceListPage()),
+                      );
+                    },
+                  ),
+
                 _buildGridCard(
                   context,
                   theme,
@@ -508,7 +545,7 @@ class _ProfilePageState extends State<ProfilePage> {
             // Version text
             Center(
               child: Text(
-                'VERSION 1.0.0 • NGUYÊN ANH',
+                'VERSION 2.0.0 • NGUYÊN ANH',
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: colorScheme.outline,
                   letterSpacing: 1.5,

@@ -21,6 +21,7 @@ import 'package:nguyenanh/features/vehicle/presentation/vehicle_management_page.
 import 'package:nguyenanh/features/vtracking/data/models/vtracking_vehicle.dart';
 import 'package:nguyenanh/features/vtracking/data/services/vtracking_service.dart';
 import 'package:nguyenanh/l10n/app_localizations.dart';
+import 'package:nguyenanh/features/chatbot/presentation/widgets/chatbot_bubble.dart';
 
 /// Global key to open the main shell's side drawer from any page.
 final GlobalKey<ScaffoldState> mainShellScaffoldKey =
@@ -247,9 +248,10 @@ class _MainShellState extends State<MainShell> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Scaffold(
-      key: mainShellScaffoldKey,
-      backgroundColor: colorScheme.surface,
+    return ChatbotBubble(
+      child: Scaffold(
+        key: mainShellScaffoldKey,
+        backgroundColor: colorScheme.surface,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: theme.navigationBarTheme.backgroundColor ?? colorScheme.surface,
@@ -320,6 +322,7 @@ class _MainShellState extends State<MainShell> {
             stations: _stations,
             initialDate: _targetTripDate,
             onRefresh: _loadData,
+            notificationService: _notificationService,
           ),
           ReportPage(
             onNavigateTrips: (date) {
@@ -339,6 +342,6 @@ class _MainShellState extends State<MainShell> {
           ),
         ],
       ),
-    );
+    ));
   }
 }
