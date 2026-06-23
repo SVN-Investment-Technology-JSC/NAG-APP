@@ -46,4 +46,18 @@ class VehicleService {
       return null;
     }
   }
+
+  Future<bool> updateVehicleStatus(int vehicleId, String status) async {
+    try {
+      final String fullUrl = '${AppEndpoints.apiBaseUrl}vehicles/$vehicleId';
+      final response = await dio.put(
+        fullUrl,
+        data: {'vehicle_status': status},
+      );
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (e) {
+      debugPrint('[VehicleService] updateVehicleStatus Error: $e');
+      return false;
+    }
+  }
 }

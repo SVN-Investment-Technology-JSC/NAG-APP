@@ -111,6 +111,48 @@ class CameraSnapshotService {
   }
 }
 
+class CameraFeedConfig {
+  final String name;
+  final String port;
+  final String channel;
+  final String? overrideIp;
+
+  const CameraFeedConfig({
+    required this.name,
+    required this.port,
+    this.channel = '102',
+    this.overrideIp,
+  });
+}
+
+const Map<int, List<CameraFeedConfig>> stationCamerasConfig = {
+  1: [
+    CameraFeedConfig(
+      name: 'Trạm C (Hướng chính)',
+      port: '81',
+    ),
+    CameraFeedConfig(
+      name: 'Trạm C (Hướng phụ)',
+      port: '83',
+    ),
+  ],
+};
+
+List<CameraFeedConfig> getStationCameras(Station station) {
+  final configured = stationCamerasConfig[station.stationId];
+  if (configured != null && configured.isNotEmpty) {
+    return configured;
+  }
+
+  final defaultPort = station.stationId == 2 ? '82' : '80';
+  return [
+    CameraFeedConfig(
+      name: 'Camera ${station.stationName}',
+      port: defaultPort,
+    ),
+  ];
+}
+
 class CameraDialog extends StatelessWidget {
   final Station station;
 
@@ -127,9 +169,7 @@ class CameraDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
-    // Station C logic
-    final bool isStationC = station.stationName.trim().toUpperCase() == 'TRẠM C';
+    final activeCameras = getStationCameras(station);
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -156,15 +196,31 @@ class CameraDialog extends StatelessWidget {
                   Icon(Icons.videocam_rounded, color: const Color(0xFF6366F1), size: 20.sp),
                   SizedBox(width: 8.w),
                   Expanded(
-                    child: Text(
-                      'Camera Giám Sát - ${station.stationName}',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        color: colorScheme.onSurface,
-                        fontSize: 18.sp,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Camera Giám Sát - ${station.stationName}',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            color: colorScheme.onSurface,
+                            fontSize: 18.sp,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          station.stationIpAddress != null && station.stationIpAddress!.isNotEmpty
+                              ? 'IP: ${station.stationIpAddress}${activeCameras.length == 1 ? ' | Port: ${activeCameras[0].port}' : ''}'
+                              : 'Chưa cấu hình IP',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 12.sp,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   IconButton(
@@ -184,24 +240,19 @@ class CameraDialog extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (isStationC) ...[
-                      CameraFrameWidget(
-                        station: station,
-                        cameraIndex: 1,
-                      ),
-                      Container(height: 2.h, color: Colors.grey[800]),
-                      CameraFrameWidget(
-                        station: station,
-                        overrideIp: '123.26.61.61',
-                        overridePort: '83',
-                        cameraIndex: 2,
-                      ),
-                    ] else ...[
-                      CameraFrameWidget(
-                        station: station,
-                        cameraIndex: 1,
-                      ),
-                    ]
+                    ...List.generate(activeCameras.length, (index) {
+                      final cam = activeCameras[index];
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (index > 0) Container(height: 2.h, color: Colors.grey[800]),
+                          CameraFrameWidget(
+                            station: station,
+                            config: cam,
+                          ),
+                        ],
+                      );
+                    }),
                   ],
                 ),
               ),
@@ -215,16 +266,12 @@ class CameraDialog extends StatelessWidget {
 
 class CameraFrameWidget extends StatefulWidget {
   final Station station;
-  final String? overrideIp;
-  final String? overridePort;
-  final int cameraIndex;
+  final CameraFeedConfig config;
 
   const CameraFrameWidget({
     super.key,
     required this.station,
-    this.overrideIp,
-    this.overridePort,
-    this.cameraIndex = 1,
+    required this.config,
   });
 
   @override
@@ -237,7 +284,6 @@ class _CameraFrameWidgetState extends State<CameraFrameWidget> {
   bool _isError = false;
   String _errorMessage = '';
   bool _isLoading = true;
-
   bool _isFetching = false;
 
   @override
@@ -247,9 +293,8 @@ class _CameraFrameWidgetState extends State<CameraFrameWidget> {
   }
 
   Future<void> _fetchFrame() async {
-    final ip = widget.overrideIp ?? widget.station.stationIpAddress;
-    final port = widget.overridePort ?? (widget.station.stationId == 1 ? '81' : 
-                  widget.station.stationId == 2 ? '82' : '80');
+    final ip = widget.config.overrideIp ?? widget.station.stationIpAddress;
+    final port = widget.config.port;
 
     if (ip == null || ip.isEmpty) {
       if (mounted) setState(() { _isLoading = false; _isError = true; });
@@ -299,136 +344,131 @@ class _CameraFrameWidgetState extends State<CameraFrameWidget> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final ip = widget.overrideIp ?? widget.station.stationIpAddress;
-    final port = widget.overridePort ?? (widget.station.stationId == 1 ? '81' : 
-                  widget.station.stationId == 2 ? '82' : '80');
+    final ip = widget.config.overrideIp ?? widget.station.stationIpAddress;
+    final port = widget.config.port;
     final bool hasConfig = ip != null && ip.isNotEmpty;
 
-    return Container(
-      color: Colors.black,
-      height: 250.h,
-      child: !hasConfig 
-        ? Center(
-            child: Padding(
-              padding: EdgeInsets.all(24.w),
-              child: Text(
-                'Vui lòng cấu hình IP và Port cho camera của trạm này trong phần quản lý trạm.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.white54,
-                  fontWeight: FontWeight.w500,
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: Container(
+        color: Colors.black,
+        child: !hasConfig 
+          ? Center(
+              child: Padding(
+                padding: EdgeInsets.all(24.w),
+                child: Text(
+                  'Vui lòng cấu hình IP và Port cho camera của trạm này trong phần quản lý trạm.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: Colors.white54,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
-            ),
-          )
-        : Stack(
-            fit: StackFit.expand,
-            children: [
-              if (_currentFrame != null)
-                Image.memory(
-                  _currentFrame!,
-                  fit: BoxFit.contain,
-                  gaplessPlayback: true,
-                ),
-              if (_isLoading && _currentFrame == null)
-                const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF6366F1)),
-                ),
-              if (_isError && _currentFrame == null)
-                Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.wifi_off_rounded, color: Colors.white54, size: 48.sp),
-                      SizedBox(height: 8.h),
-                      Text(
-                        'Mất kết nối Camera',
-                        style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
-                      ),
-                      if (_errorMessage.isNotEmpty) ...[
-                        SizedBox(height: 4.h),
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16.w),
-                          child: Text(
-                            _errorMessage,
-                            style: theme.textTheme.labelSmall?.copyWith(color: Colors.redAccent),
-                            textAlign: TextAlign.center,
-                          ),
+            )
+          : Stack(
+              fit: StackFit.expand,
+              children: [
+                if (_currentFrame != null)
+                  Image.memory(
+                    _currentFrame!,
+                    fit: BoxFit.contain,
+                    gaplessPlayback: true,
+                  ),
+                if (_isLoading && _currentFrame == null)
+                  const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF6366F1)),
+                  ),
+                if (_isError && _currentFrame == null)
+                  Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.wifi_off_rounded, color: Colors.white54, size: 48.sp),
+                        SizedBox(height: 8.h),
+                        Text(
+                          'Mất kết nối Camera',
+                          style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
                         ),
+                        if (_errorMessage.isNotEmpty) ...[
+                          SizedBox(height: 4.h),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16.w),
+                            child: Text(
+                              _errorMessage,
+                              style: theme.textTheme.labelSmall?.copyWith(color: Colors.redAccent),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-              
-              // Overlays
-              Positioned(
-                top: 8.h,
-                left: 8.w,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: BorderRadius.circular(4.r),
-                  ),
-                  child: Text(
-                    'Camera ${widget.cameraIndex} ($ip:$port)',
-                    style: TextStyle(color: Colors.white, fontSize: 10.sp, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-
-              Positioned(
-                top: 12.h,
-                right: 12.w,
-                child: IconButton(
-                  onPressed: _isFetching ? null : _fetchFrame,
-                  icon: _isFetching 
-                      ? SizedBox(width: 20.sp, height: 20.sp, child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : Icon(Icons.refresh_rounded, color: Colors.white, size: 24.sp),
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.black54,
-                  ),
-                ),
-              ),
-              if (_currentFrame != null)
+                
+                // Overlays
                 Positioned(
-                  bottom: 12.h,
+                  top: 8.h,
+                  left: 8.w,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
+                    child: Text(
+                      '${widget.config.name} ($ip:$port)',
+                      style: TextStyle(color: Colors.white, fontSize: 10.sp, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+
+                Positioned(
+                  top: 12.h,
                   right: 12.w,
                   child: IconButton(
-                    onPressed: () {
-                      Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => FullScreenCameraPage(
-                          station: widget.station,
-                          overrideIp: widget.overrideIp,
-                          overridePort: widget.overridePort,
-                          cameraIndex: widget.cameraIndex,
-                        ),
-                      ));
-                    },
-                    icon: Icon(Icons.fullscreen_rounded, color: Colors.white, size: 28.sp),
+                    onPressed: _isFetching ? null : _fetchFrame,
+                    icon: _isFetching 
+                        ? SizedBox(width: 20.sp, height: 20.sp, child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : Icon(Icons.refresh_rounded, color: Colors.white, size: 24.sp),
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.black54,
                     ),
                   ),
                 ),
-            ],
-          ),
+                if (_currentFrame != null)
+                  Positioned(
+                    bottom: 12.h,
+                    right: 12.w,
+                    child: IconButton(
+                      onPressed: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => FullScreenCameraPage(
+                            station: widget.station,
+                            config: widget.config,
+                          ),
+                        ));
+                      },
+                      icon: Icon(Icons.fullscreen_rounded, color: Colors.white, size: 28.sp),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.black54,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+      ),
     );
   }
 }
 
 class FullScreenCameraPage extends StatefulWidget {
   final Station station;
-  final String? overrideIp;
-  final String? overridePort;
-  final int cameraIndex;
+  final CameraFeedConfig config;
 
   const FullScreenCameraPage({
     super.key,
     required this.station,
-    this.overrideIp,
-    this.overridePort,
-    this.cameraIndex = 1,
+    required this.config,
   });
 
   @override
@@ -441,7 +481,6 @@ class _FullScreenCameraPageState extends State<FullScreenCameraPage> {
   bool _isError = false;
   String _errorMessage = '';
   bool _isLoading = true;
-
   bool _isFetching = false;
 
   @override
@@ -451,9 +490,8 @@ class _FullScreenCameraPageState extends State<FullScreenCameraPage> {
   }
 
   Future<void> _fetchFrame() async {
-    final ip = widget.overrideIp ?? widget.station.stationIpAddress;
-    final port = widget.overridePort ?? (widget.station.stationId == 1 ? '81' : 
-                  widget.station.stationId == 2 ? '82' : '80');
+    final ip = widget.config.overrideIp ?? widget.station.stationIpAddress;
+    final port = widget.config.port;
 
     if (ip == null || ip.isEmpty) {
       if (mounted) setState(() { _isLoading = false; _isError = true; });
@@ -502,7 +540,7 @@ class _FullScreenCameraPageState extends State<FullScreenCameraPage> {
 
   @override
   Widget build(BuildContext context) {
-    final ip = widget.overrideIp ?? widget.station.stationIpAddress;
+    final ip = widget.config.overrideIp ?? widget.station.stationIpAddress;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -510,7 +548,7 @@ class _FullScreenCameraPageState extends State<FullScreenCameraPage> {
         backgroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.white),
         title: Text(
-          'Camera ${widget.cameraIndex} - ${widget.station.stationName}',
+          '${widget.config.name} - ${widget.station.stationName}',
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         actions: [
