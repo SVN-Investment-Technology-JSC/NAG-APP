@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 import 'package:intl/intl.dart';
 import 'package:nguyenanh/features/user_manage/data/services/user_manage_service.dart';
+import 'package:nguyenanh/features/parking_idle_engine/presentation/pages/parking_idle_engine_dashboard_page.dart';
 
 import 'package:nguyenanh/core/l10n/language_provider.dart';
 import 'package:nguyenanh/core/network/notification_socket_service.dart';
@@ -77,6 +78,7 @@ class _HomePageState extends State<HomePage> {
   bool _canViewMap = false;
   bool _canSyncSlots = false;
   bool _canHistory = false;
+  bool _canViewIdleEngine = false;
 
   double _haversineDistance(double lat1, double lon1, double lat2, double lon2) {
     const double r = 6371000; // Earth radius in meters
@@ -121,6 +123,7 @@ class _HomePageState extends State<HomePage> {
           _canViewMap = _userRole == 'admin' || myPerms.contains('/dashboard__view_map');
           _canSyncSlots = _userRole == 'admin' || myPerms.contains('/dashboard__sync_slots');
           _canHistory = _userRole == 'admin' || myPerms.contains('/dashboard__history');
+          _canViewIdleEngine = _userRole == 'admin' || myPerms.contains('/parking-idle-engine');
         });
       }
     } catch (_) {}
@@ -264,7 +267,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          if (_canSyncSlots || _canHistory)
+          if (_canSyncSlots || _canHistory || _canViewIdleEngine)
             Padding(
               padding: EdgeInsets.only(right: 8.w),
               child: PopupMenuButton<String>(
@@ -291,6 +294,10 @@ class _HomePageState extends State<HomePage> {
                       onRefresh: widget.onRefresh,
                     ),
                   );
+                } else if (value == 'parking_idle_engine') {
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const ParkingIdleEngineDashboardPage(),
+                  ));
                 }
               },
               itemBuilder: (BuildContext context) => [
@@ -326,6 +333,22 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                 ),
+                if (_canViewIdleEngine)
+                  PopupMenuItem<String>(
+                    value: 'parking_idle_engine',
+                    child: Row(
+                      children: [
+                        Icon(Icons.power_settings_new_rounded, color: colorScheme.primary, size: 20.sp),
+                        SizedBox(width: 12.w),
+                        Text(
+                          'GIÁM SÁT NỔ MÁY',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),

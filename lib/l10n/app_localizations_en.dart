@@ -660,4 +660,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workArrangementStats => 'Statistics';
+
+  @override
+  String get statusAvailable => 'Available';
+
+  @override
+  String get statusIncident => 'Incident';
+
+  @override
+  String get statusMaintenance => 'Maintenance';
+
+  @override
+  String get statusOther => 'Other';
+
+  @override
+  String updateStatusSuccess(Object plate) {
+    return 'Updated vehicle status for $plate successfully';
+  }
+
+  @override
+  String get updateStatusFailed => 'Failed to update status';
+
+  @override
+  String get confirmChangeStatus => 'Confirm Status Change';
+
+  @override
+  String confirmChangePlate(Object plate, Object status) {
+    return 'Are you sure you want to change the status of vehicle $plate to $status?';
+  }
+
+  @override
+  String get updateButton => 'UPDATE';
+
+  @override
+  String get vehicleStatusTitle => 'Vehicle Status';
 }
