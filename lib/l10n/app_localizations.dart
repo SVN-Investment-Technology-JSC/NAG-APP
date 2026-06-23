@@ -1375,6 +1375,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Statistics'**
   String get workArrangementStats;
+
+  /// No description provided for @statusAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get statusAvailable;
+
+  /// No description provided for @statusIncident.
+  ///
+  /// In en, this message translates to:
+  /// **'Incident'**
+  String get statusIncident;
+
+  /// No description provided for @statusMaintenance.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance'**
+  String get statusMaintenance;
+
+  /// No description provided for @statusOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get statusOther;
+
+  /// No description provided for @updateStatusSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated vehicle status for {plate} successfully'**
+  String updateStatusSuccess(Object plate);
+
+  /// No description provided for @updateStatusFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update status'**
+  String get updateStatusFailed;
+
+  /// No description provided for @confirmChangeStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Status Change'**
+  String get confirmChangeStatus;
+
+  /// No description provided for @confirmChangePlate.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to change the status of vehicle {plate} to {status}?'**
+  String confirmChangePlate(Object plate, Object status);
+
+  /// No description provided for @updateButton.
+  ///
+  /// In en, this message translates to:
+  /// **'UPDATE'**
+  String get updateButton;
+
+  /// No description provided for @vehicleStatusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle Status'**
+  String get vehicleStatusTitle;
 }
 
 class _AppLocalizationsDelegate

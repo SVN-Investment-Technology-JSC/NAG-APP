@@ -662,4 +662,38 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get workArrangementStats => 'Thống kê';
+
+  @override
+  String get statusAvailable => 'Sẵn sàng';
+
+  @override
+  String get statusIncident => 'Sự cố';
+
+  @override
+  String get statusMaintenance => 'Bảo dưỡng';
+
+  @override
+  String get statusOther => 'Việc khác';
+
+  @override
+  String updateStatusSuccess(Object plate) {
+    return 'Đã cập nhật trạng thái xe $plate thành công';
+  }
+
+  @override
+  String get updateStatusFailed => 'Cập nhật trạng thái thất bại';
+
+  @override
+  String get confirmChangeStatus => 'Xác nhận thay đổi trạng thái';
+
+  @override
+  String confirmChangePlate(Object plate, Object status) {
+    return 'Bạn có chắc chắn muốn thay đổi trạng thái xe $plate thành $status không?';
+  }
+
+  @override
+  String get updateButton => 'CẬP NHẬT';
+
+  @override
+  String get vehicleStatusTitle => 'Trạng thái xe';
 }

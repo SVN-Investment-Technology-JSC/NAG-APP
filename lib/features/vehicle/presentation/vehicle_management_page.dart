@@ -17,9 +17,9 @@ import 'package:nguyenanh/features/home/presentation/widgets/home_order_item.dar
 import 'package:nguyenanh/features/home/presentation/widgets/vehicle_detail_sheet.dart';
 import 'package:nguyenanh/features/order/data/models/order_model.dart';
 import 'package:nguyenanh/features/order/order_service.dart';
-import 'package:nguyenanh/features/shell/presentation/main_shell.dart';
 import 'package:nguyenanh/features/stations/data/models/station_model.dart';
 import 'package:nguyenanh/features/vehicle/data/models/vehicle_model.dart';
+import 'package:nguyenanh/features/vehicle/data/services/vehicle_service.dart';
 import 'package:nguyenanh/features/vtracking/data/models/vtracking_vehicle.dart';
 import 'package:nguyenanh/l10n/app_localizations.dart';
 
@@ -48,6 +48,7 @@ class VehicleManagementPage extends StatefulWidget {
 class _VehicleManagementPageState extends State<VehicleManagementPage> with SingleTickerProviderStateMixin {
   AppLocalizations get l10n => AppLocalizations.of(context)!;
   final OrderService _orderService = OrderService(ApiClient.dio);
+  final VehicleService _vehicleService = VehicleService(ApiClient.dio);
   DateTime _selectedDate = DateTime.now();
   List<OrderModel> _orders = [];
   bool _isLoading = true;
@@ -362,6 +363,41 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> with Sing
         return bTime.compareTo(aTime);
       });
 
+    final statusOptions = [
+      {
+        'value': 'available',
+        'label': l10n.statusAvailable,
+        'icon': Icons.check_circle_outline_rounded,
+        'activeColor': const Color(0xFF047857), // emerald-700
+        'activeBg': const Color(0xFFECFDF5),    // emerald-50
+        'activeBorder': const Color(0xFF34D399), // emerald-400
+      },
+      {
+        'value': 'incident',
+        'label': l10n.statusIncident,
+        'icon': Icons.warning_amber_rounded,
+        'activeColor': const Color(0xFFB91C1C), // red-700
+        'activeBg': const Color(0xFFFEF2F2),    // red-50
+        'activeBorder': const Color(0xFFF87171), // red-400
+      },
+      {
+        'value': 'maintenance',
+        'label': l10n.statusMaintenance,
+        'icon': Icons.construction_rounded,
+        'activeColor': const Color(0xFFB45309), // amber-700
+        'activeBg': const Color(0xFFFFFBEB),    // amber-50
+        'activeBorder': const Color(0xFFFBBF24), // amber-400
+      },
+      {
+        'value': 'other',
+        'label': l10n.statusOther,
+        'icon': Icons.help_outline_rounded,
+        'activeColor': const Color(0xFF6B21A8), // purple-700
+        'activeBg': const Color(0xFFFAF5FF),    // purple-50
+        'activeBorder': const Color(0xFFC084FC), // purple-400
+      },
+    ];
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -371,124 +407,436 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> with Sing
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
       builder: (ctx) {
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.85,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          builder: (context, scrollController) {
-            return Padding(
-              padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 8.h),
-              child: Column(
-                children: [
-                  // Drag handle
-                  Container(
-                    width: 40.w,
-                    height: 4.h,
-                    decoration: BoxDecoration(
-                      color: colorScheme.outlineVariant,
-                      borderRadius: BorderRadius.circular(2.r),
+        String baselineStatus = vehicle.vehicleStatus;
+        bool isUpdating = false;
+
+        return StatefulBuilder(
+          builder: (context, setStatePopup) {
+
+            void showStatusSelectorDialog({
+              required BuildContext context,
+              required String currentStatus,
+              required List<Map<String, dynamic>> statusOptions,
+              required AppLocalizations l10n,
+              required ThemeData theme,
+              required ColorScheme colorScheme,
+              required Function(String) onSave,
+            }) {
+              showDialog(
+                context: context,
+                builder: (dialogCtx) {
+                  String tempSelectedStatus = currentStatus;
+                  return AlertDialog(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.r),
                     ),
+                    title: Text(
+                      l10n.confirmChangeStatus,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    content: StatefulBuilder(
+                      builder: (context, setStateDialog) {
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: statusOptions.map((opt) {
+                            final isSelected = tempSelectedStatus == opt['value'];
+                            final activeColor = opt['activeColor'] as Color;
+                            final activeBg = opt['activeBg'] as Color;
+                            final activeBorder = opt['activeBorder'] as Color;
+                            final icon = opt['icon'] as IconData;
+                            final label = opt['label'] as String;
+
+                            return Padding(
+                              padding: EdgeInsets.only(bottom: 8.h),
+                              child: InkWell(
+                                onTap: () {
+                                  setStateDialog(() {
+                                    tempSelectedStatus = opt['value'] as String;
+                                  });
+                                },
+                                borderRadius: BorderRadius.circular(12.r),
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                                  decoration: BoxDecoration(
+                                    color: isSelected ? activeBg : Colors.transparent,
+                                    border: Border.all(
+                                      color: isSelected ? activeBorder : colorScheme.outlineVariant,
+                                      width: 1.5,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12.r),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        icon,
+                                        size: 20.sp,
+                                        color: isSelected ? activeColor : colorScheme.onSurfaceVariant,
+                                      ),
+                                      SizedBox(width: 12.w),
+                                      Expanded(
+                                        child: Text(
+                                          label,
+                                          style: theme.textTheme.bodyMedium?.copyWith(
+                                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                            color: isSelected ? activeColor : colorScheme.onSurface,
+                                          ),
+                                        ),
+                                      ),
+                                      if (isSelected)
+                                        Icon(
+                                          Icons.check_circle_rounded,
+                                          color: activeColor,
+                                          size: 18.sp,
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      },
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogCtx),
+                        child: Text(
+                          l10n.cancel,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                      FilledButton(
+                        onPressed: () {
+                          Navigator.pop(dialogCtx);
+                          onSave(tempSelectedStatus);
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF0284C7), // sky-600
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                        ),
+                        child: Text(
+                          "Lưu",
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
+            }
+
+            Widget buildCurrentStatusBadge(String statusVal) {
+              final opt = statusOptions.firstWhere(
+                (o) => o['value'] == statusVal,
+                orElse: () => statusOptions[0],
+              );
+              final activeColor = opt['activeColor'] as Color;
+              final activeBg = opt['activeBg'] as Color;
+              final label = opt['label'] as String;
+
+              return Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                decoration: BoxDecoration(
+                  color: activeBg,
+                  borderRadius: BorderRadius.circular(6.r),
+                  border: Border.all(color: activeColor.withOpacity(0.2)),
+                ),
+                child: Text(
+                  label,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: activeColor,
+                    fontSize: 10.sp,
                   ),
-                  SizedBox(height: 16.h),
-                  // Header
-                  Row(
+                ),
+              );
+            }
+
+            return DraggableScrollableSheet(
+              expand: false,
+              initialChildSize: 0.85,
+              minChildSize: 0.5,
+              maxChildSize: 0.95,
+              builder: (context, scrollController) {
+                return Padding(
+                  padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 8.h),
+                  child: Column(
                     children: [
-                      Icon(Icons.local_shipping_rounded,
-                          color: iconColor, size: 24.sp),
-                      SizedBox(width: 10.w),
-                      Expanded(
+                      // Drag handle
+                      Container(
+                        width: 40.w,
+                        height: 4.h,
+                        decoration: BoxDecoration(
+                          color: colorScheme.outlineVariant,
+                          borderRadius: BorderRadius.circular(2.r),
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+                      // Header
+                      Row(
+                        children: [
+                          Icon(Icons.local_shipping_rounded,
+                              color: iconColor, size: 24.sp),
+                          SizedBox(width: 10.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      vehicle.vehicleLicensePlate,
+                                      style: theme.textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    buildCurrentStatusBadge(baselineStatus),
+                                  ],
+                                ),
+                                if (vehicle.vehicleName.isNotEmpty &&
+                                    vehicle.vehicleName !=
+                                        vehicle.vehicleLicensePlate)
+                                  Text(
+                                    vehicle.vehicleName,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16.h),
+                      // Current Status Selector Card
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+                        decoration: BoxDecoration(
+                          color: theme.brightness == Brightness.dark
+                              ? colorScheme.surfaceContainerLow
+                              : const Color(0xFFF8FAFC), // slate-50
+                          borderRadius: BorderRadius.circular(20.r),
+                          border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.5)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.02),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              vehicle.vehicleLicensePlate,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w800,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    "Trạng thái xe",
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      color: colorScheme.onSurface,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                                FilledButton(
+                                  onPressed: isUpdating
+                                      ? null
+                                      : () => showStatusSelectorDialog(
+                                            context: context,
+                                            currentStatus: baselineStatus,
+                                            statusOptions: statusOptions,
+                                            l10n: l10n,
+                                            theme: theme,
+                                            colorScheme: colorScheme,
+                                            onSave: (newStatus) async {
+                                              setStatePopup(() => isUpdating = true);
+                                              try {
+                                                final success = await _vehicleService.updateVehicleStatus(
+                                                  vehicle.vehicleId,
+                                                  newStatus,
+                                                );
+                                                if (success) {
+                                                  baselineStatus = newStatus;
+                                                  if (context.mounted) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(l10n.updateStatusSuccess(vehicle.vehicleLicensePlate)),
+                                                        backgroundColor: Colors.green,
+                                                      ),
+                                                    );
+                                                  }
+                                                  widget.onRefresh?.call();
+                                                } else {
+                                                  if (context.mounted) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(l10n.updateStatusFailed),
+                                                        backgroundColor: Colors.red,
+                                                      ),
+                                                    );
+                                                  }
+                                                }
+                                              } catch (e) {
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(l10n.updateStatusFailed),
+                                                      backgroundColor: Colors.red,
+                                                    ),
+                                                  );
+                                                }
+                                              } finally {
+                                                if (context.mounted) {
+                                                  setStatePopup(() => isUpdating = false);
+                                                }
+                                              }
+                                            },
+                                          ),
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: const Color(0xFF0284C7), // sky-600
+                                    foregroundColor: Colors.white,
+                                    padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14.r),
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                  child: isUpdating
+                                      ? SizedBox(
+                                          width: 16.w,
+                                          height: 16.w,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: colorScheme.onPrimary,
+                                          ),
+                                        )
+                                      : Text(
+                                          "Cập nhật",
+                                          style: theme.textTheme.labelMedium?.copyWith(
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 12.h),
+                            // Info alert box
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF), // blue-50
+                                borderRadius: BorderRadius.circular(12.r),
+                                border: Border.all(color: const Color(0xFFBFDBFE)), // blue-200
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.info_outline_rounded,
+                                    size: 16.sp,
+                                    color: const Color(0xFF1D4ED8), // blue-700
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Expanded(
+                                    child: Text(
+                                      "Nhấn vào nút Cập nhật để thay đổi trạng thái xe hoặc báo cáo sự cố.",
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        color: const Color(0xFF1E40AF), // blue-800
+                                        fontWeight: FontWeight.w500,
+                                        height: 1.3,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            if (vehicle.vehicleName.isNotEmpty &&
-                                vehicle.vehicleName !=
-                                    vehicle.vehicleLicensePlate)
-                              Text(
-                                vehicle.vehicleName,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+                      // Scrollable body
+                      Expanded(
+                        child: ListView(
+                          controller: scrollController,
+                          padding: EdgeInsets.zero,
+                          children: [
+                            Divider(color: colorScheme.outlineVariant),
+                            SizedBox(height: 8.h),
+                            if (vtracking != null && vtracking.hasPosition) ...[
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(16.r),
+                                child: VehicleMapWidget(
+                                  vtracking: vtracking,
+                                  stations: widget.stations,
                                 ),
                               ),
+                              SizedBox(height: 16.h),
+                            ],
+                            Row(
+                              children: [
+                                Icon(Icons.route_rounded,
+                                    size: 16.sp, color: colorScheme.primary),
+                                SizedBox(width: 8.w),
+                                Text(
+                                  l10n.tripsOnDate,
+                                  style: theme.textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 8.w, vertical: 3.h),
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.primaryContainer,
+                                    borderRadius: BorderRadius.circular(10.r),
+                                  ),
+                                  child: Text(
+                                    '${vehicleOrders.length}',
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      color: colorScheme.onPrimaryContainer,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 8.h),
+                            if (sortedOrders.isEmpty)
+                              Padding(
+                                padding: EdgeInsets.symmetric(vertical: 16.h),
+                                child: Text(
+                                  l10n.noTripsForVehicle,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              )
+                            else
+                              ...sortedOrders.map(
+                                  (order) => _tripItem(order, theme, colorScheme, l10n)),
+                            SizedBox(height: 8.h),
                           ],
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 12.h),
-                  // Scrollable body
-                  Expanded(
-                    child: ListView(
-                      controller: scrollController,
-                      padding: EdgeInsets.zero,
-                      children: [
-                        Divider(color: colorScheme.outlineVariant),
-                        SizedBox(height: 8.h),
-                        if (vtracking != null && vtracking.hasPosition) ...[
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(16.r),
-                            child: VehicleMapWidget(
-                              vtracking: vtracking,
-                              stations: widget.stations,
-                            ),
-                          ),
-                          SizedBox(height: 16.h),
-                        ],
-                        Row(
-                          children: [
-                            Icon(Icons.route_rounded,
-                                size: 16.sp, color: colorScheme.primary),
-                            SizedBox(width: 8.w),
-                            Text(
-                              l10n.tripsOnDate,
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const Spacer(),
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 8.w, vertical: 3.h),
-                              decoration: BoxDecoration(
-                                color: colorScheme.primaryContainer,
-                                borderRadius: BorderRadius.circular(10.r),
-                              ),
-                              child: Text(
-                                '${vehicleOrders.length}',
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: colorScheme.onPrimaryContainer,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 8.h),
-                        if (sortedOrders.isEmpty)
-                          Padding(
-                            padding: EdgeInsets.symmetric(vertical: 16.h),
-                            child: Text(
-                              l10n.noTripsForVehicle,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          )
-                        else
-                          ...sortedOrders.map(
-                              (order) => _tripItem(order, theme, colorScheme, l10n)),
-                        SizedBox(height: 8.h),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             );
           },
         );

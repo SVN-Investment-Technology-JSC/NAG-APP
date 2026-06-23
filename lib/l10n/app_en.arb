@@ -244,5 +244,26 @@
   "featureUnderDevelopment": "Feature under development",
   "workArrangementAssign": "Work Assignment",
   "workArrangementTasks": "Tasks",
-  "workArrangementStats": "Statistics"
+  "workArrangementStats": "Statistics",
+  "statusAvailable": "Available",
+  "statusIncident": "Incident",
+  "statusMaintenance": "Maintenance",
+  "statusOther": "Other",
+  "updateStatusSuccess": "Updated vehicle status for {plate} successfully",
+  "@updateStatusSuccess": {
+    "placeholders": {
+      "plate": {}
+    }
+  },
+  "updateStatusFailed": "Failed to update status",
+  "confirmChangeStatus": "Confirm Status Change",
+  "confirmChangePlate": "Are you sure you want to change the status of vehicle {plate} to {status}?",
+  "@confirmChangePlate": {
+    "placeholders": {
+      "plate": {},
+      "status": {}
+    }
+  },
+  "updateButton": "UPDATE",
+  "vehicleStatusTitle": "Vehicle Status"
 }

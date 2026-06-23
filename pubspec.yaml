@@ -2,7 +2,7 @@ name: nguyenanh
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.5+13
+version: 2.1.0+15
 
 environment:
   sdk: ^3.10.3

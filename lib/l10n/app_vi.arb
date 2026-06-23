@@ -244,5 +244,26 @@
   "featureUnderDevelopment": "Tính năng đang phát triển",
   "workArrangementAssign": "Phân công",
   "workArrangementTasks": "Công việc",
-  "workArrangementStats": "Thống kê"
+  "workArrangementStats": "Thống kê",
+  "statusAvailable": "Sẵn sàng",
+  "statusIncident": "Sự cố",
+  "statusMaintenance": "Bảo dưỡng",
+  "statusOther": "Việc khác",
+  "updateStatusSuccess": "Đã cập nhật trạng thái xe {plate} thành công",
+  "@updateStatusSuccess": {
+    "placeholders": {
+      "plate": {}
+    }
+  },
+  "updateStatusFailed": "Cập nhật trạng thái thất bại",
+  "confirmChangeStatus": "Xác nhận thay đổi trạng thái",
+  "confirmChangePlate": "Bạn có chắc chắn muốn thay đổi trạng thái xe {plate} thành {status} không?",
+  "@confirmChangePlate": {
+    "placeholders": {
+      "plate": {},
+      "status": {}
+    }
+  },
+  "updateButton": "CẬP NHẬT",
+  "vehicleStatusTitle": "Trạng thái xe"
 }
