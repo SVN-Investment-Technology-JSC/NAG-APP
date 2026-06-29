@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nguyenanh/core/theme/app_spacing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nguyenanh/features/catalog/data/models/user_assignment_model.dart';
 import 'package:nguyenanh/features/catalog/data/models/department_model.dart';
 import 'package:nguyenanh/features/catalog/data/models/skill_model.dart';
@@ -41,11 +42,33 @@ class _UserAssignmentScreenState extends State<UserAssignmentScreen> {
   String _searchQuery = '';
   bool _isInitLoaded = false;
 
+  String _userRole = '';
+  bool _canCreate = false;
+  bool _canUpdate = false;
+  bool _canDelete = false;
+
   @override
   void initState() {
     super.initState();
+    _loadPermissions();
     _fetchData();
     _scrollController.addListener(_onScroll);
+  }
+
+  Future<void> _loadPermissions() async {
+    final prefs = await SharedPreferences.getInstance();
+    _userRole = prefs.getString('user_role') ?? '';
+    try {
+      final perms = await _userService.getPermissions();
+      final myPerms = perms[_userRole] ?? [];
+      if (mounted) {
+        setState(() {
+          _canCreate = _userRole == 'admin' || myPerms.contains('/configuration/user-assignments__create');
+          _canUpdate = _userRole == 'admin' || myPerms.contains('/configuration/user-assignments__update');
+          _canDelete = _userRole == 'admin' || myPerms.contains('/configuration/user-assignments__delete');
+        });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -286,10 +309,11 @@ class _UserAssignmentScreenState extends State<UserAssignmentScreen> {
             icon: const Icon(Icons.refresh),
             onPressed: () => _fetchData(),
           ),
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showFormModal(),
-          ),
+          if (_canCreate)
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () => _showFormModal(),
+            ),
         ],
       ),
       body: Column(
@@ -336,14 +360,16 @@ class _UserAssignmentScreenState extends State<UserAssignmentScreen> {
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                IconButton(
-                                  icon: Icon(Icons.edit, color: colorScheme.primary),
-                                  onPressed: () => _showFormModal(item: item),
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.delete, color: colorScheme.error),
-                                  onPressed: () => _confirmDelete(item),
-                                ),
+                                if (_canUpdate)
+                                  IconButton(
+                                    icon: Icon(Icons.edit, color: colorScheme.primary),
+                                    onPressed: () => _showFormModal(item: item),
+                                  ),
+                                if (_canDelete)
+                                  IconButton(
+                                    icon: Icon(Icons.delete, color: colorScheme.error),
+                                    onPressed: () => _confirmDelete(item),
+                                  ),
                               ],
                             ),
                           ),

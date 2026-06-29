@@ -21,7 +21,7 @@ class VehicleApp extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return ScreenUtilInit(
-      designSize: const Size(375, 812), // Standard design size for better scaling
+      designSize: const Size(393, 852), // Set baseline to modern iPhone Pro (e.g. 14/15/16/17)
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {

@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class NotificationModel {
   final Object id;
   final bool read;
@@ -7,6 +9,7 @@ class NotificationModel {
   final String? event;
   final String? title;
   final String? message;
+  final dynamic userId;
   final int? vehicleId;
   final String? vehicleName;
   final String? vehicleLicensePlate;
@@ -24,6 +27,7 @@ class NotificationModel {
     this.event,
     this.title,
     this.message,
+    this.userId,
     this.vehicleId,
     this.vehicleName,
     this.vehicleLicensePlate,
@@ -34,8 +38,10 @@ class NotificationModel {
   });
 
   factory NotificationModel.fromJson(Map<dynamic, dynamic> json) {
+    final rawId = json['id'] ?? json['_id'];
+    final finalId = rawId ?? '${json['event'] ?? 'notification'}-${json['created_at'] ?? json['createdAt'] ?? DateTime.now().millisecondsSinceEpoch}-${json['user_id'] ?? json['userId'] ?? 'all'}';
     return NotificationModel(
-      id: json['id'] ?? 0,
+      id: finalId,
       read: json['read'] == true,
       createdAt: _str(json['created_at'] ?? json['createdAt']),
       emittedAt: _str(json['emitted_at'] ?? json['emittedAt']),
@@ -43,6 +49,7 @@ class NotificationModel {
       event: _str(json['event']),
       title: _str(json['title']),
       message: _str(json['message']),
+      userId: json['user_id'] ?? json['userId'],
       vehicleId: _int(json['vehicle_id']),
       vehicleName: _str(json['vehicle_name']),
       vehicleLicensePlate: _str(json['vehicle_license_plate']),
@@ -63,6 +70,7 @@ class NotificationModel {
       event: event,
       title: title,
       message: message,
+      userId: userId,
       vehicleId: vehicleId,
       vehicleName: vehicleName,
       vehicleLicensePlate: vehicleLicensePlate,

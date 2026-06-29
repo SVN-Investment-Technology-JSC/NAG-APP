@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nguyenanh/core/theme/app_spacing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:nguyenanh/features/user_manage/data/services/user_manage_service.dart';
 import 'package:nguyenanh/features/catalog/data/models/skill_model.dart';
 import 'package:nguyenanh/features/catalog/data/services/skill_service.dart';
 
@@ -26,11 +28,34 @@ class _SkillScreenState extends State<SkillScreen> {
   final int _limit = 20;
   String _searchQuery = '';
 
+  final UserManageService _userManageService = UserManageService();
+  String _userRole = '';
+  bool _canCreate = false;
+  bool _canUpdate = false;
+  bool _canDelete = false;
+
   @override
   void initState() {
     super.initState();
+    _loadPermissions();
     _fetchItems();
     _scrollController.addListener(_onScroll);
+  }
+
+  Future<void> _loadPermissions() async {
+    final prefs = await SharedPreferences.getInstance();
+    _userRole = prefs.getString('user_role') ?? '';
+    try {
+      final perms = await _userManageService.getPermissions();
+      final myPerms = perms[_userRole] ?? [];
+      if (mounted) {
+        setState(() {
+          _canCreate = _userRole == 'admin' || myPerms.contains('/configuration/skills__create');
+          _canUpdate = _userRole == 'admin' || myPerms.contains('/configuration/skills__update');
+          _canDelete = _userRole == 'admin' || myPerms.contains('/configuration/skills__delete');
+        });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -242,10 +267,11 @@ class _SkillScreenState extends State<SkillScreen> {
             icon: const Icon(Icons.refresh),
             onPressed: () => _fetchItems(),
           ),
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showFormModal(),
-          ),
+          if (_canCreate)
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () => _showFormModal(),
+            ),
         ],
       ),
       body: Column(
@@ -286,14 +312,16 @@ class _SkillScreenState extends State<SkillScreen> {
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                IconButton(
-                                  icon: Icon(Icons.edit, color: colorScheme.primary),
-                                  onPressed: () => _showFormModal(item: item),
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.delete, color: colorScheme.error),
-                                  onPressed: () => _confirmDelete(item),
-                                ),
+                                if (_canUpdate)
+                                  IconButton(
+                                    icon: Icon(Icons.edit, color: colorScheme.primary),
+                                    onPressed: () => _showFormModal(item: item),
+                                  ),
+                                if (_canDelete)
+                                  IconButton(
+                                    icon: Icon(Icons.delete, color: colorScheme.error),
+                                    onPressed: () => _confirmDelete(item),
+                                  ),
                               ],
                             ),
                           ),

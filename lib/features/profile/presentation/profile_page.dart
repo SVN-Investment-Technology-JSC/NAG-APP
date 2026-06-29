@@ -9,6 +9,8 @@ import 'package:nguyenanh/core/theme/app_spacing.dart';
 import 'package:nguyenanh/features/work_arrangement/presentation/work_arrangement_page.dart';
 import 'package:nguyenanh/features/meal/presentation/meal_check_page.dart';
 import 'package:nguyenanh/features/setup/presentation/selection_page.dart';
+import 'package:nguyenanh/features/chatbot/presentation/chatbot_provider.dart';
+import 'package:nguyenanh/l10n/app_localizations.dart';
 import 'package:nguyenanh/l10n/app_localizations.dart';
 import 'package:nguyenanh/features/user_manage/presentation/user_manage_main_page.dart';
 import 'package:nguyenanh/features/user_manage/data/services/user_manage_service.dart';
@@ -18,7 +20,7 @@ import 'package:nguyenanh/features/catalog/presentation/screens/skill_screen.dar
 import 'package:nguyenanh/features/catalog/presentation/screens/user_assignment_screen.dart';
 import 'package:nguyenanh/features/catalog/presentation/screens/work_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:nguyenanh/core/network/app_endpoints.dart';
+import 'package:nguyenanh/features/vehicle_maintenance/presentation/screens/vehicle_maintenance_list_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final VoidCallback onNavigateHome;
@@ -43,6 +45,13 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _canMealCheck = false;
   bool _canAttendance = false;
   bool _canUserManage = false;
+  bool _canViewVehicleTypes = false;
+  bool _canViewDepartments = false;
+  bool _canViewSkills = false;
+  bool _canViewUserAssignments = false;
+  bool _canViewWorks = false;
+  bool _canVehicleMaintenance = false;
+  bool _canAIAssistant = false;
 
   @override
   void initState() {
@@ -64,8 +73,18 @@ class _ProfilePageState extends State<ProfilePage> {
       if (mounted) {
         setState(() {
           _canMealCheck = _userRole == 'admin' || myPerms.contains('/meal-check');
-          _canAttendance = _userRole == 'admin' || myPerms.contains('/attendance');
+          _canAttendance = _userRole == 'admin' || 
+                           myPerms.contains('/attendance') || 
+                           myPerms.contains('/work-arrangements__view') || 
+                           myPerms.contains('/work-attendance__view');
           _canUserManage = _userRole == 'admin' || myPerms.contains('/user-manage__view');
+          _canViewVehicleTypes = _userRole == 'admin' || myPerms.contains('/vehicle-types__view');
+          _canViewDepartments = _userRole == 'admin' || myPerms.contains('/configuration/departments__view');
+          _canViewSkills = _userRole == 'admin' || myPerms.contains('/configuration/skills__view');
+          _canViewUserAssignments = _userRole == 'admin' || myPerms.contains('/configuration/user-assignments__view');
+          _canViewWorks = _userRole == 'admin' || myPerms.contains('/configuration/works__view');
+          _canVehicleMaintenance = _userRole == 'admin' || myPerms.contains('/vehicle-maintenances') || myPerms.contains('/vehicle-maintenances__view');
+          _canAIAssistant = _userRole == 'admin' || myPerms.contains('/ai-assistant');
         });
       }
     } catch (_) {}
@@ -194,6 +213,22 @@ class _ProfilePageState extends State<ProfilePage> {
                 title: Text(l10n.themeMode),
                 trailing: const ThemeToggleButton(),
               ),
+              if (_canAIAssistant)
+                Consumer<ChatbotProvider>(
+                  builder: (context, provider, child) {
+                    return ListTile(
+                      leading: Icon(Icons.smart_toy_rounded, color: Colors.blue),
+                      title: const Text('Bong bóng Trợ lý AI'),
+                      trailing: Switch(
+                        value: provider.isBubbleVisible,
+                        onChanged: (value) {
+                          provider.toggleBubbleVisibility();
+                        },
+                        activeColor: colorScheme.primary,
+                      ),
+                    );
+                  },
+                ),
               SizedBox(height: 12.h),
             ],
           ),
@@ -315,23 +350,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             SizedBox(height: 24.h),
 
-            // Dashboard Button (Trang chủ)
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 800),
-                child: _buildListCard(
-                  context,
-                  theme,
-                  colorScheme,
-                  icon: Icons.home_rounded,
-                  iconColor: Colors.blue,
-                  title: l10n.home,
-                  subtitle: l10n.dashboardDesc,
-                  onTap: widget.onNavigateHome,
-                ),
-              ),
-            ),
-            SizedBox(height: 16.h),
+
 
             if (_canUserManage) ...[
               Center(
@@ -361,6 +380,23 @@ class _ProfilePageState extends State<ProfilePage> {
               crossAxisSpacing: 16.w,
               childAspectRatio: MediaQuery.of(context).size.width > 600 ? 1.0 : 1.1,
               children: [
+                if (_canAIAssistant)
+                  _buildGridCard(
+                    context,
+                    theme,
+                    colorScheme,
+                    icon: Icons.smart_toy_rounded,
+                    iconColor: Colors.blue,
+                    title: 'Trợ lý AI',
+                    subtitle: 'Mở cửa sổ AI Chatbot',
+                    onTap: () {
+                      final provider = context.read<ChatbotProvider>();
+                      if (!provider.isBubbleVisible) {
+                        provider.toggleBubbleVisibility();
+                      }
+                      provider.openPanel();
+                    },
+                  ),
                 _buildGridCard(
                   context,
                   theme,
@@ -393,6 +429,23 @@ class _ProfilePageState extends State<ProfilePage> {
                     subtitle: l10n.mealDesc,
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MealCheckPage())),
                   ),
+                if (_canVehicleMaintenance)
+                  _buildGridCard(
+                    context,
+                    theme,
+                    colorScheme,
+                    icon: Icons.build_circle_rounded,
+                    iconColor: Colors.teal,
+                    title: 'Bảo trì xe',
+                    subtitle: 'Quản lý bảo trì bảo dưỡng',
+                    onTap: () {
+                      Navigator.push(
+                        context, 
+                        MaterialPageRoute(builder: (_) => const VehicleMaintenanceListPage()),
+                      );
+                    },
+                  ),
+
                 _buildGridCard(
                   context,
                   theme,
@@ -407,8 +460,8 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             SizedBox(height: 24.h),
 
-            // Danh mục Section (Admin Only)
-            if (_userRole == 'admin') ...[
+            // Danh mục Section (RBAC)
+            if (_userRole == 'admin' || _canViewVehicleTypes || _canViewDepartments || _canViewSkills || _canViewUserAssignments || _canViewWorks) ...[
               Padding(
                 padding: EdgeInsets.only(left: 8.w, bottom: 8.h),
                 child: Text(
@@ -429,17 +482,29 @@ class _ProfilePageState extends State<ProfilePage> {
                       borderRadius: BorderRadius.circular(16.r),
                     ),
                     child: Column(
-                      children: [
-                        _buildListTile(context, theme, colorScheme, icon: Icons.layers_rounded, title: 'Loại phương tiện', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VehicleTypeScreen()))),
-                        Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w),
-                        _buildListTile(context, theme, colorScheme, icon: Icons.domain_rounded, title: 'Quản lý bộ phận', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DepartmentScreen()))),
-                        Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w),
-                        _buildListTile(context, theme, colorScheme, icon: Icons.workspace_premium_rounded, title: 'Quản lý tay nghề', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SkillScreen()))),
-                        Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w),
-                        _buildListTile(context, theme, colorScheme, icon: Icons.people_alt_outlined, title: 'Danh mục nhân sự', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserAssignmentScreen()))),
-                        Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w),
-                        _buildListTile(context, theme, colorScheme, icon: Icons.work_outline_rounded, title: 'Quản lý công việc', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkScreen()))),
-                      ],
+                      children: () {
+                        final list = <Widget>[];
+                        if (_userRole == 'admin' || _canViewVehicleTypes) {
+                          list.add(_buildListTile(context, theme, colorScheme, icon: Icons.layers_rounded, title: 'Loại phương tiện', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VehicleTypeScreen()))));
+                        }
+                        if (_userRole == 'admin' || _canViewDepartments) {
+                          if (list.isNotEmpty) list.add(Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w));
+                          list.add(_buildListTile(context, theme, colorScheme, icon: Icons.domain_rounded, title: 'Quản lý bộ phận', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DepartmentScreen()))));
+                        }
+                        if (_userRole == 'admin' || _canViewSkills) {
+                          if (list.isNotEmpty) list.add(Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w));
+                          list.add(_buildListTile(context, theme, colorScheme, icon: Icons.workspace_premium_rounded, title: 'Quản lý tay nghề', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SkillScreen()))));
+                        }
+                        if (_userRole == 'admin' || _canViewUserAssignments) {
+                          if (list.isNotEmpty) list.add(Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w));
+                          list.add(_buildListTile(context, theme, colorScheme, icon: Icons.people_alt_outlined, title: 'Danh mục nhân sự', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserAssignmentScreen()))));
+                        }
+                        if (_userRole == 'admin' || _canViewWorks) {
+                          if (list.isNotEmpty) list.add(Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w));
+                          list.add(_buildListTile(context, theme, colorScheme, icon: Icons.work_outline_rounded, title: 'Quản lý công việc', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkScreen()))));
+                        }
+                        return list;
+                      }(),
                     ),
                   ),
                 ),
@@ -508,7 +573,7 @@ class _ProfilePageState extends State<ProfilePage> {
             // Version text
             Center(
               child: Text(
-                'VERSION 1.0.0 • NGUYÊN ANH',
+                'VERSION 2.0.0 • NGUYÊN ANH',
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: colorScheme.outline,
                   letterSpacing: 1.5,

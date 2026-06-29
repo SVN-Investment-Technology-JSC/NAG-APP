@@ -15,6 +15,8 @@ class PumpAssignmentBoard extends StatefulWidget {
   final Function(WorkAssignmentDraft) onChangeDraft;
   final VoidCallback onSave;
 
+  final bool readOnly;
+
   const PumpAssignmentBoard({
     super.key,
     required this.personnel,
@@ -26,6 +28,7 @@ class PumpAssignmentBoard extends StatefulWidget {
     required this.dirty,
     required this.onChangeDraft,
     required this.onSave,
+    this.readOnly = false,
   });
 
   @override
@@ -76,7 +79,7 @@ class _PumpAssignmentBoardState extends State<PumpAssignmentBoard> {
               },
             ),
           ),
-          if (widget.dirty) ...[
+          if (widget.dirty && !widget.readOnly) ...[
             SizedBox(width: 12.w),
             FilledButton(
               onPressed: widget.saving ? null : widget.onSave,
@@ -336,34 +339,37 @@ class _PumpAssignmentBoardState extends State<PumpAssignmentBoard> {
               children: [
                 ...assignedUsers.map((u) => Chip(
                       label: Text(u.userFullName),
-                      onDeleted: () {
-                        // Remove user
-                        final newRoles = Map<String, List<int>>.from(assignment.roles);
-                        newRoles[roleKey] = List<int>.from(newRoles[roleKey] ?? [])..remove(u.userId);
-                        
-                        final newAssignments = List<PumpAssignmentItem>.from(widget.draft.pumpAssignments);
-                        final index = newAssignments.indexWhere((a) => a.assignmentId == assignment.assignmentId);
-                        newAssignments[index] = PumpAssignmentItem(
-                          assignmentId: assignment.assignmentId,
-                          vehicleId: assignment.vehicleId,
-                          roles: newRoles,
-                        );
+                      onDeleted: widget.readOnly
+                          ? null
+                          : () {
+                              // Remove user
+                              final newRoles = Map<String, List<int>>.from(assignment.roles);
+                              newRoles[roleKey] = List<int>.from(newRoles[roleKey] ?? [])..remove(u.userId);
+                              
+                              final newAssignments = List<PumpAssignmentItem>.from(widget.draft.pumpAssignments);
+                              final index = newAssignments.indexWhere((a) => a.assignmentId == assignment.assignmentId);
+                              newAssignments[index] = PumpAssignmentItem(
+                                assignmentId: assignment.assignmentId,
+                                vehicleId: assignment.vehicleId,
+                                roles: newRoles,
+                              );
 
-                        widget.onChangeDraft(WorkAssignmentDraft(
-                          workDate: widget.draft.workDate,
-                          pumpAssignments: newAssignments,
-                          updatedAt: widget.draft.updatedAt,
-                        ));
-                      },
-                      deleteIcon: const Icon(Icons.close, size: 16),
+                              widget.onChangeDraft(WorkAssignmentDraft(
+                                workDate: widget.draft.workDate,
+                                pumpAssignments: newAssignments,
+                                updatedAt: widget.draft.updatedAt,
+                              ));
+                            },
+                      deleteIcon: widget.readOnly ? null : const Icon(Icons.close, size: 16),
                       backgroundColor: colorScheme.surfaceContainerHighest,
                     )),
-                ActionChip(
-                  label: const Icon(Icons.add, size: 16),
-                  onPressed: () => _showPersonnelSelector(assignment, roleKey),
-                  backgroundColor: colorScheme.primaryContainer.withOpacity(0.5),
-                  shape: const CircleBorder(),
-                ),
+                if (!widget.readOnly)
+                  ActionChip(
+                    label: const Icon(Icons.add, size: 16),
+                    onPressed: () => _showPersonnelSelector(assignment, roleKey),
+                    backgroundColor: colorScheme.primaryContainer.withOpacity(0.5),
+                    shape: const CircleBorder(),
+                  ),
               ],
             ),
           ),

@@ -11,11 +11,13 @@ import 'package:nguyenanh/l10n/app_localizations.dart';
 class WorkAssignmentManager extends StatefulWidget {
   final Function(VoidCallback) onRegisterChup;
   final Function(bool) onChupLoadingChange;
+  final bool readOnly;
 
   const WorkAssignmentManager({
     super.key,
     required this.onRegisterChup,
     required this.onChupLoadingChange,
+    this.readOnly = false,
   });
 
   @override
@@ -278,6 +280,7 @@ class _WorkAssignmentManagerState extends State<WorkAssignmentManager> with Sing
                         });
                       },
                       onSave: _savePump,
+                      readOnly: widget.readOnly,
                     ),
                     MixerAssignmentBoard(
                       personnel: _personnel,
@@ -294,6 +297,7 @@ class _WorkAssignmentManagerState extends State<WorkAssignmentManager> with Sing
                         });
                       },
                       onSave: _saveMixer,
+                      readOnly: widget.readOnly,
                     ),
                   ],
                 ),

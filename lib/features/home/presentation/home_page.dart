@@ -23,6 +23,7 @@ import 'package:nguyenanh/features/home/presentation/widgets/home_map_section.da
 import 'package:nguyenanh/features/home/presentation/widgets/home_order_item.dart';
 import 'package:nguyenanh/features/home/presentation/widgets/home_station_card.dart';
 import 'package:nguyenanh/features/home/presentation/widgets/home_user_header.dart';
+import 'package:nguyenanh/features/notifications/presentation/widgets/notification_bottom_sheet.dart';
 import 'package:nguyenanh/features/order/data/models/order_model.dart';
 import 'package:nguyenanh/features/stations/data/models/station_model.dart';
 import 'package:nguyenanh/features/vtracking/data/models/vtracking_vehicle.dart';
@@ -267,6 +268,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
+          NotificationBadge(notificationService: widget.notificationService),
           if (_canSyncSlots || _canHistory || _canViewIdleEngine)
             Padding(
               padding: EdgeInsets.only(right: 8.w),
