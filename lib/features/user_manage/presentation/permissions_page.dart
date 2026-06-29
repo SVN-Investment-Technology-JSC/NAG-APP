@@ -112,6 +112,7 @@ class _PermissionsPageState extends State<PermissionsPage> {
       '/reports/production',
       '/reports/fuel',
     ],
+
     '/user-manage': [
       '/user-manage__view',
       '/user-manage__create',
@@ -142,14 +143,14 @@ class _PermissionsPageState extends State<PermissionsPage> {
   };
 
   final Map<String, String> _permissionNames = {
-    '/dashboard__view': 'Xem',
+    '/dashboard__view': 'Xem thông tin chung',
     '/dashboard__order_detail': 'Xem chi tiết các chuyến xe (đơn hàng)',
-    '/dashboard__sync_slots': 'Đồng bộ lốt xe',
-    '/dashboard__history': 'Lịch sử lốt xe',
-    '/dashboard__checklog': 'Nhật ký vận hành',
-    '/dashboard__manual_sort': 'Sắp xếp thứ tự lốt xe',
-    '/dashboard__view_map': 'Bản đồ',
-    '/dashboard__manual_camera_fallback': 'Thao tác thủ công (camera sự cố)',
+    '/dashboard__sync_slots': 'Thao tác đồng bộ lốt xe',
+    '/dashboard__history': 'Xem lịch sử lốt xe',
+    '/dashboard__checklog': 'Xem nhật ký vận hành',
+    '/dashboard__manual_sort': 'Thao tác sắp xếp thứ tự lốt xe',
+    '/dashboard__view_map': 'Xem bản đồ',
+    '/dashboard__manual_camera_fallback': 'Thao tác cho xe vào/xuất trạm (camera sự cố)',
     '/dashboard__system_settings': 'Cấu hình vận hành',
     
     '/vehicles__view': 'Xem danh sách phương tiện',
@@ -193,7 +194,6 @@ class _PermissionsPageState extends State<PermissionsPage> {
     '/configuration/works__create': 'Thêm công việc',
     '/configuration/works__update': 'Sửa công việc',
     '/configuration/works__delete': 'Xóa công việc',
-    
     '/stations__view': 'Xem danh sách bãi/trạm',
     '/stations__create': 'Thêm bãi/trạm',
     '/stations__update': 'Sửa bãi/trạm',
@@ -201,6 +201,9 @@ class _PermissionsPageState extends State<PermissionsPage> {
     
     '/reports/production': 'Báo cáo sản xuất',
     '/reports/fuel': 'Báo cáo nhiên liệu',
+
+    '/parking-idle-engine__view': 'Xem giám sát nổ máy trong bãi',
+    '/parking-idle-engine__settings': 'Cấu hình cảnh báo nổ máy',
     
     '/calendar__view': 'Xem lịch âm/dương',
     '/meal-check': 'Đăng ký cơm ca',

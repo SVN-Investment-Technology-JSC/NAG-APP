@@ -17,6 +17,9 @@ import 'package:nguyenanh/features/home/presentation/widgets/home_order_item.dar
 import 'package:nguyenanh/features/home/presentation/widgets/vehicle_detail_sheet.dart';
 import 'package:nguyenanh/features/order/data/models/order_model.dart';
 import 'package:nguyenanh/features/order/order_service.dart';
+import 'package:nguyenanh/features/shell/presentation/main_shell.dart';
+import 'package:nguyenanh/features/notifications/presentation/widgets/notification_bottom_sheet.dart';
+import 'package:nguyenanh/core/network/notification_socket_service.dart';
 import 'package:nguyenanh/features/stations/data/models/station_model.dart';
 import 'package:nguyenanh/features/vehicle/data/models/vehicle_model.dart';
 import 'package:nguyenanh/features/vehicle/data/services/vehicle_service.dart';
@@ -30,6 +33,7 @@ class VehicleManagementPage extends StatefulWidget {
   final List<Station> stations;
   final DateTime? initialDate;
   final VoidCallback? onRefresh;
+  final NotificationSocketService notificationService;
 
   const VehicleManagementPage({
     super.key,
@@ -37,6 +41,7 @@ class VehicleManagementPage extends StatefulWidget {
     required this.vehicles,
     required this.vtrackingVehicles,
     required this.stations,
+    required this.notificationService,
     this.initialDate,
     this.onRefresh,
   });
@@ -1228,6 +1233,8 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> with Sing
             ],
           ),
           actions: [
+            NotificationBadge(notificationService: widget.notificationService),
+            SizedBox(width: 8.w),
             FilledButton.tonal(
               onPressed: _pickDate,
               style: FilledButton.styleFrom(

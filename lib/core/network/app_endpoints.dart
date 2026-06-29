@@ -6,6 +6,12 @@ class AppEndpoints {
   // Next.js web app (Google Sheets API proxy)
   static const String webBaseUrl = 'https://nguyenanhdonghoi.com';
 
+  // AI Agent Configs
+  static const String chatAgentApiToken = 'svn-pa663BZ87sBzDyy97ESlkoPjUGYLmk0sLZ8shCjBqbY';
+  static const String chatAgentStreamUrl = 'https://nag.svnagentic.site/v1/nag/chat/stream';
+  static const String chatAgentMemoryUrl = 'https://nag.svnagentic.site/v1/nag/chat/memory';
+  static const String chatAgentVoiceUrl = 'https://nag.svnagentic.site/v1/nag/voice/chat';
+
   // Google Sheets
   static const String attendanceSheetUrl =
       'https://docs.google.com/spreadsheets/d/10qL7z3dyLgAfVhCPICVYYFCLxleZfWaRzQh7XOm1wTA';

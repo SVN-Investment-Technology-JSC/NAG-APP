@@ -477,7 +477,7 @@ class _SelectionPageState extends State<SelectionPage> {
                     child: Opacity(
                       opacity: 0.4,
                       child: Text(
-                        'v1.0.0 • NGUYÊN ANH',
+                        'v2.0.0 • NGUYÊN ANH',
                         style: TextStyle(
                             fontSize: 10.sp,
                             fontWeight: FontWeight.bold,
