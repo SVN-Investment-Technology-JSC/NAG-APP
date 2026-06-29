@@ -6,7 +6,8 @@ import 'package:nguyenanh/features/work_arrangement/data/models/work_arrangement
 import 'package:nguyenanh/features/work_arrangement/data/services/work_arrangement_service.dart';
 
 class WorkAttendanceManager extends StatefulWidget {
-  const WorkAttendanceManager({super.key});
+  final bool readOnly;
+  const WorkAttendanceManager({super.key, this.readOnly = false});
 
   @override
   State<WorkAttendanceManager> createState() => _WorkAttendanceManagerState();
@@ -57,7 +58,7 @@ class _WorkAttendanceManagerState extends State<WorkAttendanceManager>
             controller: _tabController,
             physics: const NeverScrollableScrollPhysics(),
             children: [
-              _DailyMarkingView(service: _service),
+              _DailyMarkingView(service: _service, readOnly: widget.readOnly),
               _MonthlyOverviewView(service: _service),
             ],
           ),
@@ -69,7 +70,8 @@ class _WorkAttendanceManagerState extends State<WorkAttendanceManager>
 
 class _DailyMarkingView extends StatefulWidget {
   final WorkArrangementService service;
-  const _DailyMarkingView({required this.service});
+  final bool readOnly;
+  const _DailyMarkingView({required this.service, this.readOnly = false});
 
   @override
   State<_DailyMarkingView> createState() => _DailyMarkingViewState();
@@ -261,13 +263,15 @@ class _DailyMarkingViewState extends State<_DailyMarkingView> {
                       side: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.5)),
                     ),
                   ),
-                  SizedBox(width: 8.w),
-                  FilledButton.icon(
-                    onPressed: _isSaving ? null : _saveData,
-                    icon: _isSaving ? SizedBox(width: 16, height: 16, child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.save, size: 16),
-                    label: const Text('Lưu'),
-                    style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0D9488)),
-                  ),
+                  if (!widget.readOnly) ...[
+                    SizedBox(width: 8.w),
+                    FilledButton.icon(
+                      onPressed: _isSaving ? null : _saveData,
+                      icon: _isSaving ? SizedBox(width: 16, height: 16, child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.save, size: 16),
+                      label: const Text('Lưu'),
+                      style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0D9488)),
+                    ),
+                  ],
                 ],
               ),
             ],
@@ -379,6 +383,7 @@ class _DailyMarkingViewState extends State<_DailyMarkingView> {
                 draft: data.draft,
                 onSetStatus: _setStatus,
                 theme: theme,
+                readOnly: widget.readOnly,
               );
             },
           ),
@@ -417,6 +422,7 @@ class _DepartmentGroup extends StatelessWidget {
   final WorkAttendanceDraft draft;
   final void Function(int, String) onSetStatus;
   final ThemeData theme;
+  final bool readOnly;
 
   const _DepartmentGroup({
     required this.department,
@@ -424,6 +430,7 @@ class _DepartmentGroup extends StatelessWidget {
     required this.draft,
     required this.onSetStatus,
     required this.theme,
+    this.readOnly = false,
   });
 
   @override
@@ -464,6 +471,7 @@ class _DepartmentGroup extends StatelessWidget {
             status: st,
             onStatusChange: (val) => onSetStatus(m.userId, val),
             theme: theme,
+            readOnly: readOnly,
           );
         }),
         SizedBox(height: 16.h),
@@ -477,12 +485,14 @@ class _EmployeeRow extends StatelessWidget {
   final String status;
   final ValueChanged<String> onStatusChange;
   final ThemeData theme;
+  final bool readOnly;
 
   const _EmployeeRow({
     required this.person,
     required this.status,
     required this.onStatusChange,
     required this.theme,
+    this.readOnly = false,
   });
 
   @override
@@ -565,7 +575,7 @@ class _EmployeeRow extends StatelessWidget {
     Color textColor = isSelected ? activeColor : const Color(0xFF475569);
 
     return GestureDetector(
-      onTap: () => onStatusChange(value),
+      onTap: readOnly ? null : () => onStatusChange(value),
       behavior: HitTestBehavior.opaque,
       child: Container(
         height: 40.h,

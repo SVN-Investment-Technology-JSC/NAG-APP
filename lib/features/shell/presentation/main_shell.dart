@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:nguyenanh/features/user_manage/data/services/user_manage_service.dart';
 import 'package:nguyenanh/core/network/api_client.dart';
 import 'package:nguyenanh/core/network/auth_interceptor.dart';
 import 'package:nguyenanh/core/network/notification_socket_service.dart';
@@ -21,6 +23,7 @@ import 'package:nguyenanh/features/vehicle/presentation/vehicle_management_page.
 import 'package:nguyenanh/features/vtracking/data/models/vtracking_vehicle.dart';
 import 'package:nguyenanh/features/vtracking/data/services/vtracking_service.dart';
 import 'package:nguyenanh/l10n/app_localizations.dart';
+import 'package:nguyenanh/features/chatbot/presentation/widgets/chatbot_bubble.dart';
 
 /// Global key to open the main shell's side drawer from any page.
 final GlobalKey<ScaffoldState> mainShellScaffoldKey =
@@ -56,9 +59,15 @@ class _MainShellState extends State<MainShell> {
   String? _error;
   DateTime? _targetTripDate;
 
+  final UserManageService _userManageService = UserManageService();
+  String _userRole = '';
+  bool _canViewReports = false;
+  bool _canAIAssistant = false;
+
   @override
   void initState() {
     super.initState();
+    _loadPermissions();
     _setupTokenRefreshListener();
     _loadData();
     _connectSocket();
@@ -67,6 +76,21 @@ class _MainShellState extends State<MainShell> {
       const Duration(seconds: 30),
       (_) => _refreshVtracking(),
     );
+  }
+
+  Future<void> _loadPermissions() async {
+    final prefs = await SharedPreferences.getInstance();
+    _userRole = prefs.getString('user_role') ?? '';
+    try {
+      final perms = await _userManageService.getPermissions();
+      final myPerms = perms[_userRole] ?? [];
+      if (mounted) {
+        setState(() {
+          _canViewReports = _userRole == 'admin' || myPerms.contains('/reports/production');
+          _canAIAssistant = _userRole == 'admin' || myPerms.contains('/ai-assistant');
+        });
+      }
+    } catch (_) {}
   }
 
   void _setupTokenRefreshListener() {
@@ -247,9 +271,9 @@ class _MainShellState extends State<MainShell> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Scaffold(
-      key: mainShellScaffoldKey,
-      backgroundColor: colorScheme.surface,
+    final shell = Scaffold(
+        key: mainShellScaffoldKey,
+        backgroundColor: colorScheme.surface,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: theme.navigationBarTheme.backgroundColor ?? colorScheme.surface,
@@ -281,11 +305,12 @@ class _MainShellState extends State<MainShell> {
                 selectedIcon: const Icon(Icons.local_shipping_rounded),
                 label: l10n.tripsTab,
               ),
-              NavigationDestination(
-                icon: const Icon(Icons.bar_chart_outlined),
-                selectedIcon: const Icon(Icons.bar_chart_rounded),
-                label: l10n.reportsTab,
-              ),
+              if (_canViewReports)
+                NavigationDestination(
+                  icon: const Icon(Icons.bar_chart_outlined),
+                  selectedIcon: const Icon(Icons.bar_chart_rounded),
+                  label: l10n.reportsTab,
+                ),
               NavigationDestination(
                 icon: const Icon(Icons.person_outline_rounded),
                 selectedIcon: const Icon(Icons.person_rounded),
@@ -295,50 +320,65 @@ class _MainShellState extends State<MainShell> {
           ),
         ),
       ),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: [
-          HomePage(
-            orders: _yardOrders, // Pass today's orders for yard feature
-            pendingOrders: _pendingOrders, // Pass only pending for other uses
-            collectingOrders: _collectingOrders,
-            stations: _stations,
-            vtrackingVehicles: _vtrackingVehicles,
-            vehicles: _vehicles,
-            vehicleService: _vehicleService,
-            socketService: _socketService,
-            notificationService: _notificationService,
-            orderService: _orderService,
-            isLoading: _isLoading,
-            error: _error,
-            onRefresh: _loadData,
-          ),
-          VehicleManagementPage(
-            pendingOrders: _pendingOrders,
-            vehicles: _allVehicles,
-            vtrackingVehicles: _allVtrackingVehicles,
-            stations: _stations,
-            initialDate: _targetTripDate,
-            onRefresh: _loadData,
-          ),
-          ReportPage(
-            onNavigateTrips: (date) {
-              setState(() {
-                _targetTripDate = date;
-                _currentIndex = 1;
-              });
-            },
-          ),
-          ProfilePage(
-            onNavigateHome: () => setState(() => _currentIndex = 0),
-            onNavigateTrips: () => setState(() => _currentIndex = 1),
-            onLogout: () {
-              _socketService.dispose();
-              _notificationService.dispose();
-            },
-          ),
-        ],
+      body: Builder(
+        builder: (context) {
+          final children = [
+            HomePage(
+              orders: _yardOrders,
+              pendingOrders: _pendingOrders,
+              collectingOrders: _collectingOrders,
+              stations: _stations,
+              vtrackingVehicles: _vtrackingVehicles,
+              vehicles: _vehicles,
+              vehicleService: _vehicleService,
+              socketService: _socketService,
+              notificationService: _notificationService,
+              orderService: _orderService,
+              isLoading: _isLoading,
+              error: _error,
+              onRefresh: _loadData,
+            ),
+            VehicleManagementPage(
+              pendingOrders: _pendingOrders,
+              vehicles: _allVehicles,
+              vtrackingVehicles: _allVtrackingVehicles,
+              stations: _stations,
+              initialDate: _targetTripDate,
+              onRefresh: _loadData,
+              notificationService: _notificationService,
+            ),
+            if (_canViewReports)
+              ReportPage(
+                onNavigateTrips: (date) {
+                  setState(() {
+                    _targetTripDate = date;
+                    _currentIndex = 1;
+                  });
+                },
+              ),
+            ProfilePage(
+              onNavigateHome: () => setState(() => _currentIndex = 0),
+              onNavigateTrips: () => setState(() => _currentIndex = 1),
+              onLogout: () {
+                _socketService.dispose();
+                _notificationService.dispose();
+              },
+            ),
+          ];
+
+          final safeIndex = _currentIndex < children.length ? _currentIndex : children.length - 1;
+
+          return IndexedStack(
+            index: safeIndex < 0 ? 0 : safeIndex,
+            children: children,
+          );
+        }
       ),
     );
+
+    if (_canAIAssistant) {
+      return ChatbotBubble(child: shell);
+    }
+    return shell;
   }
 }
