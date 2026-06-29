@@ -18,7 +18,6 @@ import 'package:nguyenanh/features/catalog/presentation/screens/skill_screen.dar
 import 'package:nguyenanh/features/catalog/presentation/screens/user_assignment_screen.dart';
 import 'package:nguyenanh/features/catalog/presentation/screens/work_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:nguyenanh/core/network/app_endpoints.dart';
 
 class ProfilePage extends StatefulWidget {
   final VoidCallback onNavigateHome;
@@ -43,6 +42,11 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _canMealCheck = false;
   bool _canAttendance = false;
   bool _canUserManage = false;
+  bool _canViewVehicleTypes = false;
+  bool _canViewDepartments = false;
+  bool _canViewSkills = false;
+  bool _canViewUserAssignments = false;
+  bool _canViewWorks = false;
 
   @override
   void initState() {
@@ -64,8 +68,17 @@ class _ProfilePageState extends State<ProfilePage> {
       if (mounted) {
         setState(() {
           _canMealCheck = _userRole == 'admin' || myPerms.contains('/meal-check');
-          _canAttendance = _userRole == 'admin' || myPerms.contains('/attendance');
+          _canAttendance = _userRole == 'admin' || 
+                           myPerms.contains('/attendance') || 
+                           myPerms.contains('/work-arrangements__view') || 
+                           myPerms.contains('/work-attendance__view');
           _canUserManage = _userRole == 'admin' || myPerms.contains('/user-manage__view');
+          
+          _canViewVehicleTypes = _userRole == 'admin' || myPerms.contains('/vehicle-types__view');
+          _canViewDepartments = _userRole == 'admin' || myPerms.contains('/configuration/departments__view');
+          _canViewSkills = _userRole == 'admin' || myPerms.contains('/configuration/skills__view');
+          _canViewUserAssignments = _userRole == 'admin' || myPerms.contains('/configuration/user-assignments__view');
+          _canViewWorks = _userRole == 'admin' || myPerms.contains('/configuration/works__view');
         });
       }
     } catch (_) {}
@@ -407,8 +420,8 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             SizedBox(height: 24.h),
 
-            // Danh mục Section (Admin Only)
-            if (_userRole == 'admin') ...[
+            // Danh mục Section (RBAC)
+            if (_userRole == 'admin' || _canViewVehicleTypes || _canViewDepartments || _canViewSkills || _canViewUserAssignments || _canViewWorks) ...[
               Padding(
                 padding: EdgeInsets.only(left: 8.w, bottom: 8.h),
                 child: Text(
@@ -429,17 +442,29 @@ class _ProfilePageState extends State<ProfilePage> {
                       borderRadius: BorderRadius.circular(16.r),
                     ),
                     child: Column(
-                      children: [
-                        _buildListTile(context, theme, colorScheme, icon: Icons.layers_rounded, title: 'Loại phương tiện', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VehicleTypeScreen()))),
-                        Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w),
-                        _buildListTile(context, theme, colorScheme, icon: Icons.domain_rounded, title: 'Quản lý bộ phận', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DepartmentScreen()))),
-                        Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w),
-                        _buildListTile(context, theme, colorScheme, icon: Icons.workspace_premium_rounded, title: 'Quản lý tay nghề', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SkillScreen()))),
-                        Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w),
-                        _buildListTile(context, theme, colorScheme, icon: Icons.people_alt_outlined, title: 'Danh mục nhân sự', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserAssignmentScreen()))),
-                        Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w),
-                        _buildListTile(context, theme, colorScheme, icon: Icons.work_outline_rounded, title: 'Quản lý công việc', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkScreen()))),
-                      ],
+                      children: () {
+                        final list = <Widget>[];
+                        if (_userRole == 'admin' || _canViewVehicleTypes) {
+                          list.add(_buildListTile(context, theme, colorScheme, icon: Icons.layers_rounded, title: 'Loại phương tiện', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VehicleTypeScreen()))));
+                        }
+                        if (_userRole == 'admin' || _canViewDepartments) {
+                          if (list.isNotEmpty) list.add(Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w));
+                          list.add(_buildListTile(context, theme, colorScheme, icon: Icons.domain_rounded, title: 'Quản lý bộ phận', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DepartmentScreen()))));
+                        }
+                        if (_userRole == 'admin' || _canViewSkills) {
+                          if (list.isNotEmpty) list.add(Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w));
+                          list.add(_buildListTile(context, theme, colorScheme, icon: Icons.workspace_premium_rounded, title: 'Quản lý tay nghề', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SkillScreen()))));
+                        }
+                        if (_userRole == 'admin' || _canViewUserAssignments) {
+                          if (list.isNotEmpty) list.add(Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w));
+                          list.add(_buildListTile(context, theme, colorScheme, icon: Icons.people_alt_outlined, title: 'Danh mục nhân sự', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserAssignmentScreen()))));
+                        }
+                        if (_userRole == 'admin' || _canViewWorks) {
+                          if (list.isNotEmpty) list.add(Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w));
+                          list.add(_buildListTile(context, theme, colorScheme, icon: Icons.work_outline_rounded, title: 'Quản lý công việc', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkScreen()))));
+                        }
+                        return list;
+                      }(),
                     ),
                   ),
                 ),

@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -34,6 +33,7 @@ class _PermissionsPageState extends State<PermissionsPage> {
   final Map<String, List<String>> _allModules = {
     '/dashboard': [
       '/dashboard__view',
+      '/dashboard__order_detail',
       '/dashboard__sync_slots',
       '/dashboard__history',
       '/dashboard__checklog',
@@ -53,12 +53,54 @@ class _PermissionsPageState extends State<PermissionsPage> {
       '/vehicle-maintenances__create',
       '/vehicle-maintenances__update',
       '/vehicle-maintenances__delete',
+      '/vehicle-maintenances__submit',
+      '/vehicle-maintenances__dispatch_review',
+      '/vehicle-maintenances__production_approve',
+    ],
+    '/parking-idle-engine': [
+      '/parking-idle-engine__view',
+      '/parking-idle-engine__settings',
+    ],
+    '/tools': [
+      '/calendar__view',
+      '/meal-check',
+      '/work-attendance__view',
+      '/work-attendance__update',
+      '/work-arrangements__view',
+      '/work-arrangements__update',
+      '/ai-assistant',
+      '/attendance',
     ],
     '/vehicle-types': [
       '/vehicle-types__view',
       '/vehicle-types__create',
       '/vehicle-types__update',
       '/vehicle-types__delete',
+    ],
+    '/configuration/departments': [
+      '/configuration/departments__view',
+      '/configuration/departments__create',
+      '/configuration/departments__update',
+      '/configuration/departments__assign_users',
+      '/configuration/departments__delete',
+    ],
+    '/configuration/skills': [
+      '/configuration/skills__view',
+      '/configuration/skills__create',
+      '/configuration/skills__update',
+      '/configuration/skills__delete',
+    ],
+    '/configuration/user-assignments': [
+      '/configuration/user-assignments__view',
+      '/configuration/user-assignments__create',
+      '/configuration/user-assignments__update',
+      '/configuration/user-assignments__delete',
+    ],
+    '/configuration/works': [
+      '/configuration/works__view',
+      '/configuration/works__create',
+      '/configuration/works__update',
+      '/configuration/works__delete',
     ],
     '/stations': [
       '/stations__view',
@@ -69,11 +111,6 @@ class _PermissionsPageState extends State<PermissionsPage> {
     '/reports': [
       '/reports/production',
       '/reports/fuel',
-    ],
-    '/tools': [
-      '/meal-check',
-      '/attendance',
-      '/ai-assistant',
     ],
     '/user-manage': [
       '/user-manage__view',
@@ -91,16 +128,22 @@ class _PermissionsPageState extends State<PermissionsPage> {
     '/dashboard': 'Bảng điều khiển',
     '/vehicles': 'Quản lý phương tiện',
     '/vehicle-maintenances': 'Bảo trì xe',
+    '/parking-idle-engine': 'Giám sát nổ máy',
+    '/tools': 'Công cụ & Trợ lý',
     '/vehicle-types': 'Loại phương tiện',
+    '/configuration/departments': 'Quản lý bộ phận',
+    '/configuration/skills': 'Quản lý tay nghề',
+    '/configuration/user-assignments': 'Danh mục nhân sự',
+    '/configuration/works': 'Quản lý công việc',
     '/stations': 'Quản lý trạm',
     '/reports': 'Báo cáo phân tích',
-    '/tools': 'Công cụ & Trợ lý',
     '/user-manage': 'Tất cả người dùng',
     '/role-permissions': 'Phân quyền vai trò',
   };
 
   final Map<String, String> _permissionNames = {
     '/dashboard__view': 'Xem',
+    '/dashboard__order_detail': 'Xem chi tiết các chuyến xe (đơn hàng)',
     '/dashboard__sync_slots': 'Đồng bộ lốt xe',
     '/dashboard__history': 'Lịch sử lốt xe',
     '/dashboard__checklog': 'Nhật ký vận hành',
@@ -118,11 +161,38 @@ class _PermissionsPageState extends State<PermissionsPage> {
     '/vehicle-maintenances__create': 'Thêm bảo trì',
     '/vehicle-maintenances__update': 'Sửa bảo trì',
     '/vehicle-maintenances__delete': 'Xóa bảo trì',
+    '/vehicle-maintenances__submit': 'Gửi phiếu bảo trì',
+    '/vehicle-maintenances__dispatch_review': 'Kiểm tra bảo trì',
+    '/vehicle-maintenances__production_approve': 'Phê duyệt bảo trì',
+
+    '/parking-idle-engine__view': 'Xem giám sát nổ máy',
+    '/parking-idle-engine__settings': 'Cấu hình cảnh báo nổ máy',
     
     '/vehicle-types__view': 'Xem danh sách loại phương tiện',
     '/vehicle-types__create': 'Thêm loại phương tiện',
     '/vehicle-types__update': 'Sửa loại phương tiện',
     '/vehicle-types__delete': 'Xóa loại phương tiện',
+
+    '/configuration/departments__view': 'Xem danh sách bộ phận',
+    '/configuration/departments__create': 'Thêm bộ phận',
+    '/configuration/departments__update': 'Sửa bộ phận',
+    '/configuration/departments__assign_users': 'Gán nhân sự vào bộ phận',
+    '/configuration/departments__delete': 'Xóa bộ phận',
+
+    '/configuration/skills__view': 'Xem danh sách tay nghề',
+    '/configuration/skills__create': 'Thêm tay nghề',
+    '/configuration/skills__update': 'Sửa tay nghề',
+    '/configuration/skills__delete': 'Xóa tay nghề',
+
+    '/configuration/user-assignments__view': 'Xem danh mục nhân sự',
+    '/configuration/user-assignments__create': 'Thêm nhân sự',
+    '/configuration/user-assignments__update': 'Sửa nhân sự',
+    '/configuration/user-assignments__delete': 'Xóa nhân sự',
+
+    '/configuration/works__view': 'Xem danh sách công việc',
+    '/configuration/works__create': 'Thêm công việc',
+    '/configuration/works__update': 'Sửa công việc',
+    '/configuration/works__delete': 'Xóa công việc',
     
     '/stations__view': 'Xem danh sách bãi/trạm',
     '/stations__create': 'Thêm bãi/trạm',
@@ -132,9 +202,14 @@ class _PermissionsPageState extends State<PermissionsPage> {
     '/reports/production': 'Báo cáo sản xuất',
     '/reports/fuel': 'Báo cáo nhiên liệu',
     
+    '/calendar__view': 'Xem lịch âm/dương',
     '/meal-check': 'Đăng ký cơm ca',
-    '/attendance': 'Chấm công',
+    '/work-attendance__view': 'Xem bảng công',
+    '/work-attendance__update': 'Cập nhật nghỉ nửa ngày',
+    '/work-arrangements__view': 'Xem phân công',
+    '/work-arrangements__update': 'Cập nhật phân công',
     '/ai-assistant': 'Trợ lý AI',
+    '/attendance': 'Chấm công',
     
     '/user-manage__view': 'Xem danh sách người dùng',
     '/user-manage__create': 'Thêm người dùng',
