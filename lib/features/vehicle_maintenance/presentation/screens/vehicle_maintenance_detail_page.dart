@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:nguyenanh/core/network/api_client.dart';
 import 'package:nguyenanh/core/theme/app_colors.dart';
 import 'package:nguyenanh/core/theme/app_spacing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:nguyenanh/features/user_manage/data/services/user_manage_service.dart';
 import 'package:nguyenanh/features/vehicle_maintenance/data/models/vehicle_maintenance_history_model.dart';
 import 'package:nguyenanh/features/vehicle_maintenance/data/models/vehicle_maintenance_model.dart';
 import 'package:nguyenanh/features/vehicle_maintenance/data/services/vehicle_maintenance_service.dart';
@@ -29,11 +31,38 @@ class _VehicleMaintenanceDetailPageState extends State<VehicleMaintenanceDetailP
   VehicleMaintenance? _maintenance;
   List<VehicleMaintenanceHistory> _histories = [];
 
+  final UserManageService _userManageService = UserManageService();
+  String _userRole = '';
+  bool _canUpdate = false;
+  bool _canDelete = false;
+  bool _canSubmit = false;
+  bool _canDispatchReview = false;
+  bool _canProductionApprove = false;
+
   @override
   void initState() {
     super.initState();
+    _loadPermissions();
     _fetchDetail();
     _fetchHistory();
+  }
+
+  Future<void> _loadPermissions() async {
+    final prefs = await SharedPreferences.getInstance();
+    _userRole = prefs.getString('user_role') ?? '';
+    try {
+      final perms = await _userManageService.getPermissions();
+      final myPerms = perms[_userRole] ?? [];
+      if (mounted) {
+        setState(() {
+          _canUpdate = _userRole == 'admin' || myPerms.contains('/vehicle-maintenances__update');
+          _canDelete = _userRole == 'admin' || myPerms.contains('/vehicle-maintenances__delete');
+          _canSubmit = _userRole == 'admin' || myPerms.contains('/vehicle-maintenances__submit');
+          _canDispatchReview = _userRole == 'admin' || myPerms.contains('/vehicle-maintenances__dispatch_review');
+          _canProductionApprove = _userRole == 'admin' || myPerms.contains('/vehicle-maintenances__production_approve');
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _fetchDetail() async {
@@ -198,6 +227,14 @@ class _VehicleMaintenanceDetailPageState extends State<VehicleMaintenanceDetailP
     }
   }
 
+  bool _canPerformAction(String action) {
+    if (_userRole == 'admin') return true;
+    if (action == 'submit') return _canSubmit;
+    if (action == 'dispatch_approve' || action == 'dispatch_reject') return _canDispatchReview;
+    if (action == 'production_approve' || action == 'production_reject') return _canProductionApprove;
+    return false;
+  }
+
   Widget _buildInfoRow(String label, String value, {bool isHtml = false, Color? valueColor}) {
     return Padding(
       padding: EdgeInsets.only(bottom: 12.h),
@@ -260,7 +297,7 @@ class _VehicleMaintenanceDetailPageState extends State<VehicleMaintenanceDetailP
     final formatter = NumberFormat.currency(locale: 'vi_VN', symbol: m.currency ?? 'VND');
     final isDraftOrRejected = ['draft', 'rejected'].contains(m.vehicleMaintenanceStatus);
     // Determine if the user can edit this maintenance (typically only creators can edit drafts, but let's allow it if workflow permits or status is draft)
-    final canEdit = isDraftOrRejected;
+    final canEdit = isDraftOrRejected && (_canUpdate || _userRole == 'admin');
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -294,46 +331,57 @@ class _VehicleMaintenanceDetailPageState extends State<VehicleMaintenanceDetailP
               BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5)),
             ],
           ),
-          child: Row(
-            children: [
-              if (canEdit)
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                      side: const BorderSide(color: Colors.red),
-                      padding: EdgeInsets.symmetric(vertical: 12.h),
-                    ),
-                    onPressed: () => _showWorkflowDialog('delete'),
-                    icon: const Icon(Icons.delete_outline, size: 20),
-                    label: const Text('Xóa'),
-                  ),
-                ),
-              if (canEdit && m.workflowAvailableActions != null && m.workflowAvailableActions!.isNotEmpty)
-                SizedBox(width: 12.w),
-              if (m.workflowAvailableActions != null)
-                ...m.workflowAvailableActions!.where((a) => a != 'delete').map((action) {
-                  final isDanger = action.contains('reject');
-                  IconData iconData = Icons.check_circle_outline;
-                  if (isDanger) iconData = Icons.cancel_outlined;
-                  if (action == 'submit') iconData = Icons.send;
+          child: Builder(
+            builder: (context) {
+              final showDelete = canEdit && (_canDelete || _userRole == 'admin');
+              final activeActions = m.workflowAvailableActions != null
+                  ? m.workflowAvailableActions!.where((a) => a != 'delete' && _canPerformAction(a)).toList()
+                  : <String>[];
 
-                  return Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.only(left: m.workflowAvailableActions!.first == action && !canEdit ? 0 : (action != m.workflowAvailableActions!.first ? 12.w : 0)),
-                      child: FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: isDanger ? Colors.red : theme.colorScheme.primary,
+              return Row(
+                children: [
+                  if (showDelete)
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
                           padding: EdgeInsets.symmetric(vertical: 12.h),
                         ),
-                        onPressed: () => _showWorkflowDialog(action),
-                        icon: Icon(iconData, size: 20),
-                        label: Text(_getWorkflowActionLabel(action)),
+                        onPressed: () => _showWorkflowDialog('delete'),
+                        icon: const Icon(Icons.delete_outline, size: 20),
+                        label: const Text('Xóa'),
                       ),
                     ),
-                  );
-                }).toList(),
-            ],
+                  if (showDelete && activeActions.isNotEmpty)
+                    SizedBox(width: 12.w),
+                  ...activeActions.map((action) {
+                    final isDanger = action.contains('reject');
+                    IconData iconData = Icons.check_circle_outline;
+                    if (isDanger) iconData = Icons.cancel_outlined;
+                    if (action == 'submit') iconData = Icons.send;
+
+                    final isFirst = activeActions.first == action;
+                    final leftPadding = isFirst && !showDelete ? 0.0 : 12.w;
+
+                    return Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(left: leftPadding),
+                        child: FilledButton.icon(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: isDanger ? Colors.red : theme.colorScheme.primary,
+                            padding: EdgeInsets.symmetric(vertical: 12.h),
+                          ),
+                          onPressed: () => _showWorkflowDialog(action),
+                          icon: Icon(iconData, size: 20),
+                          label: Text(_getWorkflowActionLabel(action)),
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              );
+            }
           ),
         ),
       ),

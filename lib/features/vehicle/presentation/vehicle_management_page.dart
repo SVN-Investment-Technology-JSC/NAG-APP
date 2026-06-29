@@ -65,6 +65,7 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> with Sing
   final UserManageService _userManageService = UserManageService();
   String _userRole = '';
   bool _canManualSort = false;
+  bool _canOrderDetail = false;
   bool _isManualMode = false;
   bool _isReordering = false;
   late AnimationController _reloadAnimController;
@@ -118,6 +119,7 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> with Sing
       if (mounted) {
         setState(() {
           _canManualSort = _userRole == 'admin' || myPerms.contains('/dashboard__manual_sort');
+          _canOrderDetail = _userRole == 'admin' || myPerms.contains('/dashboard__order_detail');
         });
       }
     } catch (_) {}
@@ -354,6 +356,16 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> with Sing
   }
 
   void _showVehiclePopup(VehicleModel vehicle) {
+    if (!_canOrderDetail && _userRole != 'admin') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bạn không có quyền xem chi tiết các chuyến xe (đơn hàng)'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final l10n = AppLocalizations.of(context)!;

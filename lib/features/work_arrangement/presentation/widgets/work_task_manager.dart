@@ -8,7 +8,8 @@ import 'package:nguyenanh/features/work_arrangement/presentation/widgets/personn
 import 'package:nguyenanh/l10n/app_localizations.dart';
 
 class WorkTaskManager extends StatefulWidget {
-  const WorkTaskManager({super.key});
+  final bool readOnly;
+  const WorkTaskManager({super.key, this.readOnly = false});
 
   @override
   State<WorkTaskManager> createState() => _WorkTaskManagerState();
@@ -408,14 +409,16 @@ class _WorkTaskManagerState extends State<WorkTaskManager> {
                                 style: TextStyle(color: colorScheme.onPrimaryContainer, fontSize: 12.sp, fontWeight: FontWeight.bold),
                               ),
                             ),
-                          SizedBox(width: 4.w),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline, color: Colors.red),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            iconSize: 20.sp,
-                            onPressed: () => _removeParentGroup(parent.workId),
-                          ),
+                          if (!widget.readOnly) ...[
+                            SizedBox(width: 4.w),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: Colors.red),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              iconSize: 20.sp,
+                              onPressed: () => _removeParentGroup(parent.workId),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -457,19 +460,20 @@ class _WorkTaskManagerState extends State<WorkTaskManager> {
                                   children: [
                                     ...assignedUsers.map((u) => Chip(
                                           label: Text(u.userFullName),
-                                          onDeleted: () => _removeUserFromWork(task.workId, u.userId),
-                                          deleteIcon: const Icon(Icons.close, size: 16),
+                                          onDeleted: widget.readOnly ? null : () => _removeUserFromWork(task.workId, u.userId),
+                                          deleteIcon: widget.readOnly ? null : const Icon(Icons.close, size: 16),
                                           backgroundColor: colorScheme.surfaceContainerHighest,
                                           visualDensity: VisualDensity.compact,
                                         )),
-                                    ActionChip(
-                                      label: Text(assignedUsers.isEmpty ? 'Thêm nhân sự vào' : 'Gán thêm', style: TextStyle(color: colorScheme.primary)),
-                                      avatar: Icon(Icons.add, size: 16, color: colorScheme.primary),
-                                      onPressed: () => _showPersonnelSelector(task.workId),
-                                      backgroundColor: Colors.transparent,
-                                      shape: StadiumBorder(side: BorderSide(color: colorScheme.primary.withOpacity(0.5))),
-                                      visualDensity: VisualDensity.compact,
-                                    ),
+                                    if (!widget.readOnly)
+                                      ActionChip(
+                                        label: Text(assignedUsers.isEmpty ? 'Thêm nhân sự vào' : 'Gán thêm', style: TextStyle(color: colorScheme.primary)),
+                                        avatar: Icon(Icons.add, size: 16, color: colorScheme.primary),
+                                        onPressed: () => _showPersonnelSelector(task.workId),
+                                        backgroundColor: Colors.transparent,
+                                        shape: StadiumBorder(side: BorderSide(color: colorScheme.primary.withOpacity(0.5))),
+                                        visualDensity: VisualDensity.compact,
+                                      ),
                                   ],
                                 ),
                               ],
@@ -483,15 +487,16 @@ class _WorkTaskManagerState extends State<WorkTaskManager> {
               );
             },
           ),
-          Positioned(
-            bottom: 16.h,
-            right: 16.w,
-            child: FloatingActionButton.extended(
-              onPressed: _showAddWorkSelector,
-              icon: const Icon(Icons.add),
-              label: const Text('Thêm việc'),
+          if (!widget.readOnly)
+            Positioned(
+              bottom: 16.h,
+              right: 16.w,
+              child: FloatingActionButton.extended(
+                onPressed: _showAddWorkSelector,
+                icon: const Icon(Icons.add),
+                label: const Text('Thêm việc'),
+              ),
             ),
-          ),
         ],
       );
     }
@@ -556,7 +561,7 @@ class _WorkTaskManagerState extends State<WorkTaskManager> {
                   },
                 ),
               ),
-              if (_dirty) ...[
+              if (_dirty && !widget.readOnly) ...[
                 SizedBox(width: 12.w),
                 FilledButton(
                   onPressed: _saving ? null : _save,

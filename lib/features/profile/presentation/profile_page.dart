@@ -51,6 +51,7 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _canViewUserAssignments = false;
   bool _canViewWorks = false;
   bool _canVehicleMaintenance = false;
+  bool _canAIAssistant = false;
 
   @override
   void initState() {
@@ -83,6 +84,7 @@ class _ProfilePageState extends State<ProfilePage> {
           _canViewUserAssignments = _userRole == 'admin' || myPerms.contains('/configuration/user-assignments__view');
           _canViewWorks = _userRole == 'admin' || myPerms.contains('/configuration/works__view');
           _canVehicleMaintenance = _userRole == 'admin' || myPerms.contains('/vehicle-maintenances') || myPerms.contains('/vehicle-maintenances__view');
+          _canAIAssistant = _userRole == 'admin' || myPerms.contains('/ai-assistant');
         });
       }
     } catch (_) {}
@@ -211,21 +213,22 @@ class _ProfilePageState extends State<ProfilePage> {
                 title: Text(l10n.themeMode),
                 trailing: const ThemeToggleButton(),
               ),
-              Consumer<ChatbotProvider>(
-                builder: (context, provider, child) {
-                  return ListTile(
-                    leading: Icon(Icons.smart_toy_rounded, color: Colors.blue),
-                    title: const Text('Bong bóng Trợ lý AI'),
-                    trailing: Switch(
-                      value: provider.isBubbleVisible,
-                      onChanged: (value) {
-                        provider.toggleBubbleVisibility();
-                      },
-                      activeColor: colorScheme.primary,
-                    ),
-                  );
-                },
-              ),
+              if (_canAIAssistant)
+                Consumer<ChatbotProvider>(
+                  builder: (context, provider, child) {
+                    return ListTile(
+                      leading: Icon(Icons.smart_toy_rounded, color: Colors.blue),
+                      title: const Text('Bong bóng Trợ lý AI'),
+                      trailing: Switch(
+                        value: provider.isBubbleVisible,
+                        onChanged: (value) {
+                          provider.toggleBubbleVisibility();
+                        },
+                        activeColor: colorScheme.primary,
+                      ),
+                    );
+                  },
+                ),
               SizedBox(height: 12.h),
             ],
           ),
@@ -377,22 +380,23 @@ class _ProfilePageState extends State<ProfilePage> {
               crossAxisSpacing: 16.w,
               childAspectRatio: MediaQuery.of(context).size.width > 600 ? 1.0 : 1.1,
               children: [
-                _buildGridCard(
-                  context,
-                  theme,
-                  colorScheme,
-                  icon: Icons.smart_toy_rounded,
-                  iconColor: Colors.blue,
-                  title: 'Trợ lý AI',
-                  subtitle: 'Mở cửa sổ AI Chatbot',
-                  onTap: () {
-                    final provider = context.read<ChatbotProvider>();
-                    if (!provider.isBubbleVisible) {
-                      provider.toggleBubbleVisibility();
-                    }
-                    provider.openPanel();
-                  },
-                ),
+                if (_canAIAssistant)
+                  _buildGridCard(
+                    context,
+                    theme,
+                    colorScheme,
+                    icon: Icons.smart_toy_rounded,
+                    iconColor: Colors.blue,
+                    title: 'Trợ lý AI',
+                    subtitle: 'Mở cửa sổ AI Chatbot',
+                    onTap: () {
+                      final provider = context.read<ChatbotProvider>();
+                      if (!provider.isBubbleVisible) {
+                        provider.toggleBubbleVisibility();
+                      }
+                      provider.openPanel();
+                    },
+                  ),
                 _buildGridCard(
                   context,
                   theme,

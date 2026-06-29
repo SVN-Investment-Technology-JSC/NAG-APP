@@ -4,6 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:nguyenanh/core/network/api_client.dart';
 import 'package:nguyenanh/core/theme/app_spacing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:nguyenanh/features/user_manage/data/services/user_manage_service.dart';
 import 'package:nguyenanh/features/vehicle_maintenance/data/models/vehicle_maintenance_model.dart';
 import 'package:nguyenanh/features/vehicle_maintenance/data/services/vehicle_maintenance_service.dart';
 import 'package:intl/intl.dart';
@@ -37,10 +39,33 @@ class _VehicleMaintenanceListPageState extends State<VehicleMaintenanceListPage>
     {'value': 'approved', 'label': 'Đã duyệt'},
     {'value': 'rejected', 'label': 'Từ chối'},
   ];
+  final UserManageService _userManageService = UserManageService();
+  String _userRole = '';
+  bool _canCreate = false;
+  bool _canUpdate = false;
+  bool _canDelete = false;
+
   @override
   void initState() {
     super.initState();
+    _loadPermissions();
     _loadData();
+  }
+
+  Future<void> _loadPermissions() async {
+    final prefs = await SharedPreferences.getInstance();
+    _userRole = prefs.getString('user_role') ?? '';
+    try {
+      final perms = await _userManageService.getPermissions();
+      final myPerms = perms[_userRole] ?? [];
+      if (mounted) {
+        setState(() {
+          _canCreate = _userRole == 'admin' || myPerms.contains('/vehicle-maintenances__create');
+          _canUpdate = _userRole == 'admin' || myPerms.contains('/vehicle-maintenances__update');
+          _canDelete = _userRole == 'admin' || myPerms.contains('/vehicle-maintenances__delete');
+        });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -289,18 +314,19 @@ class _VehicleMaintenanceListPageState extends State<VehicleMaintenanceListPage>
             icon: const Icon(Icons.refresh_rounded),
             onPressed: _loadData,
           ),
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline_rounded),
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const VehicleMaintenanceFormPage()),
-              );
-              if (result == true) {
-                _loadData();
-              }
-            },
-          ),
+          if (_canCreate)
+            IconButton(
+              icon: const Icon(Icons.add_circle_outline_rounded),
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const VehicleMaintenanceFormPage()),
+                );
+                if (result == true) {
+                  _loadData();
+                }
+              },
+            ),
         ],
       ),
       body: Column(
@@ -392,30 +418,32 @@ class _VehicleMaintenanceListPageState extends State<VehicleMaintenanceListPage>
                   icon: Icons.info_outline,
                   label: 'Chi tiết',
                 ),
-                SlidableAction(
-                  onPressed: (_) async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => VehicleMaintenanceFormPage(maintenance: item)),
-                    );
-                    if (result == true) {
-                      _loadData();
-                    }
-                  },
-                  backgroundColor: Colors.orange.shade100.withOpacity(0.7),
-                  foregroundColor: Colors.orange.shade800,
-                  icon: Icons.edit_outlined,
-                  label: 'Sửa',
-                ),
-                SlidableAction(
-                  onPressed: (_) {
-                    _showDeleteConfirmDialog(item);
-                  },
-                  backgroundColor: Colors.red.shade100.withOpacity(0.7),
-                  foregroundColor: Colors.red.shade800,
-                  icon: Icons.delete_outline,
-                  label: 'Xóa',
-                ),
+                if (_canUpdate)
+                  SlidableAction(
+                    onPressed: (_) async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => VehicleMaintenanceFormPage(maintenance: item)),
+                      );
+                      if (result == true) {
+                        _loadData();
+                      }
+                    },
+                    backgroundColor: Colors.orange.shade100.withOpacity(0.7),
+                    foregroundColor: Colors.orange.shade800,
+                    icon: Icons.edit_outlined,
+                    label: 'Sửa',
+                  ),
+                if (_canDelete)
+                  SlidableAction(
+                    onPressed: (_) {
+                      _showDeleteConfirmDialog(item);
+                    },
+                    backgroundColor: Colors.red.shade100.withOpacity(0.7),
+                    foregroundColor: Colors.red.shade800,
+                    icon: Icons.delete_outline,
+                    label: 'Xóa',
+                  ),
               ],
             ),
             child: InkWell(

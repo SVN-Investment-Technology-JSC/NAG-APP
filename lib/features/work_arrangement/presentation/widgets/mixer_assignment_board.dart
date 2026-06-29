@@ -15,6 +15,8 @@ class MixerAssignmentBoard extends StatefulWidget {
   final Function(WorkMixerAssignmentDraft) onChangeDraft;
   final VoidCallback onSave;
 
+  final bool readOnly;
+
   const MixerAssignmentBoard({
     super.key,
     required this.personnel,
@@ -26,6 +28,7 @@ class MixerAssignmentBoard extends StatefulWidget {
     required this.dirty,
     required this.onChangeDraft,
     required this.onSave,
+    this.readOnly = false,
   });
 
   @override
@@ -76,7 +79,7 @@ class _MixerAssignmentBoardState extends State<MixerAssignmentBoard> {
               },
             ),
           ),
-          if (widget.dirty) ...[
+          if (widget.dirty && !widget.readOnly) ...[
             SizedBox(width: 12.w),
             FilledButton(
               onPressed: widget.saving ? null : widget.onSave,
@@ -328,23 +331,25 @@ class _MixerAssignmentBoardState extends State<MixerAssignmentBoard> {
                         if (assignedUser != null)
                           Chip(
                             label: Text(assignedUser.userFullName, overflow: TextOverflow.ellipsis),
-                            onDeleted: () {
-                              final newAssignments = List<MixerAssignmentItem>.from(widget.draft.mixerAssignments);
-                              newAssignments[index] = MixerAssignmentItem(
-                                assignmentId: assignment.assignmentId,
-                                vehicleId: assignment.vehicleId,
-                                userId: null,
-                              );
-                              widget.onChangeDraft(WorkMixerAssignmentDraft(
-                                workDate: widget.draft.workDate,
-                                mixerAssignments: newAssignments,
-                                updatedAt: widget.draft.updatedAt,
-                              ));
-                            },
-                            deleteIcon: const Icon(Icons.close, size: 16),
+                            onDeleted: widget.readOnly
+                                ? null
+                                : () {
+                                    final newAssignments = List<MixerAssignmentItem>.from(widget.draft.mixerAssignments);
+                                    newAssignments[index] = MixerAssignmentItem(
+                                      assignmentId: assignment.assignmentId,
+                                      vehicleId: assignment.vehicleId,
+                                      userId: null,
+                                    );
+                                    widget.onChangeDraft(WorkMixerAssignmentDraft(
+                                      workDate: widget.draft.workDate,
+                                      mixerAssignments: newAssignments,
+                                      updatedAt: widget.draft.updatedAt,
+                                    ));
+                                  },
+                            deleteIcon: widget.readOnly ? null : const Icon(Icons.close, size: 16),
                             backgroundColor: colorScheme.surfaceContainerHighest,
                           )
-                        else
+                        else if (!widget.readOnly)
                           ActionChip(
                             label: const Icon(Icons.add, size: 16),
                             onPressed: () => _showPersonnelSelector(assignment, index),
