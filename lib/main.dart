@@ -6,6 +6,7 @@ import 'package:nguyenanh/core/l10n/language_provider.dart';
 import 'package:nguyenanh/core/network/api_client.dart';
 import 'package:nguyenanh/core/theme/theme_provider.dart';
 import 'package:nguyenanh/features/chatbot/presentation/chatbot_provider.dart';
+import 'package:nguyenanh/features/application_form/presentation/application_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,6 +21,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => ChatbotProvider()),
+        ChangeNotifierProvider(create: (_) => ApplicationProvider()),
       ],
       child: const VehicleApp(),
     ),

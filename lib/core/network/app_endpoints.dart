@@ -39,4 +39,6 @@ class AppEndpoints {
   static const String works = 'works';
   static const String vehicles = 'vehicles';
   static const String attendanceDailyRecords = 'attendance-daily-records';
+  static const String lotTagRequests = 'lot-tags/requests';
+  static const String lotTags = 'lot-tags';
 }

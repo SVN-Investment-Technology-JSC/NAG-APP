@@ -21,6 +21,7 @@ import 'package:nguyenanh/features/catalog/presentation/screens/user_assignment_
 import 'package:nguyenanh/features/catalog/presentation/screens/work_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:nguyenanh/features/vehicle_maintenance/presentation/screens/vehicle_maintenance_list_page.dart';
+import 'package:nguyenanh/features/application_form/presentation/screens/application_list_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final VoidCallback onNavigateHome;
@@ -52,6 +53,7 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _canViewWorks = false;
   bool _canVehicleMaintenance = false;
   bool _canAIAssistant = false;
+  bool _canViewApplications = false;
 
   @override
   void initState() {
@@ -85,6 +87,7 @@ class _ProfilePageState extends State<ProfilePage> {
           _canViewWorks = _userRole == 'admin' || myPerms.contains('/configuration/works__view');
           _canVehicleMaintenance = _userRole == 'admin' || myPerms.contains('/vehicle-maintenances') || myPerms.contains('/vehicle-maintenances__view');
           _canAIAssistant = _userRole == 'admin' || myPerms.contains('/ai-assistant');
+          _canViewApplications = _userRole == 'admin' || _userRole == 'driver' || myPerms.contains('/applications__view');
         });
       }
     } catch (_) {}
@@ -246,7 +249,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final displayName = _userFullName == 'Người dùng' ? l10n.defaultUser : _userFullName;
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
         child: ListView(
           padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width > 600 ? 40.w : 20.w, vertical: 16.h),
@@ -348,128 +351,102 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
             ),
-            SizedBox(height: 24.h),
-
-
-
-            if (_canUserManage) ...[
+            // CÔNG VIỆC
+            Padding(
+              padding: EdgeInsets.only(left: 8.w, bottom: 12.h, top: 12.h),
+              child: Text(
+                'CÔNG VIỆC',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
+                  color: const Color(0xFF64748B),
+                ),
+              ),
+            ),
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: GridView.count(
+                  physics: const NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12.w,
+                  crossAxisSpacing: 12.w,
+                  childAspectRatio: 1.35,
+                  children: [
+                    if (_canAIAssistant)
+                      _buildGridCard(
+                        context,
+                        theme,
+                        colorScheme,
+                        icon: Icons.smart_toy_rounded,
+                        iconColor: const Color(0xFF2563EB),
+                        title: 'Trợ lý AI',
+                        subtitle: 'Hỗ trợ thông minh 24/7',
+                        onTap: () {
+                          final provider = context.read<ChatbotProvider>();
+                          if (!provider.isBubbleVisible) {
+                            provider.toggleBubbleVisibility();
+                          }
+                          provider.openPanel();
+                        },
+                      ),
+                    _buildGridCard(
+                      context,
+                      theme,
+                      colorScheme,
+                      icon: Icons.map_rounded,
+                      iconColor: const Color(0xFF10B981),
+                      title: 'Chuyến đi',
+                      subtitle: 'Lịch trình di chuyển',
+                      onTap: widget.onNavigateTrips,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: 16.h),
+            if (_canAttendance) ...[
               Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 800),
-                  child: _buildListCard(
-                    context,
-                    theme,
-                    colorScheme,
-                    icon: Icons.admin_panel_settings_rounded,
-                    iconColor: Colors.deepPurple,
-                    title: 'Quản lý người dùng',
-                    subtitle: 'Phân quyền & Tài khoản',
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserManageMainPage())),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.01),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: _buildGroupedListTile(
+                      context,
+                      theme,
+                      colorScheme,
+                      icon: Icons.calendar_month_rounded,
+                      iconColor: const Color(0xFF475569),
+                      title: 'Bố trí công việc',
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkArrangementPage())),
+                    ),
                   ),
                 ),
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: 24.h),
             ],
 
-            // Grid Options
-            GridView.count(
-              physics: const NeverScrollableScrollPhysics(),
-              shrinkWrap: true,
-              crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 2,
-              mainAxisSpacing: 16.w,
-              crossAxisSpacing: 16.w,
-              childAspectRatio: MediaQuery.of(context).size.width > 600 ? 1.0 : 1.1,
-              children: [
-                if (_canAIAssistant)
-                  _buildGridCard(
-                    context,
-                    theme,
-                    colorScheme,
-                    icon: Icons.smart_toy_rounded,
-                    iconColor: Colors.blue,
-                    title: 'Trợ lý AI',
-                    subtitle: 'Mở cửa sổ AI Chatbot',
-                    onTap: () {
-                      final provider = context.read<ChatbotProvider>();
-                      if (!provider.isBubbleVisible) {
-                        provider.toggleBubbleVisibility();
-                      }
-                      provider.openPanel();
-                    },
-                  ),
-                _buildGridCard(
-                  context,
-                  theme,
-                  colorScheme,
-                  icon: Icons.local_shipping_rounded,
-                  iconColor: Colors.deepOrange,
-                  title: l10n.dailyTrips,
-                  subtitle: l10n.tripsDesc,
-                  onTap: widget.onNavigateTrips,
-                ),
-                if (_canAttendance)
-                  _buildGridCard(
-                    context,
-                    theme,
-                    colorScheme,
-                    icon: Icons.event_available_rounded,
-                    iconColor: Colors.green,
-                    title: 'Bố trí công việc',
-                    subtitle: 'Quản lý công việc và phân công',
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkArrangementPage())),
-                  ),
-                if (_canMealCheck)
-                  _buildGridCard(
-                    context,
-                    theme,
-                    colorScheme,
-                    icon: Icons.restaurant_rounded,
-                    iconColor: Colors.purple,
-                    title: l10n.mealCheck,
-                    subtitle: l10n.mealDesc,
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MealCheckPage())),
-                  ),
-                if (_canVehicleMaintenance)
-                  _buildGridCard(
-                    context,
-                    theme,
-                    colorScheme,
-                    icon: Icons.build_circle_rounded,
-                    iconColor: Colors.teal,
-                    title: 'Bảo trì xe',
-                    subtitle: 'Quản lý bảo trì bảo dưỡng',
-                    onTap: () {
-                      Navigator.push(
-                        context, 
-                        MaterialPageRoute(builder: (_) => const VehicleMaintenanceListPage()),
-                      );
-                    },
-                  ),
-
-                _buildGridCard(
-                  context,
-                  theme,
-                  colorScheme,
-                  icon: Icons.settings_rounded,
-                  iconColor: Colors.blue,
-                  title: l10n.settings,
-                  subtitle: l10n.settingsDesc,
-                  onTap: _showSettingsPanel,
-                ),
-              ],
-            ),
-            SizedBox(height: 24.h),
-
-            // Danh mục Section (RBAC)
-            if (_userRole == 'admin' || _canViewVehicleTypes || _canViewDepartments || _canViewSkills || _canViewUserAssignments || _canViewWorks) ...[
+            // TIỆN ÍCH
+            if (_canMealCheck || _canViewApplications || _canVehicleMaintenance) ...[
               Padding(
-                padding: EdgeInsets.only(left: 8.w, bottom: 8.h),
+                padding: EdgeInsets.only(left: 8.w, bottom: 12.h),
                 child: Text(
-                  'DANH MỤC',
+                  'TIỆN ÍCH',
                   style: theme.textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                     letterSpacing: 1.2,
-                    color: colorScheme.outline,
+                    color: const Color(0xFF64748B),
                   ),
                 ),
               ),
@@ -478,8 +455,90 @@ class _ProfilePageState extends State<ProfilePage> {
                   constraints: const BoxConstraints(maxWidth: 800),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(16.r),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.01),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: () {
+                        final list = <Widget>[];
+                        if (_canMealCheck) {
+                          list.add(_buildGroupedListTile(
+                            context,
+                            theme,
+                            colorScheme,
+                            icon: Icons.restaurant_rounded,
+                            iconColor: const Color(0xFFEF4444),
+                            title: 'Cơm ca',
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MealCheckPage())),
+                          ));
+                        }
+                        if (_canViewApplications) {
+                          if (list.isNotEmpty) list.add(const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 56));
+                          list.add(_buildGroupedListTile(
+                            context,
+                            theme,
+                            colorScheme,
+                            icon: Icons.description_rounded,
+                            iconColor: const Color(0xFF2563EB),
+                            title: 'Đơn từ',
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ApplicationListPage())),
+                          ));
+                        }
+                        if (_canVehicleMaintenance) {
+                          if (list.isNotEmpty) list.add(const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 56));
+                          list.add(_buildGroupedListTile(
+                            context,
+                            theme,
+                            colorScheme,
+                            icon: Icons.directions_car_rounded,
+                            iconColor: const Color(0xFF2563EB),
+                            title: 'Bảo trì xe',
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VehicleMaintenanceListPage())),
+                          ));
+                        }
+                        return list;
+                      }(),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 24.h),
+            ],
+
+            // DANH MỤC (RBAC)
+            if (_userRole == 'admin' || _canViewVehicleTypes || _canViewDepartments || _canViewSkills || _canViewUserAssignments || _canViewWorks) ...[
+              Padding(
+                padding: EdgeInsets.only(left: 8.w, bottom: 12.h),
+                child: Text(
+                  'DANH MỤC',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.2,
+                    color: const Color(0xFF64748B),
+                  ),
+                ),
+              ),
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.01),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Column(
                       children: () {
@@ -488,19 +547,19 @@ class _ProfilePageState extends State<ProfilePage> {
                           list.add(_buildListTile(context, theme, colorScheme, icon: Icons.layers_rounded, title: 'Loại phương tiện', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VehicleTypeScreen()))));
                         }
                         if (_userRole == 'admin' || _canViewDepartments) {
-                          if (list.isNotEmpty) list.add(Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w));
+                          if (list.isNotEmpty) list.add(const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 56));
                           list.add(_buildListTile(context, theme, colorScheme, icon: Icons.domain_rounded, title: 'Quản lý bộ phận', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DepartmentScreen()))));
                         }
                         if (_userRole == 'admin' || _canViewSkills) {
-                          if (list.isNotEmpty) list.add(Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w));
+                          if (list.isNotEmpty) list.add(const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 56));
                           list.add(_buildListTile(context, theme, colorScheme, icon: Icons.workspace_premium_rounded, title: 'Quản lý tay nghề', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SkillScreen()))));
                         }
                         if (_userRole == 'admin' || _canViewUserAssignments) {
-                          if (list.isNotEmpty) list.add(Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w));
+                          if (list.isNotEmpty) list.add(const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 56));
                           list.add(_buildListTile(context, theme, colorScheme, icon: Icons.people_alt_outlined, title: 'Danh mục nhân sự', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserAssignmentScreen()))));
                         }
                         if (_userRole == 'admin' || _canViewWorks) {
-                          if (list.isNotEmpty) list.add(Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w));
+                          if (list.isNotEmpty) list.add(const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 56));
                           list.add(_buildListTile(context, theme, colorScheme, icon: Icons.work_outline_rounded, title: 'Quản lý công việc', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkScreen()))));
                         }
                         return list;
@@ -512,15 +571,15 @@ class _ProfilePageState extends State<ProfilePage> {
               SizedBox(height: 24.h),
             ],
 
-            // Support & Legal
+            // CÀI ĐẶT & HỖ TRỢ
             Padding(
-              padding: EdgeInsets.only(left: 8.w, bottom: 8.h),
+              padding: EdgeInsets.only(left: 8.w, bottom: 12.h),
               child: Text(
-                l10n.supportLegal,
+                'CÀI ĐẶT & HỖ TRỢ',
                 style: theme.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
-                  color: colorScheme.outline,
+                  color: const Color(0xFF64748B),
                 ),
               ),
             ),
@@ -529,14 +588,59 @@ class _ProfilePageState extends State<ProfilePage> {
                 constraints: const BoxConstraints(maxWidth: 800),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(16.r),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.01),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Column(
                     children: [
-                      _buildListTile(context, theme, colorScheme, icon: Icons.help_outline_rounded, title: l10n.helpCenter, onTap: () => _launchUrl('https://nguyenanhgroup.vn/')),
-                      Divider(height: 1, color: colorScheme.outlineVariant, indent: 48.w),
-                      _buildListTile(context, theme, colorScheme, icon: Icons.privacy_tip_outlined, title: l10n.privacyPolicy, onTap: () => _launchUrl('https://nguyenanhgroup.vn/')),
+                      if (_canUserManage) ...[
+                        _buildGroupedListTile(
+                          context,
+                          theme,
+                          colorScheme,
+                          icon: Icons.manage_accounts_rounded,
+                          iconColor: const Color(0xFF2563EB),
+                          title: 'Quản lý người dùng',
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UserManageMainPage())),
+                        ),
+                        const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 56),
+                      ],
+                      _buildGroupedListTile(
+                        context,
+                        theme,
+                        colorScheme,
+                        icon: Icons.settings_rounded,
+                        iconColor: const Color(0xFF2563EB),
+                        title: 'Cài đặt hệ thống',
+                        onTap: _showSettingsPanel,
+                      ),
+                      const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 56),
+                      _buildGroupedListTile(
+                        context,
+                        theme,
+                        colorScheme,
+                        icon: Icons.help_outline_rounded,
+                        iconColor: const Color(0xFF2563EB),
+                        title: 'Trung tâm hỗ trợ',
+                        onTap: () => _launchUrl('https://nguyenanhgroup.vn/'),
+                      ),
+                      const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 56),
+                      _buildGroupedListTile(
+                        context,
+                        theme,
+                        colorScheme,
+                        icon: Icons.verified_user_outlined,
+                        iconColor: const Color(0xFF2563EB),
+                        title: 'Điều khoản',
+                        onTap: () => _launchUrl('https://nguyenanhgroup.vn/'),
+                      ),
                     ],
                   ),
                 ),
@@ -607,69 +711,48 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildListCard(BuildContext context, ThemeData theme, ColorScheme colorScheme, {required IconData icon, required Color iconColor, required String title, required String subtitle, required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16.r),
-      child: Container(
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(16.r),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(10.w),
-              decoration: BoxDecoration(color: iconColor.withOpacity(0.15), shape: BoxShape.circle),
-              child: Icon(icon, color: iconColor, size: 24.sp),
-            ),
-            SizedBox(width: 16.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16.sp, color: colorScheme.onSurface)),
-                  SizedBox(height: 2.h),
-                  Text(subtitle, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12.sp)),
-                ],
-              ),
-            ),
-            Icon(Icons.chevron_right_rounded, color: colorScheme.outlineVariant),
-          ],
-        ),
-      ),
-    );
+    return _buildGroupedListTile(context, theme, colorScheme, icon: icon, iconColor: iconColor, title: title, subtitle: subtitle, onTap: onTap);
   }
 
   Widget _buildGridCard(BuildContext context, ThemeData theme, ColorScheme colorScheme, {required IconData icon, required Color iconColor, required String title, required String subtitle, required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16.r),
+      borderRadius: BorderRadius.circular(20.r),
       child: Container(
-        padding: EdgeInsets.all(12.w),
+        padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(16.r),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.01),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: EdgeInsets.all(6.w),
-              decoration: BoxDecoration(color: iconColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10.r)),
-              child: Icon(icon, color: iconColor, size: 20.sp),
+              padding: EdgeInsets.all(8.w),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 24.sp),
             ),
             const Spacer(),
             Text(
               title, 
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.sp, color: colorScheme.onSurface),
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15.sp, color: const Color(0xFF1E293B)),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
             SizedBox(height: 2.h),
             Text(
               subtitle, 
-              style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 10.sp, height: 1.2),
+              style: TextStyle(color: const Color(0xFF64748B), fontSize: 10.sp, height: 1.3),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -680,11 +763,63 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildListTile(BuildContext context, ThemeData theme, ColorScheme colorScheme, {required IconData icon, Color? iconColor, required String title, required VoidCallback onTap}) {
-    return ListTile(
-      leading: Icon(icon, color: iconColor ?? colorScheme.onSurfaceVariant),
-      title: Text(title, style: TextStyle(fontWeight: FontWeight.w600, color: iconColor ?? colorScheme.onSurface, fontSize: 15.sp)),
-      trailing: Icon(Icons.chevron_right_rounded, color: colorScheme.outlineVariant),
+    return _buildGroupedListTile(
+      context,
+      theme,
+      colorScheme,
+      icon: icon,
+      iconColor: iconColor ?? const Color(0xFF3B82F6),
+      title: title,
       onTap: onTap,
+    );
+  }
+
+  Widget _buildGroupedListTile(BuildContext context, ThemeData theme, ColorScheme colorScheme, {required IconData icon, required Color iconColor, required String title, String? subtitle, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16.r),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(8.w),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 20.sp),
+            ),
+            SizedBox(width: 16.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700, 
+                      fontSize: 15.sp, 
+                      color: const Color(0xFF1E293B),
+                    ),
+                  ),
+                  if (subtitle != null && subtitle.isNotEmpty) ...[
+                    SizedBox(height: 2.h),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 11.sp, 
+                        color: const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: const Color(0xFF94A3B8), size: 20.sp),
+          ],
+        ),
+      ),
     );
   }
 }
