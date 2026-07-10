@@ -54,6 +54,7 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _canVehicleMaintenance = false;
   bool _canAIAssistant = false;
   bool _canViewApplications = false;
+  bool _canViewTripsTab = false;
 
   @override
   void initState() {
@@ -86,8 +87,9 @@ class _ProfilePageState extends State<ProfilePage> {
           _canViewUserAssignments = _userRole == 'admin' || myPerms.contains('/configuration/user-assignments__view');
           _canViewWorks = _userRole == 'admin' || myPerms.contains('/configuration/works__view');
           _canVehicleMaintenance = _userRole == 'admin' || myPerms.contains('/vehicle-maintenances') || myPerms.contains('/vehicle-maintenances__view');
-          _canAIAssistant = _userRole == 'admin' || myPerms.contains('/ai-assistant');
+           _canAIAssistant = _userRole == 'admin' || myPerms.contains('/ai-assistant');
           _canViewApplications = _userRole == 'admin' || _userRole == 'driver' || myPerms.contains('/applications__view');
+          _canViewTripsTab = _userRole == 'admin' || myPerms.contains('/dashboard__trips_tab');
         });
       }
     } catch (_) {}
@@ -352,60 +354,63 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
             // CÔNG VIỆC
-            Padding(
-              padding: EdgeInsets.only(left: 8.w, bottom: 12.h, top: 12.h),
-              child: Text(
-                'CÔNG VIỆC',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2,
-                  color: const Color(0xFF64748B),
+            if (_canAIAssistant || _canViewTripsTab) ...[
+              Padding(
+                padding: EdgeInsets.only(left: 8.w, bottom: 12.h, top: 12.h),
+                child: Text(
+                  'CÔNG VIỆC',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.2,
+                    color: const Color(0xFF64748B),
+                  ),
                 ),
               ),
-            ),
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 800),
-                child: GridView.count(
-                  physics: const NeverScrollableScrollPhysics(),
-                  shrinkWrap: true,
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12.w,
-                  crossAxisSpacing: 12.w,
-                  childAspectRatio: 1.35,
-                  children: [
-                    if (_canAIAssistant)
-                      _buildGridCard(
-                        context,
-                        theme,
-                        colorScheme,
-                        icon: Icons.smart_toy_rounded,
-                        iconColor: const Color(0xFF2563EB),
-                        title: 'Trợ lý AI',
-                        subtitle: 'Hỗ trợ thông minh 24/7',
-                        onTap: () {
-                          final provider = context.read<ChatbotProvider>();
-                          if (!provider.isBubbleVisible) {
-                            provider.toggleBubbleVisibility();
-                          }
-                          provider.openPanel();
-                        },
-                      ),
-                    _buildGridCard(
-                      context,
-                      theme,
-                      colorScheme,
-                      icon: Icons.map_rounded,
-                      iconColor: const Color(0xFF10B981),
-                      title: 'Chuyến đi',
-                      subtitle: 'Lịch trình di chuyển',
-                      onTap: widget.onNavigateTrips,
-                    ),
-                  ],
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: GridView.count(
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12.w,
+                    crossAxisSpacing: 12.w,
+                    childAspectRatio: 1.35,
+                    children: [
+                      if (_canAIAssistant)
+                        _buildGridCard(
+                          context,
+                          theme,
+                          colorScheme,
+                          icon: Icons.smart_toy_rounded,
+                          iconColor: const Color(0xFF2563EB),
+                          title: 'Trợ lý AI',
+                          subtitle: 'Hỗ trợ thông minh 24/7',
+                          onTap: () {
+                            final provider = context.read<ChatbotProvider>();
+                            if (!provider.isBubbleVisible) {
+                              provider.toggleBubbleVisibility();
+                            }
+                            provider.openPanel();
+                          },
+                        ),
+                      if (_canViewTripsTab)
+                        _buildGridCard(
+                          context,
+                          theme,
+                          colorScheme,
+                          icon: Icons.map_rounded,
+                          iconColor: const Color(0xFF10B981),
+                          title: 'Chuyến đi',
+                          subtitle: 'Lịch trình di chuyển',
+                          onTap: widget.onNavigateTrips,
+                        ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            SizedBox(height: 16.h),
+              SizedBox(height: 16.h),
+            ],
             if (_canAttendance) ...[
               Center(
                 child: ConstrainedBox(

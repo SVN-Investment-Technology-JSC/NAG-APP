@@ -80,6 +80,7 @@ class _HomePageState extends State<HomePage> {
   bool _canSyncSlots = false;
   bool _canHistory = false;
   bool _canViewIdleEngine = false;
+  bool _canViewReadyVehicles = false;
 
   double _haversineDistance(double lat1, double lon1, double lat2, double lon2) {
     const double r = 6371000; // Earth radius in meters
@@ -125,6 +126,7 @@ class _HomePageState extends State<HomePage> {
           _canSyncSlots = _userRole == 'admin' || myPerms.contains('/dashboard__sync_slots');
           _canHistory = _userRole == 'admin' || myPerms.contains('/dashboard__history');
           _canViewIdleEngine = _userRole == 'admin' || myPerms.contains('/parking-idle-engine');
+          _canViewReadyVehicles = _userRole == 'admin' || myPerms.contains('/dashboard__vehicles_in_yard');
         });
       }
     } catch (_) {}
@@ -381,7 +383,8 @@ class _HomePageState extends State<HomePage> {
                   collectingOrders: _collectingOrders,
                 ),
               ),
-            ..._buildReadyVehiclesSliver(theme, colorScheme, l10n),
+            if (_canViewReadyVehicles)
+              ..._buildReadyVehiclesSliver(theme, colorScheme, l10n),
             SliverToBoxAdapter(child: SizedBox(height: 24.h)),
           ],
         ),

@@ -41,6 +41,8 @@ class _PermissionsPageState extends State<PermissionsPage> {
       '/dashboard__view_map',
       '/dashboard__manual_camera_fallback',
       '/dashboard__system_settings',
+      '/dashboard__vehicles_in_yard',
+      '/dashboard__trips_tab',
     ],
     '/vehicles': [
       '/vehicles__view',
@@ -152,6 +154,8 @@ class _PermissionsPageState extends State<PermissionsPage> {
     '/dashboard__view_map': 'Xem bản đồ',
     '/dashboard__manual_camera_fallback': 'Thao tác cho xe vào/xuất trạm (camera sự cố)',
     '/dashboard__system_settings': 'Cấu hình vận hành',
+    '/dashboard__vehicles_in_yard': 'Xem danh sách xe trong bãi',
+    '/dashboard__trips_tab': 'Xem tab Chuyến đi',
     
     '/vehicles__view': 'Xem danh sách phương tiện',
     '/vehicles__create': 'Thêm phương tiện',
