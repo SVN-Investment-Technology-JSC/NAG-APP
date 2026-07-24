@@ -126,7 +126,7 @@ class _HomePageState extends State<HomePage> {
           _canSyncSlots = _userRole == 'admin' || myPerms.contains('/dashboard__sync_slots');
           _canHistory = _userRole == 'admin' || myPerms.contains('/dashboard__history');
           _canViewIdleEngine = _userRole == 'admin' || myPerms.contains('/parking-idle-engine');
-          _canViewReadyVehicles = _userRole == 'admin' || myPerms.contains('/dashboard__vehicles_in_yard');
+          _canViewReadyVehicles = _userRole == 'admin' || myPerms.contains('/dashboard__view_yard_vehicles');
         });
       }
     } catch (_) {}

@@ -7,6 +7,7 @@ import 'package:nguyenanh/features/application_form/data/models/application_mode
 import 'package:nguyenanh/features/application_form/presentation/application_provider.dart';
 import 'package:nguyenanh/features/application_form/presentation/screens/application_form_page.dart';
 import 'package:nguyenanh/features/application_form/presentation/screens/application_detail_page.dart';
+import 'package:nguyenanh/features/user_manage/data/services/user_manage_service.dart';
 
 class ApplicationListPage extends StatefulWidget {
   const ApplicationListPage({super.key});
@@ -21,6 +22,7 @@ class _ApplicationListPageState extends State<ApplicationListPage>
   String _userRole = '';
   String _userFullName = '';
   bool _isLoading = true;
+  bool _canCreateRequest = false;
 
   @override
   void initState() {
@@ -36,10 +38,27 @@ class _ApplicationListPageState extends State<ApplicationListPage>
 
   Future<void> _loadUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _userRole = prefs.getString('user_role') ?? 'driver';
-      _userFullName = prefs.getString('user_full_name') ?? '';
-    });
+    final role = prefs.getString('user_role') ?? 'driver';
+    _userRole = role;
+    _userFullName = prefs.getString('user_full_name') ?? '';
+    
+    try {
+      final UserManageService userService = UserManageService();
+      final perms = await userService.getPermissions();
+      final myPerms = perms[role] ?? [];
+      if (mounted) {
+        setState(() {
+          _canCreateRequest = role == 'admin' || role == 'driver' || myPerms.contains('/work-arrangements/lot-tag-requests__create');
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _canCreateRequest = role == 'admin' || role == 'driver';
+        });
+      }
+    }
+
     await _loadData();
     if (mounted) {
       setState(() {
@@ -169,7 +188,7 @@ class _ApplicationListPageState extends State<ApplicationListPage>
           );
         },
       ),
-      floatingActionButton: isDriver
+      floatingActionButton: _canCreateRequest
           ? FloatingActionButton.extended(
               onPressed: () async {
                 final result = await Navigator.push(

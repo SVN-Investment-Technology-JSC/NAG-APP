@@ -19,6 +19,7 @@ import 'package:nguyenanh/features/catalog/presentation/screens/department_scree
 import 'package:nguyenanh/features/catalog/presentation/screens/skill_screen.dart';
 import 'package:nguyenanh/features/catalog/presentation/screens/user_assignment_screen.dart';
 import 'package:nguyenanh/features/catalog/presentation/screens/work_screen.dart';
+import 'package:nguyenanh/features/catalog/presentation/screens/lot_tag_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:nguyenanh/features/vehicle_maintenance/presentation/screens/vehicle_maintenance_list_page.dart';
 import 'package:nguyenanh/features/application_form/presentation/screens/application_list_page.dart';
@@ -51,6 +52,7 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _canViewSkills = false;
   bool _canViewUserAssignments = false;
   bool _canViewWorks = false;
+  bool _canViewLotTags = false;
   bool _canVehicleMaintenance = false;
   bool _canAIAssistant = false;
   bool _canViewApplications = false;
@@ -67,12 +69,13 @@ class _ProfilePageState extends State<ProfilePage> {
     if (!mounted) return;
     setState(() {
       _userFullName = prefs.getString('user_full_name') ?? 'Người dùng';
-      _userRole = prefs.getString('user_role') ?? 'Admin';
+      _userRole = (prefs.getString('user_role') ?? 'admin').toLowerCase();
     });
 
     try {
       final perms = await _userManageService.getPermissions();
       final myPerms = perms[_userRole] ?? [];
+      debugPrint('[ProfilePage] Loaded permissions for $_userRole: $myPerms');
       if (mounted) {
         setState(() {
           _canMealCheck = _userRole == 'admin' || myPerms.contains('/meal-check');
@@ -86,13 +89,17 @@ class _ProfilePageState extends State<ProfilePage> {
           _canViewSkills = _userRole == 'admin' || myPerms.contains('/configuration/skills__view');
           _canViewUserAssignments = _userRole == 'admin' || myPerms.contains('/configuration/user-assignments__view');
           _canViewWorks = _userRole == 'admin' || myPerms.contains('/configuration/works__view');
+          _canViewLotTags = _userRole == 'admin' || myPerms.contains('/configuration/lot-tags__view');
           _canVehicleMaintenance = _userRole == 'admin' || myPerms.contains('/vehicle-maintenances') || myPerms.contains('/vehicle-maintenances__view');
-           _canAIAssistant = _userRole == 'admin' || myPerms.contains('/ai-assistant');
-          _canViewApplications = _userRole == 'admin' || _userRole == 'driver' || myPerms.contains('/applications__view');
-          _canViewTripsTab = _userRole == 'admin' || myPerms.contains('/dashboard__trips_tab');
+          _canAIAssistant = _userRole == 'admin' || myPerms.contains('/ai-assistant');
+          _canViewApplications = _userRole == 'admin' || _userRole == 'driver' || myPerms.contains('/applications__view') || myPerms.contains('/work-arrangements/lot-tag-requests__view');
+          _canViewTripsTab = _userRole == 'admin' || myPerms.contains('/dashboard__view_lot_order');
         });
+        debugPrint('[ProfilePage] _canViewTripsTab = $_canViewTripsTab');
       }
-    } catch (_) {}
+    } catch (e, stack) {
+      debugPrint('[ProfilePage] Failed to load permissions: $e\n$stack');
+    }
   }
 
   void _showLanguagePicker() {
@@ -518,7 +525,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ],
 
             // DANH MỤC (RBAC)
-            if (_userRole == 'admin' || _canViewVehicleTypes || _canViewDepartments || _canViewSkills || _canViewUserAssignments || _canViewWorks) ...[
+            if (_userRole == 'admin' || _canViewVehicleTypes || _canViewDepartments || _canViewSkills || _canViewUserAssignments || _canViewWorks || _canViewLotTags) ...[
               Padding(
                 padding: EdgeInsets.only(left: 8.w, bottom: 12.h),
                 child: Text(
@@ -566,6 +573,10 @@ class _ProfilePageState extends State<ProfilePage> {
                         if (_userRole == 'admin' || _canViewWorks) {
                           if (list.isNotEmpty) list.add(const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 56));
                           list.add(_buildListTile(context, theme, colorScheme, icon: Icons.work_outline_rounded, title: 'Quản lý công việc', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkScreen()))));
+                        }
+                        if (_userRole == 'admin' || _canViewLotTags) {
+                          if (list.isNotEmpty) list.add(const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 56));
+                          list.add(_buildListTile(context, theme, colorScheme, icon: Icons.tag_rounded, title: 'Tag lốt xe', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LotTagScreen()))));
                         }
                         return list;
                       }(),

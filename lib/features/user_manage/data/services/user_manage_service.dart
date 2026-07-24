@@ -1,27 +1,12 @@
 import 'package:dio/dio.dart';
-import 'package:nguyenanh/core/network/app_endpoints.dart';
+import 'package:nguyenanh/core/network/api_client.dart';
 import 'package:nguyenanh/features/user_manage/data/models/user_manage_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserManageService {
   final Dio _dio;
 
-  UserManageService() : _dio = Dio() {
-    _dio.options.baseUrl = AppEndpoints.apiBaseUrl;
-    _dio.options.connectTimeout = const Duration(seconds: 15);
-    _dio.options.receiveTimeout = const Duration(seconds: 15);
-
-    _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        final prefs = await SharedPreferences.getInstance();
-        final token = prefs.getString('access_token');
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-        return handler.next(options);
-      },
-    ));
-  }
+  UserManageService([Dio? dio]) : _dio = dio ?? ApiClient.dio;
 
   Future<Map<String, dynamic>> getUsers({int page = 1, int limit = 10, String? search}) async {
     try {
@@ -96,6 +81,16 @@ class UserManageService {
       await _dio.put('/permissions', data: permissions);
     } catch (e) {
       throw Exception('Failed to update permissions: $e');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getRoles() async {
+    try {
+      final response = await _dio.get('/roles');
+      final rawData = response.data['data'] as List? ?? response.data as List? ?? [];
+      return rawData.map((e) => Map<String, dynamic>.from(e)).toList();
+    } catch (e) {
+      throw Exception('Failed to load roles: $e');
     }
   }
 }

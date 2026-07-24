@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
 import 'package:nguyenanh/features/application_form/data/models/application_model.dart';
 import 'package:nguyenanh/features/application_form/presentation/application_provider.dart';
+import 'package:nguyenanh/features/user_manage/data/services/user_manage_service.dart';
 
 class ApplicationDetailPage extends StatefulWidget {
   final int applicationId;
@@ -20,6 +21,8 @@ class _ApplicationDetailPageState extends State<ApplicationDetailPage> {
   bool _isLoading = true;
   bool _isProcessing = false;
   final _notesController = TextEditingController();
+  bool _canReview = false;
+  bool _canCancel = false;
 
   @override
   void initState() {
@@ -29,10 +32,29 @@ class _ApplicationDetailPageState extends State<ApplicationDetailPage> {
 
   Future<void> _loadUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _userRole = prefs.getString('user_role') ?? 'driver';
-      _isLoading = false;
-    });
+    final role = prefs.getString('user_role') ?? 'driver';
+    _userRole = role;
+    
+    try {
+      final UserManageService userService = UserManageService();
+      final perms = await userService.getPermissions();
+      final myPerms = perms[role] ?? [];
+      if (mounted) {
+        setState(() {
+          _canReview = role == 'admin' || myPerms.contains('/work-arrangements/lot-tag-requests__review');
+          _canCancel = role == 'admin' || role == 'driver' || myPerms.contains('/work-arrangements/lot-tag-requests__cancel');
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _canReview = role == 'admin';
+          _canCancel = role == 'admin' || role == 'driver';
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -238,9 +260,8 @@ class _ApplicationDetailPageState extends State<ApplicationDetailPage> {
     );
     
     final statusColor = _getStatusColor(item.requestStatus);
-    final isDriver = _userRole == 'driver';
-    final showApprovalActions = !isDriver && item.requestStatus == 'pending';
-    final showCancelAction = isDriver && item.requestStatus == 'pending';
+    final showApprovalActions = _canReview && item.requestStatus == 'pending';
+    final showCancelAction = _canCancel && item.requestStatus == 'pending';
 
     final vehiclePlate = item.vehicle?.vehicleLicensePlate;
     final vehicleName = item.vehicle?.vehicleName;

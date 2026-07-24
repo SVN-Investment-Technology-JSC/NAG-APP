@@ -82,17 +82,22 @@ class _MainShellState extends State<MainShell> {
   Future<void> _loadPermissions() async {
     final prefs = await SharedPreferences.getInstance();
     _userRole = prefs.getString('user_role') ?? '';
+    debugPrint('[MainShell] _loadPermissions userRole: $_userRole');
     try {
       final perms = await _userManageService.getPermissions();
       final myPerms = perms[_userRole] ?? [];
+      debugPrint('[MainShell] Loaded permissions for $_userRole: $myPerms');
       if (mounted) {
         setState(() {
           _canViewReports = _userRole == 'admin' || myPerms.contains('/reports/production');
           _canAIAssistant = _userRole == 'admin' || myPerms.contains('/ai-assistant');
-          _canViewTripsTab = _userRole == 'admin' || myPerms.contains('/dashboard__trips_tab');
+          _canViewTripsTab = _userRole == 'admin' || myPerms.contains('/dashboard__view_lot_order');
         });
+        debugPrint('[MainShell] _canViewTripsTab = $_canViewTripsTab');
       }
-    } catch (_) {}
+    } catch (e, stack) {
+      debugPrint('[MainShell] Failed to load permissions: $e\n$stack');
+    }
   }
 
   void _setupTokenRefreshListener() {
