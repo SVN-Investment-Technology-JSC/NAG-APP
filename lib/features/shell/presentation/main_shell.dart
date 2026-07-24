@@ -63,6 +63,7 @@ class _MainShellState extends State<MainShell> {
   String _userRole = '';
   bool _canViewReports = false;
   bool _canAIAssistant = false;
+  bool _canViewTripsTab = false;
 
   @override
   void initState() {
@@ -81,16 +82,22 @@ class _MainShellState extends State<MainShell> {
   Future<void> _loadPermissions() async {
     final prefs = await SharedPreferences.getInstance();
     _userRole = prefs.getString('user_role') ?? '';
+    debugPrint('[MainShell] _loadPermissions userRole: $_userRole');
     try {
       final perms = await _userManageService.getPermissions();
       final myPerms = perms[_userRole] ?? [];
+      debugPrint('[MainShell] Loaded permissions for $_userRole: $myPerms');
       if (mounted) {
         setState(() {
           _canViewReports = _userRole == 'admin' || myPerms.contains('/reports/production');
           _canAIAssistant = _userRole == 'admin' || myPerms.contains('/ai-assistant');
+          _canViewTripsTab = _userRole == 'admin' || myPerms.contains('/dashboard__view_lot_order');
         });
+        debugPrint('[MainShell] _canViewTripsTab = $_canViewTripsTab');
       }
-    } catch (_) {}
+    } catch (e, stack) {
+      debugPrint('[MainShell] Failed to load permissions: $e\n$stack');
+    }
   }
 
   void _setupTokenRefreshListener() {
@@ -271,109 +278,127 @@ class _MainShellState extends State<MainShell> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final shell = Scaffold(
-        key: mainShellScaffoldKey,
-        backgroundColor: colorScheme.surface,
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: theme.navigationBarTheme.backgroundColor ?? colorScheme.surface,
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: NavigationBar(
-            selectedIndex: _currentIndex,
-            onDestinationSelected: (i) {
-              setState(() => _currentIndex = i);
-            },
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            indicatorColor: colorScheme.primary.withOpacity(0.1),
-            destinations: [
-              NavigationDestination(
-                icon: const Icon(Icons.dashboard_outlined),
-                selectedIcon: const Icon(Icons.dashboard_rounded),
-                label: l10n.homeTab,
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.local_shipping_outlined),
-                selectedIcon: const Icon(Icons.local_shipping_rounded),
-                label: l10n.tripsTab,
-              ),
-              if (_canViewReports)
-                NavigationDestination(
-                  icon: const Icon(Icons.bar_chart_outlined),
-                  selectedIcon: const Icon(Icons.bar_chart_rounded),
-                  label: l10n.reportsTab,
-                ),
-              NavigationDestination(
-                icon: const Icon(Icons.person_outline_rounded),
-                selectedIcon: const Icon(Icons.person_rounded),
-                label: l10n.profileTab,
-              ),
-            ],
-          ),
-        ),
-      ),
-      body: Builder(
-        builder: (context) {
-          final children = [
-            HomePage(
-              orders: _yardOrders,
-              pendingOrders: _pendingOrders,
-              collectingOrders: _collectingOrders,
-              stations: _stations,
-              vtrackingVehicles: _vtrackingVehicles,
-              vehicles: _vehicles,
-              vehicleService: _vehicleService,
-              socketService: _socketService,
-              notificationService: _notificationService,
-              orderService: _orderService,
-              isLoading: _isLoading,
-              error: _error,
-              onRefresh: _loadData,
-            ),
-            VehicleManagementPage(
-              pendingOrders: _pendingOrders,
-              vehicles: _allVehicles,
-              vtrackingVehicles: _allVtrackingVehicles,
-              stations: _stations,
-              initialDate: _targetTripDate,
-              onRefresh: _loadData,
-              notificationService: _notificationService,
-            ),
-            if (_canViewReports)
-              ReportPage(
-                onNavigateTrips: (date) {
-                  setState(() {
-                    _targetTripDate = date;
-                    _currentIndex = 1;
-                  });
-                },
-              ),
-            ProfilePage(
-              onNavigateHome: () => setState(() => _currentIndex = 0),
-              onNavigateTrips: () => setState(() => _currentIndex = 1),
-              onLogout: () {
-                _socketService.dispose();
-                _notificationService.dispose();
-              },
-            ),
-          ];
+    final shell = Builder(
+      builder: (context) {
+        final children = <Widget>[];
+        final destinations = <NavigationDestination>[];
 
-          final safeIndex = _currentIndex < children.length ? _currentIndex : children.length - 1;
+        // 1. Home
+        children.add(HomePage(
+          orders: _yardOrders,
+          pendingOrders: _pendingOrders,
+          collectingOrders: _collectingOrders,
+          stations: _stations,
+          vtrackingVehicles: _vtrackingVehicles,
+          vehicles: _vehicles,
+          vehicleService: _vehicleService,
+          socketService: _socketService,
+          notificationService: _notificationService,
+          orderService: _orderService,
+          isLoading: _isLoading,
+          error: _error,
+          onRefresh: _loadData,
+        ));
+        destinations.add(NavigationDestination(
+          icon: const Icon(Icons.dashboard_outlined),
+          selectedIcon: const Icon(Icons.dashboard_rounded),
+          label: l10n.homeTab,
+        ));
 
-          return IndexedStack(
-            index: safeIndex < 0 ? 0 : safeIndex,
-            children: children,
-          );
+        // 2. Trips
+        int tripsTabIndex = -1;
+        if (_canViewTripsTab) {
+          tripsTabIndex = children.length;
+          children.add(VehicleManagementPage(
+            pendingOrders: _pendingOrders,
+            vehicles: _allVehicles,
+            vtrackingVehicles: _allVtrackingVehicles,
+            stations: _stations,
+            initialDate: _targetTripDate,
+            onRefresh: _loadData,
+            notificationService: _notificationService,
+          ));
+          destinations.add(NavigationDestination(
+            icon: const Icon(Icons.local_shipping_outlined),
+            selectedIcon: const Icon(Icons.local_shipping_rounded),
+            label: l10n.tripsTab,
+          ));
         }
-      ),
+
+        // 3. Reports
+        if (_canViewReports) {
+          children.add(ReportPage(
+            onNavigateTrips: (date) {
+              if (tripsTabIndex != -1) {
+                setState(() {
+                  _targetTripDate = date;
+                  _currentIndex = tripsTabIndex;
+                });
+              }
+            },
+          ));
+          destinations.add(NavigationDestination(
+            icon: const Icon(Icons.bar_chart_outlined),
+            selectedIcon: const Icon(Icons.bar_chart_rounded),
+            label: l10n.reportsTab,
+          ));
+        }
+
+        // 4. Profile
+        children.add(ProfilePage(
+          onNavigateHome: () => setState(() => _currentIndex = 0),
+          onNavigateTrips: () {
+            if (tripsTabIndex != -1) {
+              setState(() => _currentIndex = tripsTabIndex);
+            }
+          },
+          onLogout: () {
+            _socketService.dispose();
+            _notificationService.dispose();
+          },
+        ));
+        destinations.add(NavigationDestination(
+          icon: const Icon(Icons.person_outline_rounded),
+          selectedIcon: const Icon(Icons.person_rounded),
+          label: l10n.profileTab,
+        ));
+
+        final safeIndex = _currentIndex < children.length ? _currentIndex : children.length - 1;
+        final cleanIndex = safeIndex < 0 ? 0 : safeIndex;
+
+        return Scaffold(
+          key: mainShellScaffoldKey,
+          backgroundColor: colorScheme.surface,
+          bottomNavigationBar: Container(
+            decoration: BoxDecoration(
+              color: theme.navigationBarTheme.backgroundColor ?? colorScheme.surface,
+              boxShadow: [
+                BoxShadow(
+                  color: colorScheme.shadow.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              child: NavigationBar(
+                selectedIndex: cleanIndex,
+                onDestinationSelected: (i) {
+                  setState(() => _currentIndex = i);
+                },
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                indicatorColor: colorScheme.primary.withOpacity(0.1),
+                destinations: destinations,
+              ),
+            ),
+          ),
+          body: IndexedStack(
+            index: cleanIndex,
+            children: children,
+          ),
+        );
+      },
     );
 
     if (_canAIAssistant) {

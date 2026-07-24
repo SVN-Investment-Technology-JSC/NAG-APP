@@ -17,7 +17,7 @@ class _ApplicationFormPageState extends State<ApplicationFormPage> {
   final _formKey = GlobalKey<FormState>();
   String? _selectedTagKey;
   int? _selectedVehicleId;
-  DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
+  DateTime _selectedDate = DateTime.now();
   final _reasonController = TextEditingController();
   String _userFullName = '';
   bool _isSubmitting = false;
@@ -57,11 +57,12 @@ class _ApplicationFormPageState extends State<ApplicationFormPage> {
   }
 
   Future<void> _selectDate() async {
+    final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      firstDate: DateTime(now.year, now.month, now.day),
+      lastDate: now.add(const Duration(days: 365)),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(

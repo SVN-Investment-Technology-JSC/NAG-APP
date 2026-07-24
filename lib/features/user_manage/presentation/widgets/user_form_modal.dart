@@ -34,8 +34,8 @@ class _UserFormModalState extends State<UserFormModal> {
   String _selectedRole = 'user';
   bool _isLoading = false;
 
-  final List<String> _roles = ['admin', 'manager', 'dispatcher', 'driver', 'user'];
-  final Map<String, String> _roleNames = {
+  List<String> _roles = ['admin', 'manager', 'dispatcher', 'driver', 'user'];
+  Map<String, String> _roleNames = {
     'admin': 'Quản trị viên',
     'manager': 'Quản lý',
     'dispatcher': 'Điều phối xe',
@@ -55,9 +55,46 @@ class _UserFormModalState extends State<UserFormModal> {
     _joinDateController = TextEditingController(text: widget.user?.userJoinDate ?? '');
     _workShiftController = TextEditingController(text: widget.user?.userWorkShift ?? '');
     
-    if (widget.user != null && _roles.contains(widget.user!.role)) {
+    if (widget.user != null) {
       _selectedRole = widget.user!.role;
     }
+    _initRolesList();
+  }
+
+  Future<void> _initRolesList() async {
+    if (_selectedRole != 'admin') {
+      setState(() {
+        _roles.remove('admin');
+      });
+    }
+    _loadRoles();
+  }
+
+  Future<void> _loadRoles() async {
+    try {
+      final rolesData = await _userService.getRoles();
+      if (rolesData.isNotEmpty && mounted) {
+        setState(() {
+          final List<String> fetchedRoles = [];
+          final Map<String, String> fetchedNames = {};
+          for (final roleObj in rolesData) {
+            final String rName = roleObj['role'] ?? '';
+            final String rLabel = roleObj['role_label'] ?? rName;
+            if (rName.isNotEmpty) {
+              if (rName == 'admin' && _selectedRole != 'admin') {
+                continue;
+              }
+              fetchedRoles.add(rName);
+              fetchedNames[rName] = rLabel;
+            }
+          }
+          if (fetchedRoles.isNotEmpty) {
+            _roles = fetchedRoles;
+            _roleNames = fetchedNames;
+          }
+        });
+      }
+    } catch (_) {}
   }
 
   @override
