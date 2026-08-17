@@ -1,6 +1,7 @@
 class UserManageModel {
   final int userId;
   final String userFullName;
+  final String? userShortName;
   final String username;
   final String userEmail;
   final String userPhoneNumber;
@@ -13,6 +14,7 @@ class UserManageModel {
   UserManageModel({
     required this.userId,
     required this.userFullName,
+    this.userShortName,
     required this.username,
     required this.userEmail,
     required this.userPhoneNumber,
@@ -27,6 +29,7 @@ class UserManageModel {
     return UserManageModel(
       userId: json['user_id'] ?? 0,
       userFullName: json['user_full_name'] ?? '',
+      userShortName: json['user_short_name'],
       username: json['username'] ?? '',
       userEmail: json['user_email'] ?? '',
       userPhoneNumber: json['user_phone_number'] ?? '',
@@ -42,6 +45,7 @@ class UserManageModel {
     return {
       'user_id': userId,
       'user_full_name': userFullName,
+      'user_short_name': userShortName,
       'username': username,
       'user_email': userEmail,
       'user_phone_number': userPhoneNumber,

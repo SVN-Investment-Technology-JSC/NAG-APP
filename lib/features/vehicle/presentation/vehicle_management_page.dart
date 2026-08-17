@@ -66,6 +66,7 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> with Sing
   String _userRole = '';
   bool _canManualSort = false;
   bool _canOrderDetail = false;
+  bool _limitTo3 = false;
   bool _isManualMode = false;
   bool _isReordering = false;
   late AnimationController _reloadAnimController;
@@ -120,6 +121,7 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> with Sing
         setState(() {
           _canManualSort = _userRole == 'admin' || myPerms.contains('/dashboard__manual_sort');
           _canOrderDetail = _userRole == 'admin' || myPerms.contains('/dashboard__order_detail');
+          _limitTo3 = _userRole != 'admin' && myPerms.contains('/dashboard__view_lot_order_limit_3');
         });
       }
     } catch (_) {}
@@ -1295,8 +1297,11 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> with Sing
   }
 
   Widget _buildQueueTab(AppLocalizations l10n, ColorScheme colorScheme, ThemeData theme) {
-    final sorted = List<OrderModel>.from(widget.pendingOrders)
+    var sorted = List<OrderModel>.from(widget.pendingOrders)
       ..sort((a, b) => a.orderNumber.compareTo(b.orderNumber));
+    if (_limitTo3 && sorted.length > 3) {
+      sorted = sorted.sublist(0, 3);
+    }
 
     return Stack(
       children: [

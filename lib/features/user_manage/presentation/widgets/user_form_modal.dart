@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:nguyenanh/features/user_manage/data/models/user_manage_model.dart';
 import 'package:nguyenanh/features/user_manage/data/services/user_manage_service.dart';
@@ -23,6 +24,7 @@ class _UserFormModalState extends State<UserFormModal> {
   final _userService = UserManageService();
   
   late TextEditingController _fullNameController;
+  late TextEditingController _shortNameController;
   late TextEditingController _usernameController;
   late TextEditingController _passwordController;
   late TextEditingController _emailController;
@@ -47,12 +49,14 @@ class _UserFormModalState extends State<UserFormModal> {
   void initState() {
     super.initState();
     _fullNameController = TextEditingController(text: widget.user?.userFullName ?? '');
+    _shortNameController = TextEditingController(text: widget.user?.userShortName ?? '');
     _usernameController = TextEditingController(text: widget.user?.username ?? '');
     _passwordController = TextEditingController();
     _emailController = TextEditingController(text: widget.user?.userEmail ?? '');
     _phoneController = TextEditingController(text: widget.user?.userPhoneNumber ?? '');
     _addressController = TextEditingController(text: widget.user?.userAddress ?? '');
-    _joinDateController = TextEditingController(text: widget.user?.userJoinDate ?? '');
+    final todayStr = DateTime.now().toString().split(' ')[0];
+    _joinDateController = TextEditingController(text: widget.user?.userJoinDate ?? todayStr);
     _workShiftController = TextEditingController(text: widget.user?.userWorkShift ?? '');
     
     if (widget.user != null) {
@@ -100,6 +104,7 @@ class _UserFormModalState extends State<UserFormModal> {
   @override
   void dispose() {
     _fullNameController.dispose();
+    _shortNameController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
     _emailController.dispose();
@@ -111,20 +116,31 @@ class _UserFormModalState extends State<UserFormModal> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    final l10n = AppLocalizations.of(context)!;
+    if (!_formKey.currentState!.validate()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.errorPleaseFillRequiredFields)),
+        );
+      }
+      return;
+    }
 
     setState(() => _isLoading = true);
 
     try {
       final data = <String, dynamic>{
         'user_full_name': _fullNameController.text.trim(),
+        'user_short_name': _shortNameController.text.trim(),
         'username': _usernameController.text.trim(),
         'user_email': _emailController.text.trim(),
         'user_phone_number': _phoneController.text.trim(),
         'user_address': _addressController.text.trim(),
         'role': _selectedRole,
-        if (_joinDateController.text.isNotEmpty) 'user_join_date': _joinDateController.text.trim(),
-        if (_workShiftController.text.isNotEmpty) 'user_work_shift': _workShiftController.text.trim(),
+        'user_join_date': _joinDateController.text.isNotEmpty 
+            ? _joinDateController.text.trim() 
+            : DateTime.now().toString().split(' ')[0],
+        'user_work_shift': _workShiftController.text.trim(),
       };
 
       if (_passwordController.text.isNotEmpty) {
@@ -148,9 +164,58 @@ class _UserFormModalState extends State<UserFormModal> {
         );
       }
     } catch (e) {
+      debugPrint('[UserFormModal] _submit error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi: $e')),
+        String errMsg = 'Đã xảy ra lỗi không xác định. Vui lòng thử lại sau.';
+        if (e is DioException) {
+          final statusCode = e.response?.statusCode;
+          final responseData = e.response?.data;
+          
+          String? rawServerMsg;
+          if (responseData is Map) {
+            rawServerMsg = (responseData['message'] ?? responseData['error'] ?? responseData['errorMessage'])?.toString();
+          }
+          
+          final String baseMsg = rawServerMsg ?? e.message ?? e.toString();
+          final lowerMsg = baseMsg.toLowerCase();
+          
+          if (lowerMsg.contains('username') && (lowerMsg.contains('already') || lowerMsg.contains('duplicate') || lowerMsg.contains('exist'))) {
+            errMsg = l10n.errorDuplicateUsername;
+          } else if (lowerMsg.contains('email') && (lowerMsg.contains('already') || lowerMsg.contains('duplicate') || lowerMsg.contains('exist'))) {
+            errMsg = l10n.errorDuplicateEmail;
+          } else if (lowerMsg.contains('phone') && (lowerMsg.contains('already') || lowerMsg.contains('duplicate') || lowerMsg.contains('exist'))) {
+            errMsg = l10n.errorDuplicatePhone;
+          } else if (statusCode == 500) {
+            errMsg = l10n.errorServer500;
+          } else if (statusCode == 403 || statusCode == 401) {
+            errMsg = l10n.errorForbidden403;
+          } else if (statusCode == 404) {
+            errMsg = l10n.errorNotFound404;
+          } else {
+            errMsg = baseMsg;
+          }
+        } else {
+          errMsg = e.toString();
+        }
+
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.red),
+                const SizedBox(width: 8),
+                Text(l10n.errorDialogTitle),
+              ],
+            ),
+            content: Text(errMsg),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(l10n.closeButton),
+              ),
+            ],
+          ),
         );
       }
     } finally {
@@ -198,6 +263,12 @@ class _UserFormModalState extends State<UserFormModal> {
                       label: 'Họ và tên',
                       icon: Icons.person,
                       validator: (v) => v!.isEmpty ? 'Vui lòng nhập họ tên' : null,
+                    ),
+                    SizedBox(height: 16.h),
+                    _buildTextField(
+                      controller: _shortNameController,
+                      label: l10n.shortNameLabel,
+                      icon: Icons.person_outline,
                     ),
                     SizedBox(height: 16.h),
                     _buildTextField(

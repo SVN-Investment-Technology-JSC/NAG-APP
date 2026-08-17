@@ -694,4 +694,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get vehicleStatusTitle => 'Vehicle Status';
+
+  @override
+  String get shortNameLabel => 'Short Name';
+
+  @override
+  String get errorPleaseFillRequiredFields =>
+      'Please fill in all required fields (Full name, Username...)';
+
+  @override
+  String get errorDuplicateUsername =>
+      'Username already exists in the system. Please choose another username.';
+
+  @override
+  String get errorDuplicateEmail =>
+      'Email is already in use. Please choose another email.';
+
+  @override
+  String get errorDuplicatePhone =>
+      'Phone number is already in use. Please choose another phone number.';
+
+  @override
+  String get errorServer500 =>
+      'Server system error (500). Please try again later or contact the administrator.';
+
+  @override
+  String get errorForbidden403 =>
+      'You do not have permission to perform this action (403).';
+
+  @override
+  String get errorNotFound404 => 'Service path not found (404).';
+
+  @override
+  String get errorDialogTitle => 'Error';
+
+  @override
+  String get closeButton => 'Close';
 }

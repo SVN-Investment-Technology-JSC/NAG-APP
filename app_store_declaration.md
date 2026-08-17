@@ -77,20 +77,18 @@ Khi Apple hỏi về các loại dữ liệu mà ứng dụng thu thập, bạn 
 ---
 
 ## 📌 PHẦN 4: Có gì mới trong phiên bản này (What's New in This Version)
-*Ban tom tat tinh nang moi de dien vao o "What's New in This Version" tren App Store Connect.*
+*Bản tóm tắt tính năng mới để điền vào ô "What's New in This Version" trên App Store Connect.*
 
-### Ban Tieng Anh (English)
+### 🇺🇸 Bản Tiếng Anh (English) - Version 2.2.1 (Build 23)
 What's New in This Version:
-- Real-time Notifications: Added an interactive notification center with search filter and categories (All, Vehicle Maintenance, System alerts). Supports real-time WebSocket sync, tap-to-dismiss, and mark-all-as-read features.
-- Vehicle Maintenance Module: Drivers and dispatchers can now create, submit, track maintenance logs, discuss via comment section, and trace ticket history.
-- AI Assistant: Integrated an intuitive AI Chatbot panel to help drivers query station information and operational guides on the go.
-- Performance and UI Enhancements: Improved geofencing accuracy, updated Home UI cards, and fixed minor bugs for smoother transitions.
+- Added "Short Name" (Tên viết tắt) input field when creating or editing users, enhancing data consistency with the web administration panel.
+- Enhanced User Form UX: Added visual snackbar alerts for empty required fields, and friendly descriptive dialog alerts for duplicate username, phone number, or email conflicts.
+- Fine-grained Dashboard Permissions: Integrated a new limited permission that truncates the dashboard lot queue to display only the top 3 vehicles.
+- Android platform build and Gradle compile configuration optimizations.
 
-### Ban Tieng Viet (Vietnamese)
+### 🇻🇳 Bản Tiếng Việt (Vietnamese) - Phiên bản 2.2.1 (Build 23)
 Có gì mới trong phiên bản này:
-- Thông báo Thời gian thực: Tích hợp Trung tâm thông báo mới cho phép tìm kiếm và phân loại thông báo (Tất cả, Bảo trì, Hệ thống). Hỗ trợ đồng bộ hóa WebSocket thời gian thực, vuốt để ẩn và tính năng đánh dấu tất cả đã đọc.
-- Quản lý Bảo trì Xe: Cho phép tài xế tạo phiếu đề xuất bảo trì, theo dõi tiến độ, trao đổi qua bình luận và xem lịch sử phê duyệt.
-- Trợ lý AI Chatbot: Thêm chatbot thông minh hỗ trợ tài xế tra cứu nhanh hướng dẫn vận hành và thông tin trạm.
-- Cải tiến và Sửa lỗi: Tối ưu hóa độ chính xác định vị địa lý (Geofencing), cập nhật giao diện Trang chủ và sửa các lỗi nhỏ giúp tăng tốc độ phản hồi.
-
-
+- Thêm ô nhập "Tên viết tắt" khi tạo mới/chỉnh sửa người dùng, giúp đồng bộ thông tin quản lý với trang quản trị web.
+- Tối ưu hóa biểu mẫu người dùng: Bổ sung cảnh báo nhanh khi để trống thông tin bắt buộc, hiển thị hộp thoại thông báo lỗi chi tiết, dễ hiểu khi bị trùng tên đăng nhập, số điện thoại hoặc email.
+- Phân quyền bảng điều khiển động: Thêm quyền xem giới hạn hàng đợi lốt xe (chỉ hiển thị tối đa 3 xe chạy trên đầu danh sách).
+- Tối ưu hóa cấu hình build và biên dịch Gradle cho nền tảng Android.

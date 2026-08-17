@@ -265,5 +265,15 @@
     }
   },
   "updateButton": "CẬP NHẬT",
-  "vehicleStatusTitle": "Trạng thái xe"
+  "vehicleStatusTitle": "Trạng thái xe",
+  "shortNameLabel": "Tên viết tắt",
+  "errorPleaseFillRequiredFields": "Vui lòng điền đầy đủ các thông tin bắt buộc (Họ tên, Username...)",
+  "errorDuplicateUsername": "Tên đăng nhập đã tồn tại trong hệ thống. Vui lòng chọn tên khác.",
+  "errorDuplicateEmail": "Email đã được sử dụng. Vui lòng chọn email khác.",
+  "errorDuplicatePhone": "Số điện thoại đã được sử dụng. Vui lòng chọn số khác.",
+  "errorServer500": "Lỗi hệ thống máy chủ (500). Vui lòng thử lại sau hoặc liên hệ quản trị viên.",
+  "errorForbidden403": "Bạn không có quyền thực hiện thao tác này (403).",
+  "errorNotFound404": "Không tìm thấy đường dẫn dịch vụ (404).",
+  "errorDialogTitle": "Lỗi",
+  "closeButton": "Đóng"
 }

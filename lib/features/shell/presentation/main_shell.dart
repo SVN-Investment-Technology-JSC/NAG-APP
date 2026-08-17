@@ -91,7 +91,9 @@ class _MainShellState extends State<MainShell> {
         setState(() {
           _canViewReports = _userRole == 'admin' || myPerms.contains('/reports/production');
           _canAIAssistant = _userRole == 'admin' || myPerms.contains('/ai-assistant');
-          _canViewTripsTab = _userRole == 'admin' || myPerms.contains('/dashboard__view_lot_order');
+          _canViewTripsTab = _userRole == 'admin' ||
+              myPerms.contains('/dashboard__view_lot_order') ||
+              myPerms.contains('/dashboard__view_lot_order_limit_3');
         });
         debugPrint('[MainShell] _canViewTripsTab = $_canViewTripsTab');
       }
