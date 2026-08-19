@@ -38,7 +38,7 @@ class UserManageService {
       final response = await _dio.post('/users', data: userData);
       return UserManageModel.fromJson(response.data['data'] ?? response.data);
     } catch (e) {
-      throw Exception('Failed to create user: $e');
+      rethrow;
     }
   }
 
@@ -47,7 +47,7 @@ class UserManageService {
       final response = await _dio.put('/users/$userId', data: userData);
       return UserManageModel.fromJson(response.data['data'] ?? response.data);
     } catch (e) {
-      throw Exception('Failed to update user: $e');
+      rethrow;
     }
   }
 

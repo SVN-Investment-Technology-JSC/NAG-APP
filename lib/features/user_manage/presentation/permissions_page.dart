@@ -63,7 +63,9 @@ class _PermissionsPageState extends State<PermissionsPage> {
         '/dashboard__manual_sort',
         '/dashboard__view_map',
         '/dashboard__view_yard_vehicles',
+        '/dashboard__view_trips',
         '/dashboard__view_lot_order',
+        '/dashboard__view_lot_order_limit_3',
         '/dashboard__manual_camera_fallback',
         '/dashboard__system_settings',
       ],
@@ -265,7 +267,9 @@ class _PermissionsPageState extends State<PermissionsPage> {
     '/dashboard__manual_sort': 'Thao tác sắp xếp thứ tự lốt xe',
     '/dashboard__view_map': 'Xem bản đồ',
     '/dashboard__view_yard_vehicles': 'Xem xe trong bãi',
+    '/dashboard__view_trips': 'Chuyến trong ngày',
     '/dashboard__view_lot_order': 'Xem thứ tự lốt xe',
+    '/dashboard__view_lot_order_limit_3': 'Xem thứ tự lốt xe (chỉ 3 xe)',
     '/dashboard__manual_camera_fallback': 'Thao tác cho xe vào/xuất trạm (camera sự cố)',
     '/dashboard__system_settings': 'Cấu hình vận hành',
     
@@ -495,9 +499,15 @@ class _PermissionsPageState extends State<PermissionsPage> {
       }
       if (isGranted) {
         for (var leaf in leaves) {
+          if (leaf == '/dashboard__view_lot_order_limit_3') {
+            continue;
+          }
           if (!_permissions[role]!.contains(leaf)) {
             _permissions[role]!.add(leaf);
           }
+        }
+        if (leaves.contains('/dashboard__view_lot_order')) {
+          _permissions[role]!.remove('/dashboard__view_lot_order_limit_3');
         }
       } else {
         for (var leaf in leaves) {
@@ -517,6 +527,11 @@ class _PermissionsPageState extends State<PermissionsPage> {
         if (!_permissions[role]!.contains(perm)) {
           _permissions[role]!.add(perm);
         }
+        if (perm == '/dashboard__view_lot_order') {
+          _permissions[role]!.remove('/dashboard__view_lot_order_limit_3');
+        } else if (perm == '/dashboard__view_lot_order_limit_3') {
+          _permissions[role]!.remove('/dashboard__view_lot_order');
+        }
       } else {
         _permissions[role]!.remove(perm);
       }
@@ -527,10 +542,16 @@ class _PermissionsPageState extends State<PermissionsPage> {
     final widgets = <Widget>[];
     for (final node in nodes) {
       final leaves = _getAllLeafPermissions(node);
-      final checkedCount = leaves.where((leaf) => rolePerms.contains(leaf)).length;
+      final leavesForChecking = leaves.toList();
+      if (!rolePerms.contains('/dashboard__view_lot_order_limit_3') && leavesForChecking.contains('/dashboard__view_lot_order_limit_3')) {
+        leavesForChecking.remove('/dashboard__view_lot_order_limit_3');
+      } else if (rolePerms.contains('/dashboard__view_lot_order_limit_3') && leavesForChecking.contains('/dashboard__view_lot_order')) {
+        leavesForChecking.remove('/dashboard__view_lot_order');
+      }
+      final checkedCount = leavesForChecking.where((leaf) => rolePerms.contains(leaf)).length;
       bool? isChecked = false;
       if (checkedCount > 0) {
-        isChecked = checkedCount == leaves.length ? true : null;
+        isChecked = checkedCount == leavesForChecking.length ? true : null;
       }
 
       final hasSubItems = node.children.isNotEmpty || node.actions.isNotEmpty;
