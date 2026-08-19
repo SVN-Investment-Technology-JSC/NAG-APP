@@ -1435,6 +1435,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Vehicle Status'**
   String get vehicleStatusTitle;
+
+  /// No description provided for @shortNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Short Name'**
+  String get shortNameLabel;
+
+  /// No description provided for @errorPleaseFillRequiredFields.
+  ///
+  /// In en, this message translates to:
+  /// **'Please fill in all required fields (Full name, Username...)'**
+  String get errorPleaseFillRequiredFields;
+
+  /// No description provided for @errorDuplicateUsername.
+  ///
+  /// In en, this message translates to:
+  /// **'Username already exists in the system. Please choose another username.'**
+  String get errorDuplicateUsername;
+
+  /// No description provided for @errorDuplicateEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email is already in use. Please choose another email.'**
+  String get errorDuplicateEmail;
+
+  /// No description provided for @errorDuplicatePhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number is already in use. Please choose another phone number.'**
+  String get errorDuplicatePhone;
+
+  /// No description provided for @errorServer500.
+  ///
+  /// In en, this message translates to:
+  /// **'Server system error (500). Please try again later or contact the administrator.'**
+  String get errorServer500;
+
+  /// No description provided for @errorForbidden403.
+  ///
+  /// In en, this message translates to:
+  /// **'You do not have permission to perform this action (403).'**
+  String get errorForbidden403;
+
+  /// No description provided for @errorNotFound404.
+  ///
+  /// In en, this message translates to:
+  /// **'Service path not found (404).'**
+  String get errorNotFound404;
+
+  /// No description provided for @errorDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get errorDialogTitle;
+
+  /// No description provided for @closeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get closeButton;
 }
 
 class _AppLocalizationsDelegate

@@ -696,4 +696,40 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get vehicleStatusTitle => 'Trạng thái xe';
+
+  @override
+  String get shortNameLabel => 'Tên viết tắt';
+
+  @override
+  String get errorPleaseFillRequiredFields =>
+      'Vui lòng điền đầy đủ các thông tin bắt buộc (Họ tên, Username...)';
+
+  @override
+  String get errorDuplicateUsername =>
+      'Tên đăng nhập đã tồn tại trong hệ thống. Vui lòng chọn tên khác.';
+
+  @override
+  String get errorDuplicateEmail =>
+      'Email đã được sử dụng. Vui lòng chọn email khác.';
+
+  @override
+  String get errorDuplicatePhone =>
+      'Số điện thoại đã được sử dụng. Vui lòng chọn số khác.';
+
+  @override
+  String get errorServer500 =>
+      'Lỗi hệ thống máy chủ (500). Vui lòng thử lại sau hoặc liên hệ quản trị viên.';
+
+  @override
+  String get errorForbidden403 =>
+      'Bạn không có quyền thực hiện thao tác này (403).';
+
+  @override
+  String get errorNotFound404 => 'Không tìm thấy đường dẫn dịch vụ (404).';
+
+  @override
+  String get errorDialogTitle => 'Lỗi';
+
+  @override
+  String get closeButton => 'Đóng';
 }

@@ -66,6 +66,9 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> with Sing
   String _userRole = '';
   bool _canManualSort = false;
   bool _canOrderDetail = false;
+  bool _limitTo3 = false;
+  bool _canViewLotOrder = false;
+  bool _canViewDailyTrips = false;
   bool _isManualMode = false;
   bool _isReordering = false;
   late AnimationController _reloadAnimController;
@@ -120,6 +123,11 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> with Sing
         setState(() {
           _canManualSort = _userRole == 'admin' || myPerms.contains('/dashboard__manual_sort');
           _canOrderDetail = _userRole == 'admin' || myPerms.contains('/dashboard__order_detail');
+          _limitTo3 = _userRole != 'admin' && myPerms.contains('/dashboard__view_lot_order_limit_3');
+          _canViewLotOrder = _userRole == 'admin' || 
+                             myPerms.contains('/dashboard__view_lot_order') || 
+                             myPerms.contains('/dashboard__view_lot_order_limit_3');
+          _canViewDailyTrips = _userRole == 'admin' || myPerms.contains('/dashboard__view_trips');
         });
       }
     } catch (_) {}
@@ -1222,8 +1230,58 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> with Sing
     final isToday = DateFormat('yyyy-MM-dd').format(_selectedDate) ==
         DateFormat('yyyy-MM-dd').format(DateTime.now());
 
+    final showLotOrder = _canViewLotOrder;
+    final showDailyTrips = _canViewDailyTrips;
+    final int controllerLength = (showLotOrder && showDailyTrips) ? 2 : 1;
+
+    PreferredSizeWidget? bottomTabBar;
+    Widget bodyWidget;
+
+    if (showLotOrder && showDailyTrips) {
+      bottomTabBar = TabBar(
+        labelColor: colorScheme.primary,
+        unselectedLabelColor: colorScheme.onSurfaceVariant,
+        indicatorColor: colorScheme.primary,
+        labelStyle: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+        tabs: [
+          Tab(text: l10n.vehicleQueue),
+          Tab(text: l10n.dailyTrips),
+        ],
+      );
+      bodyWidget = TabBarView(
+        children: [
+          _buildQueueTab(l10n, colorScheme, theme),
+          _buildDailyTripsTab(l10n, colorScheme, theme),
+        ],
+      );
+    } else if (showLotOrder) {
+      bottomTabBar = null;
+      bodyWidget = _buildQueueTab(l10n, colorScheme, theme);
+    } else if (showDailyTrips) {
+      bottomTabBar = null;
+      bodyWidget = _buildDailyTripsTab(l10n, colorScheme, theme);
+    } else {
+      // Fallback before permissions are loaded, or if none are active
+      bottomTabBar = TabBar(
+        labelColor: colorScheme.primary,
+        unselectedLabelColor: colorScheme.onSurfaceVariant,
+        indicatorColor: colorScheme.primary,
+        labelStyle: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+        tabs: [
+          Tab(text: l10n.vehicleQueue),
+          Tab(text: l10n.dailyTrips),
+        ],
+      );
+      bodyWidget = TabBarView(
+        children: [
+          _buildQueueTab(l10n, colorScheme, theme),
+          _buildDailyTripsTab(l10n, colorScheme, theme),
+        ],
+      );
+    }
+
     return DefaultTabController(
-      length: 2,
+      length: controllerLength,
       child: Scaffold(
         backgroundColor: colorScheme.surface,
         appBar: AppBar(
@@ -1234,16 +1292,7 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> with Sing
               fontWeight: FontWeight.w800,
             ),
           ),
-          bottom: TabBar(
-            labelColor: colorScheme.primary,
-            unselectedLabelColor: colorScheme.onSurfaceVariant,
-            indicatorColor: colorScheme.primary,
-            labelStyle: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-            tabs: [
-              Tab(text: l10n.vehicleQueue),
-              Tab(text: l10n.dailyTrips),
-            ],
-          ),
+          bottom: bottomTabBar,
           actions: [
             NotificationBadge(notificationService: widget.notificationService),
             SizedBox(width: 8.w),
@@ -1284,19 +1333,17 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> with Sing
             SizedBox(width: 8.w),
           ],
         ),
-        body: TabBarView(
-          children: [
-            _buildQueueTab(l10n, colorScheme, theme),
-            _buildDailyTripsTab(l10n, colorScheme, theme),
-          ],
-        ),
+        body: bodyWidget,
       ),
     );
   }
 
   Widget _buildQueueTab(AppLocalizations l10n, ColorScheme colorScheme, ThemeData theme) {
-    final sorted = List<OrderModel>.from(widget.pendingOrders)
+    var sorted = List<OrderModel>.from(widget.pendingOrders)
       ..sort((a, b) => a.orderNumber.compareTo(b.orderNumber));
+    if (_limitTo3 && sorted.length > 3) {
+      sorted = sorted.sublist(0, 3);
+    }
 
     return Stack(
       children: [
