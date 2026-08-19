@@ -79,14 +79,28 @@ Khi Apple hỏi về các loại dữ liệu mà ứng dụng thu thập, bạn 
 ## 📌 PHẦN 4: Có gì mới trong phiên bản này (What's New in This Version)
 *Bản tóm tắt tính năng mới để điền vào ô "What's New in This Version" trên App Store Connect.*
 
-### 🇺🇸 Bản Tiếng Anh (English) - Version 2.2.1 (Build 23)
+### 🇺🇸 Bản Tiếng Anh (English) - Version 2.2.2 (Build 25)
+What's New in This Version:
+- Upgraded the minimum target iOS version to 15.0 to comply with the latest Apple App Store Connect submission requirements.
+- Introduced a dedicated "Daily Trips" (Chuyến trong ngày) permission toggle in the Role Permissions screen.
+- Improved the Trips tab interface by dynamically showing or hiding sub-tabs and headers based on active permissions (Lot Order and Daily Trips).
+
+### 🇻🇳 Bản Tiếng Việt (Vietnamese) - Phiên bản 2.2.2 (Build 25)
+Có gì mới trong phiên bản này:
+- Nâng cấp phiên bản hệ điều hành iOS tối thiểu lên 15.0 để tuân thủ các điều kiện phê duyệt mới nhất của Apple App Store Connect.
+- Bổ sung quyền cấu hình bật/tắt độc lập cho tính năng "Chuyến trong ngày" trong phân quyền vai trò.
+- Tối ưu hóa giao diện Tab Chuyến đi: Tự động ẩn thanh tiêu đề tab con để hiển thị toàn màn hình nếu người dùng chỉ có một quyền hoạt động (Xem thứ tự lốt xe hoặc Chuyến trong ngày).
+
+---
+
+### 🇺🇸 Bản Tiếng Anh (English) - Version 2.2.1 (Build 23/24)
 What's New in This Version:
 - Added "Short Name" (Tên viết tắt) input field when creating or editing users, enhancing data consistency with the web administration panel.
 - Enhanced User Form UX: Added visual snackbar alerts for empty required fields, and friendly descriptive dialog alerts for duplicate username, phone number, or email conflicts.
 - Fine-grained Dashboard Permissions: Integrated a new limited permission that truncates the dashboard lot queue to display only the top 3 vehicles.
 - Android platform build and Gradle compile configuration optimizations.
 
-### 🇻🇳 Bản Tiếng Việt (Vietnamese) - Phiên bản 2.2.1 (Build 23)
+### 🇻🇳 Bản Tiếng Việt (Vietnamese) - Phiên bản 2.2.1 (Build 23/24)
 Có gì mới trong phiên bản này:
 - Thêm ô nhập "Tên viết tắt" khi tạo mới/chỉnh sửa người dùng, giúp đồng bộ thông tin quản lý với trang quản trị web.
 - Tối ưu hóa biểu mẫu người dùng: Bổ sung cảnh báo nhanh khi để trống thông tin bắt buộc, hiển thị hộp thoại thông báo lỗi chi tiết, dễ hiểu khi bị trùng tên đăng nhập, số điện thoại hoặc email.

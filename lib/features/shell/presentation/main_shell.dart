@@ -92,6 +92,7 @@ class _MainShellState extends State<MainShell> {
           _canViewReports = _userRole == 'admin' || myPerms.contains('/reports/production');
           _canAIAssistant = _userRole == 'admin' || myPerms.contains('/ai-assistant');
           _canViewTripsTab = _userRole == 'admin' ||
+              myPerms.contains('/dashboard__view_trips') ||
               myPerms.contains('/dashboard__view_lot_order') ||
               myPerms.contains('/dashboard__view_lot_order_limit_3');
         });

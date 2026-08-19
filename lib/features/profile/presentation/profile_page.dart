@@ -94,6 +94,7 @@ class _ProfilePageState extends State<ProfilePage> {
           _canAIAssistant = _userRole == 'admin' || myPerms.contains('/ai-assistant');
           _canViewApplications = _userRole == 'admin' || _userRole == 'driver' || myPerms.contains('/applications__view') || myPerms.contains('/work-arrangements/lot-tag-requests__view');
           _canViewTripsTab = _userRole == 'admin' ||
+                             myPerms.contains('/dashboard__view_trips') ||
                              myPerms.contains('/dashboard__view_lot_order') ||
                              myPerms.contains('/dashboard__view_lot_order_limit_3');
         });
