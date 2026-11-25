@@ -2,7 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:nguyenanh/core/theme/ui_version_provider.dart';
+import 'package:nguyenanh/core/push/fleet_push.dart';
+import 'package:nguyenanh/features/fleet_monitoring/presentation/fleet_utils.dart';
+import 'package:nguyenanh/features/fleet_monitoring/presentation/v2/widgets/fleet_alert_bell.dart';
 import 'package:nguyenanh/features/user_manage/data/services/user_manage_service.dart';
 import 'package:nguyenanh/core/network/api_client.dart';
 import 'package:nguyenanh/core/network/auth_interceptor.dart';
@@ -10,9 +15,12 @@ import 'package:nguyenanh/core/network/notification_socket_service.dart';
 import 'package:nguyenanh/core/network/socket_service.dart';
 import 'package:nguyenanh/features/attendance/presentation/attendance_page.dart';
 import 'package:nguyenanh/features/home/presentation/home_page.dart';
+import 'package:nguyenanh/features/home/presentation/v2/home_page_v2.dart';
 import 'package:nguyenanh/features/meal/presentation/meal_check_page.dart';
 import 'package:nguyenanh/features/profile/presentation/profile_page.dart';
+import 'package:nguyenanh/features/profile/presentation/v2/profile_page_v2.dart';
 import 'package:nguyenanh/features/reports/presentation/pages/report_page.dart';
+import 'package:nguyenanh/features/reports/presentation/v2/report_page_v2.dart';
 import 'package:nguyenanh/features/order/data/models/order_model.dart';
 import 'package:nguyenanh/features/order/order_service.dart';
 import 'package:nguyenanh/features/stations/data/models/station_model.dart';
@@ -20,10 +28,12 @@ import 'package:nguyenanh/features/stations/data/services/station_service.dart';
 import 'package:nguyenanh/features/vehicle/data/models/vehicle_model.dart';
 import 'package:nguyenanh/features/vehicle/data/services/vehicle_service.dart';
 import 'package:nguyenanh/features/vehicle/presentation/vehicle_management_page.dart';
+import 'package:nguyenanh/features/vehicle/presentation/v2/vehicle_management_page_v2.dart';
 import 'package:nguyenanh/features/vtracking/data/models/vtracking_vehicle.dart';
 import 'package:nguyenanh/features/vtracking/data/services/vtracking_service.dart';
 import 'package:nguyenanh/l10n/app_localizations.dart';
 import 'package:nguyenanh/features/chatbot/presentation/widgets/chatbot_bubble.dart';
+import 'package:nguyenanh/features/chatbot/presentation/v2/widgets/chatbot_bubble_v2.dart';
 
 /// Global key to open the main shell's side drawer from any page.
 final GlobalKey<ScaffoldState> mainShellScaffoldKey =
@@ -97,9 +107,25 @@ class _MainShellState extends State<MainShell> {
               myPerms.contains('/dashboard__view_lot_order_limit_3');
         });
         debugPrint('[MainShell] _canViewTripsTab = $_canViewTripsTab');
+        _setupFleetPush(FleetPermissions.fromList(_userRole, myPerms));
       }
     } catch (e, stack) {
       debugPrint('[MainShell] Failed to load permissions: $e\n$stack');
+    }
+  }
+
+  /// Fleet-monitoring push: register this phone only for users with a fleet permission, open tapped alerts.
+  void _setupFleetPush(FleetPermissions fleetPerms) {
+    final push = FleetPush.instance;
+    push.onOpen = (target) {
+      final ctx = ApiClient.navigatorKey.currentContext;
+      if (ctx == null || !fleetPerms.any) return;
+      openFleetAlert(ctx, eventId: target.eventId, category: target.category, perms: fleetPerms);
+    };
+    push.syncForUser(allowed: fleetPerms.any);
+    final pending = push.takePending();
+    if (pending != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => push.onOpen?.call(pending));
     }
   }
 
@@ -285,9 +311,27 @@ class _MainShellState extends State<MainShell> {
       builder: (context) {
         final children = <Widget>[];
         final destinations = <NavigationDestination>[];
+        // v2 = redesigned screens (UiVersionProvider); v1 = original screens, kept for rollback.
+        final newUi = context.watch<UiVersionProvider>().isNewUi;
 
         // 1. Home
-        children.add(HomePage(
+        children.add(newUi
+            ? HomePageV2(
+                orders: _yardOrders,
+                pendingOrders: _pendingOrders,
+                collectingOrders: _collectingOrders,
+                stations: _stations,
+                vtrackingVehicles: _vtrackingVehicles,
+                vehicles: _vehicles,
+                vehicleService: _vehicleService,
+                socketService: _socketService,
+                notificationService: _notificationService,
+                orderService: _orderService,
+                isLoading: _isLoading,
+                error: _error,
+                onRefresh: _loadData,
+              )
+            : HomePage(
           orders: _yardOrders,
           pendingOrders: _pendingOrders,
           collectingOrders: _collectingOrders,
@@ -312,15 +356,25 @@ class _MainShellState extends State<MainShell> {
         int tripsTabIndex = -1;
         if (_canViewTripsTab) {
           tripsTabIndex = children.length;
-          children.add(VehicleManagementPage(
-            pendingOrders: _pendingOrders,
-            vehicles: _allVehicles,
-            vtrackingVehicles: _allVtrackingVehicles,
-            stations: _stations,
-            initialDate: _targetTripDate,
-            onRefresh: _loadData,
-            notificationService: _notificationService,
-          ));
+          children.add(newUi
+              ? VehicleManagementPageV2(
+                  pendingOrders: _pendingOrders,
+                  vehicles: _allVehicles,
+                  vtrackingVehicles: _allVtrackingVehicles,
+                  stations: _stations,
+                  initialDate: _targetTripDate,
+                  onRefresh: _loadData,
+                  notificationService: _notificationService,
+                )
+              : VehicleManagementPage(
+                  pendingOrders: _pendingOrders,
+                  vehicles: _allVehicles,
+                  vtrackingVehicles: _allVtrackingVehicles,
+                  stations: _stations,
+                  initialDate: _targetTripDate,
+                  onRefresh: _loadData,
+                  notificationService: _notificationService,
+                ));
           destinations.add(NavigationDestination(
             icon: const Icon(Icons.local_shipping_outlined),
             selectedIcon: const Icon(Icons.local_shipping_rounded),
@@ -330,16 +384,15 @@ class _MainShellState extends State<MainShell> {
 
         // 3. Reports
         if (_canViewReports) {
-          children.add(ReportPage(
-            onNavigateTrips: (date) {
-              if (tripsTabIndex != -1) {
-                setState(() {
-                  _targetTripDate = date;
-                  _currentIndex = tripsTabIndex;
-                });
-              }
-            },
-          ));
+          void reportsToTrips(DateTime date) {
+            if (tripsTabIndex != -1) {
+              setState(() {
+                _targetTripDate = date;
+                _currentIndex = tripsTabIndex;
+              });
+            }
+          }
+          children.add(newUi ? ReportPageV2(onNavigateTrips: reportsToTrips) : ReportPage(onNavigateTrips: reportsToTrips));
           destinations.add(NavigationDestination(
             icon: const Icon(Icons.bar_chart_outlined),
             selectedIcon: const Icon(Icons.bar_chart_rounded),
@@ -348,18 +401,20 @@ class _MainShellState extends State<MainShell> {
         }
 
         // 4. Profile
-        children.add(ProfilePage(
-          onNavigateHome: () => setState(() => _currentIndex = 0),
-          onNavigateTrips: () {
-            if (tripsTabIndex != -1) {
-              setState(() => _currentIndex = tripsTabIndex);
-            }
-          },
-          onLogout: () {
-            _socketService.dispose();
-            _notificationService.dispose();
-          },
-        ));
+        void profileHome() => setState(() => _currentIndex = 0);
+        void profileTrips() {
+          if (tripsTabIndex != -1) {
+            setState(() => _currentIndex = tripsTabIndex);
+          }
+        }
+        void profileLogout() {
+          _socketService.dispose();
+          _notificationService.dispose();
+          FleetPush.instance.unregister(); // this phone stops receiving fleet alerts
+        }
+        children.add(newUi
+            ? ProfilePageV2(onNavigateHome: profileHome, onNavigateTrips: profileTrips, onLogout: profileLogout)
+            : ProfilePage(onNavigateHome: profileHome, onNavigateTrips: profileTrips, onLogout: profileLogout));
         destinations.add(NavigationDestination(
           icon: const Icon(Icons.person_outline_rounded),
           selectedIcon: const Icon(Icons.person_rounded),
@@ -373,16 +428,22 @@ class _MainShellState extends State<MainShell> {
           key: mainShellScaffoldKey,
           backgroundColor: colorScheme.surface,
           bottomNavigationBar: Container(
-            decoration: BoxDecoration(
-              color: theme.navigationBarTheme.backgroundColor ?? colorScheme.surface,
-              boxShadow: [
-                BoxShadow(
-                  color: colorScheme.shadow.withOpacity(0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, -4),
-                ),
-              ],
-            ),
+            decoration: newUi
+                // v2: flat bar with a hairline top border; colours come from AppThemeV2.navigationBarTheme
+                ? BoxDecoration(
+                    color: colorScheme.surface,
+                    border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
+                  )
+                : BoxDecoration(
+                    color: theme.navigationBarTheme.backgroundColor ?? colorScheme.surface,
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.shadow.withOpacity(0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, -4),
+                      ),
+                    ],
+                  ),
             child: SafeArea(
               child: NavigationBar(
                 selectedIndex: cleanIndex,
@@ -391,7 +452,7 @@ class _MainShellState extends State<MainShell> {
                 },
                 backgroundColor: Colors.transparent,
                 elevation: 0,
-                indicatorColor: colorScheme.primary.withOpacity(0.1),
+                indicatorColor: newUi ? null : colorScheme.primary.withOpacity(0.1),
                 destinations: destinations,
               ),
             ),
@@ -405,7 +466,7 @@ class _MainShellState extends State<MainShell> {
     );
 
     if (_canAIAssistant) {
-      return ChatbotBubble(child: shell);
+      return context.watch<UiVersionProvider>().isNewUi ? ChatbotBubbleV2(child: shell) : ChatbotBubble(child: shell);
     }
     return shell;
   }

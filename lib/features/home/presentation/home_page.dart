@@ -12,6 +12,8 @@ import 'package:latlong2/latlong.dart' hide Path;
 import 'package:intl/intl.dart';
 import 'package:nguyenanh/features/user_manage/data/services/user_manage_service.dart';
 import 'package:nguyenanh/features/parking_idle_engine/presentation/pages/parking_idle_engine_dashboard_page.dart';
+import 'package:nguyenanh/features/fleet_monitoring/presentation/fleet_utils.dart';
+import 'package:nguyenanh/features/fleet_monitoring/presentation/fleet_monitoring_entry.dart';
 
 import 'package:nguyenanh/core/l10n/language_provider.dart';
 import 'package:nguyenanh/core/network/notification_socket_service.dart';
@@ -81,6 +83,7 @@ class _HomePageState extends State<HomePage> {
   bool _canHistory = false;
   bool _canViewIdleEngine = false;
   bool _canViewReadyVehicles = false;
+  FleetPermissions _fleetPerms = const FleetPermissions();
 
   double _haversineDistance(double lat1, double lon1, double lat2, double lon2) {
     const double r = 6371000; // Earth radius in meters
@@ -125,8 +128,10 @@ class _HomePageState extends State<HomePage> {
           _canViewMap = _userRole == 'admin' || myPerms.contains('/dashboard__view_map');
           _canSyncSlots = _userRole == 'admin' || myPerms.contains('/dashboard__sync_slots');
           _canHistory = _userRole == 'admin' || myPerms.contains('/dashboard__history');
-          _canViewIdleEngine = _userRole == 'admin' || myPerms.contains('/parking-idle-engine');
+          // same rule as the web's hasPageAccess: the page key or its "__view" action
+          _canViewIdleEngine = _userRole == 'admin' || myPerms.contains('/parking-idle-engine') || myPerms.contains('/parking-idle-engine__view');
           _canViewReadyVehicles = _userRole == 'admin' || myPerms.contains('/dashboard__view_yard_vehicles');
+          _fleetPerms = FleetPermissions.fromList(_userRole, myPerms);
         });
       }
     } catch (_) {}
@@ -271,7 +276,7 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           NotificationBadge(notificationService: widget.notificationService),
-          if (_canSyncSlots || _canHistory || _canViewIdleEngine)
+          if (_canSyncSlots || _canHistory || _canViewIdleEngine || _fleetPerms.any)
             Padding(
               padding: EdgeInsets.only(right: 8.w),
               child: PopupMenuButton<String>(
@@ -301,6 +306,10 @@ class _HomePageState extends State<HomePage> {
                 } else if (value == 'parking_idle_engine') {
                   Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => const ParkingIdleEngineDashboardPage(),
+                  ));
+                } else if (value == 'fleet_monitoring') {
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => FleetMonitoringEntry(perms: _fleetPerms),
                   ));
                 }
               },
@@ -346,6 +355,22 @@ class _HomePageState extends State<HomePage> {
                         SizedBox(width: 12.w),
                         Text(
                           'GIÁM SÁT NỔ MÁY',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (_fleetPerms.any)
+                  PopupMenuItem<String>(
+                    value: 'fleet_monitoring',
+                    child: Row(
+                      children: [
+                        Icon(Icons.local_shipping_outlined, color: colorScheme.primary, size: 20.sp),
+                        SizedBox(width: 12.w),
+                        Text(
+                          'GIÁM SÁT XE',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),

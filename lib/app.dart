@@ -3,11 +3,13 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:nguyenanh/features/setup/presentation/selection_page.dart';
+import 'package:nguyenanh/features/setup/presentation/selection_entry.dart';
 import 'package:nguyenanh/features/shell/presentation/main_shell.dart';
 import 'package:nguyenanh/l10n/app_localizations.dart';
 import 'package:nguyenanh/core/l10n/language_provider.dart';
 import 'package:nguyenanh/core/theme/app_theme.dart';
+import 'package:nguyenanh/core/theme/app_theme_v2.dart';
+import 'package:nguyenanh/core/theme/ui_version_provider.dart';
 import 'package:nguyenanh/core/theme/theme_provider.dart';
 import 'package:nguyenanh/core/network/api_client.dart';
 import 'package:nguyenanh/features/auth/data/services/auth_service.dart';
@@ -19,6 +21,7 @@ class VehicleApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final languageProvider = Provider.of<LanguageProvider>(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final newUi = Provider.of<UiVersionProvider>(context).isNewUi;
 
     return ScreenUtilInit(
       designSize: const Size(393, 852), // Set baseline to modern iPhone Pro (e.g. 14/15/16/17)
@@ -27,8 +30,8 @@ class VehicleApp extends StatelessWidget {
       builder: (context, child) {
         return MaterialApp(
           title: 'Nguyên Anh',
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
+          theme: newUi ? AppThemeV2.lightTheme : AppTheme.lightTheme,
+          darkTheme: newUi ? AppThemeV2.darkTheme : AppTheme.darkTheme,
           themeMode: themeProvider.themeMode,
           debugShowCheckedModeBanner: false,
           navigatorKey: ApiClient.navigatorKey,
@@ -68,7 +71,7 @@ class _RootHandlerState extends State<RootHandler> {
     if (token == null || token.isEmpty) {
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const SelectionPage()),
+          MaterialPageRoute(builder: (_) => const SelectionEntry()),
         );
       }
       return;
@@ -101,7 +104,7 @@ class _RootHandlerState extends State<RootHandler> {
 
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const SelectionPage()),
+        MaterialPageRoute(builder: (_) => const SelectionEntry()),
       );
     }
   }

@@ -3,6 +3,8 @@ plugins {
     id("org.jetbrains.kotlin.android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    // Firebase / Google services (needs app/google-services.json)
+    id("com.google.gms.google-services")
 }
 
 import java.io.FileInputStream

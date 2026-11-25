@@ -5,7 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 
 import 'package:nguyenanh/core/theme/app_spacing.dart';
-import 'package:nguyenanh/features/home/presentation/widgets/vehicle_detail_sheet.dart';
+import 'package:nguyenanh/features/home/presentation/v2/widgets/vehicle_detail_sheet_entry.dart';
 import 'package:nguyenanh/features/order/data/models/order_model.dart';
 import 'package:nguyenanh/features/stations/data/models/station_model.dart';
 import 'package:nguyenanh/features/vtracking/data/models/vtracking_vehicle.dart';
@@ -196,7 +196,7 @@ class _HomeMapSectionState extends State<HomeMapSection> {
           children: [
             // Car Icon (SVG)
             GestureDetector(
-              onTap: () => VehicleDetailSheet.show(context, v, widget.stations),
+              onTap: () => showVehicleDetailSheet(context, v, widget.stations),
               child: Transform.rotate(
                 angle: v.direction * (3.1415926535897932 / 180),
                 child: carSvg,
@@ -206,7 +206,7 @@ class _HomeMapSectionState extends State<HomeMapSection> {
             Positioned(
               bottom: 48.w + 2.h,
               child: GestureDetector(
-                onTap: () => VehicleDetailSheet.show(context, v, widget.stations),
+                onTap: () => showVehicleDetailSheet(context, v, widget.stations),
                 child: Container(
                   padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
                   decoration: BoxDecoration(
