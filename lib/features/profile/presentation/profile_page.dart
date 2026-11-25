@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:nguyenanh/core/l10n/language_provider.dart';
 import 'package:nguyenanh/core/theme/theme_toggle_button.dart';
+import 'package:nguyenanh/core/theme/ui_version_provider.dart';
 import 'package:nguyenanh/core/theme/app_spacing.dart';
 import 'package:nguyenanh/features/work_arrangement/presentation/work_arrangement_page.dart';
 import 'package:nguyenanh/features/meal/presentation/meal_check_page.dart';
@@ -227,6 +228,17 @@ class _ProfilePageState extends State<ProfilePage> {
                 leading: Icon(Icons.dark_mode_rounded, color: colorScheme.secondary),
                 title: Text(l10n.themeMode),
                 trailing: const ThemeToggleButton(),
+              ),
+              Consumer<UiVersionProvider>(
+                builder: (context, ui, child) => ListTile(
+                  leading: Icon(Icons.auto_awesome_rounded, color: colorScheme.primary),
+                  title: const Text('Giao diện mới'),
+                  subtitle: Text(ui.isNewUi ? 'Đang dùng giao diện mới' : 'Đang dùng giao diện cũ'),
+                  trailing: Switch(
+                    value: ui.isNewUi,
+                    onChanged: (v) => ui.setNewUi(v),
+                  ),
+                ),
               ),
               if (_canAIAssistant)
                 Consumer<ChatbotProvider>(

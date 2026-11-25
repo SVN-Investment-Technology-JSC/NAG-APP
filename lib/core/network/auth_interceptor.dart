@@ -4,7 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nguyenanh/core/network/api_client.dart';
-import 'package:nguyenanh/features/setup/presentation/selection_page.dart';
+import 'package:nguyenanh/features/setup/presentation/selection_entry.dart';
 
 class AuthInterceptor extends Interceptor {
   final Dio dio;
@@ -184,7 +184,7 @@ class AuthInterceptor extends Interceptor {
       ApiClient.cookieJar.deleteAll();
 
       navigatorKey.currentState?.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const SelectionPage()),
+        MaterialPageRoute(builder: (_) => const SelectionEntry()),
         (route) => false,
       );
     } finally {
