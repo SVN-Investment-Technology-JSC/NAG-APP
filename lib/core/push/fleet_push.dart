@@ -38,7 +38,9 @@ class FleetPush extends ChangeNotifier {
     channelId,
     'Cảnh báo giám sát xe',
     description: 'Tụt dầu bất thường, bê tông thừa cần kiểm tra',
-    importance: Importance.high,
+    importance: Importance.max,
+    playSound: true,
+    enableVibration: true,
   );
 
   final _local = FlutterLocalNotificationsPlugin();
@@ -73,7 +75,7 @@ class FleetPush extends ChangeNotifier {
 
       await _local.initialize(
         settings: const InitializationSettings(
-          android: AndroidInitializationSettings('@drawable/ic_stat_fleet'),
+          android: AndroidInitializationSettings('ic_stat_fleet'),
           // permission is asked by FirebaseMessaging.requestPermission (once, with the user's login)
           iOS: DarwinInitializationSettings(requestAlertPermission: false, requestBadgePermission: false, requestSoundPermission: false),
         ),
@@ -82,6 +84,13 @@ class FleetPush extends ChangeNotifier {
       await _local
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(_channel);
+
+      // On Android 13+, ensure notification permission is requested so notifications are not blocked
+      if (Platform.isAndroid) {
+        await _local
+            .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+            ?.requestNotificationsPermission();
+      }
 
       // foreground: iOS shows the banner itself with these options; Android needs us to show it (see _showForeground)
       await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(alert: true, badge: true, sound: true);
@@ -113,9 +122,10 @@ class FleetPush extends ChangeNotifier {
           _channel.id,
           _channel.name,
           channelDescription: _channel.description,
-          importance: Importance.high,
-          priority: Priority.high,
-          icon: '@drawable/ic_stat_fleet',
+          importance: Importance.max,
+          priority: Priority.max,
+          visibility: NotificationVisibility.public,
+          icon: 'ic_stat_fleet',
           color: const Color(0xFFDC2626),
           styleInformation: BigTextStyleInformation(n.body ?? ''),
         ),
@@ -157,10 +167,6 @@ class FleetPush extends ChangeNotifier {
   Future<void> syncForUser({required bool allowed}) async {
     if (!_ready) return;
     try {
-      if (!allowed) {
-        await unregister();
-        return;
-      }
       final perm = await FirebaseMessaging.instance.requestPermission(alert: true, badge: true, sound: true);
       if (perm.authorizationStatus == AuthorizationStatus.denied) {
         debugPrint('[FleetPush] notifications denied by the user');
@@ -169,7 +175,7 @@ class FleetPush extends ChangeNotifier {
       if (Platform.isIOS) {
         // the FCM token needs the APNs token first (arrives a moment after permission is granted)
         String? apns;
-        for (var i = 0; i < 10 && apns == null; i++) {
+        for (var i = 0; i < 20 && apns == null; i++) {
           apns = await FirebaseMessaging.instance.getAPNSToken();
           if (apns == null) await Future.delayed(const Duration(milliseconds: 500));
         }
@@ -177,9 +183,16 @@ class FleetPush extends ChangeNotifier {
           debugPrint('[FleetPush] no APNs token (simulator, missing Push capability, or notifications denied)');
           return;
         }
+        debugPrint('[FleetPush] APNs token acquired successfully');
       }
       _token = await FirebaseMessaging.instance.getToken();
       if (_token == null) return;
+      debugPrint('[FleetPush] FCM Token: $_token');
+
+      if (!allowed) {
+        await unregister();
+        return;
+      }
       await _register(_token!);
       _refreshSub ??= FirebaseMessaging.instance.onTokenRefresh.listen((t) {
         _token = t;
