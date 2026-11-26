@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nguyenanh/features/fleet_monitoring/data/services/fleet_reads.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:latlong2/latlong.dart';
@@ -16,6 +17,7 @@ Future<void> showFleetEventSheet(
   bool cameraAllowed = false,
   VoidCallback? onChanged,
 }) {
+  FleetReads.instance.markRead([eventId], source: 'open');
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,

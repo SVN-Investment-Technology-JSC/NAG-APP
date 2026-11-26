@@ -9,6 +9,10 @@ import 'package:nguyenanh/core/network/api_client.dart';
 import 'package:nguyenanh/features/notifications/data/models/notification_model.dart';
 
 class NotificationSocketService {
+  /// General notifications (xe vào bãi / vào trạm…) are no longer shown: no top toast, no bell.
+  /// Set to true to bring them back. Fleet-monitoring alerts have their own bell (FleetAlertBell).
+  static const showOnScreen = false;
+
   io.Socket? _socket;
   Timer? _refreshTimer;
 
@@ -91,6 +95,7 @@ class NotificationSocketService {
   }
 
   void _showTopToast(String message) {
+    if (!showOnScreen) return;
     final overlay = ApiClient.navigatorKey.currentState?.overlay;
     final context = ApiClient.navigatorKey.currentContext;
     if (overlay == null || context == null) return;

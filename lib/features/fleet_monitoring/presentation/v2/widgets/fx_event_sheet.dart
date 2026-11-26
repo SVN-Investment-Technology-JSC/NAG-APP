@@ -5,6 +5,8 @@ import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:nguyenanh/features/fleet_monitoring/data/models/fleet_models.dart';
 import 'package:nguyenanh/features/fleet_monitoring/data/services/fleet_monitoring_service.dart';
+import 'package:nguyenanh/features/fleet_monitoring/data/services/fleet_reads.dart';
+import 'package:intl/intl.dart';
 import 'package:nguyenanh/features/fleet_monitoring/presentation/fleet_utils.dart';
 import 'package:nguyenanh/features/fleet_monitoring/presentation/fleet_video_player.dart';
 import 'package:nguyenanh/features/fleet_monitoring/presentation/v2/widgets/fx_trip_route_map.dart';
@@ -67,6 +69,7 @@ class _BodyState extends State<_Body> {
   List<int> _routeTs = [];
   List<FleetGeofence> _yards = [];
   bool _tripLoading = false;
+  List<FleetReader>? _whoRead; // read receipts of the shown event
 
   @override
   void initState() {
@@ -90,12 +93,25 @@ class _BodyState extends State<_Body> {
         _loading = false;
       });
       if (widget.category == 'concrete' && d.tripId != null) _loadTrip(d);
+      _markAndLoadReaders(_curId);
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _error = 'Không tải được sự kiện';
         _loading = false;
       });
+    }
+  }
+
+  /// Opening an alert = read by me; then show everyone who has seen it.
+  Future<void> _markAndLoadReaders(String id) async {
+    setState(() => _whoRead = null);
+    await FleetReads.instance.markRead([id], source: 'open');
+    try {
+      final who = await FleetReads.instance.who(id);
+      if (mounted && id == _curId) setState(() => _whoRead = who);
+    } catch (_) {
+      if (mounted && id == _curId) setState(() => _whoRead = const []);
     }
   }
 
@@ -551,6 +567,42 @@ class _BodyState extends State<_Body> {
                         const FxSectionHeader(icon: Icons.history_rounded, title: 'Lịch sử duyệt', tone: FxTokens.blue),
                         for (var i = 0; i < ev.reviews.length; i++)
                           _ReviewItem(r: ev.reviews[i], last: i == ev.reviews.length - 1),
+                      ],
+                    ),
+                  ),
+                // Read receipts
+                if (_whoRead != null && _whoRead!.isNotEmpty)
+                  FxCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        FxSectionHeader(
+                          icon: Icons.visibility_outlined,
+                          title: 'Đã xem',
+                          subtitle: '${_whoRead!.length} người đã mở cảnh báo này',
+                          tone: FxTokens.slate,
+                        ),
+                        for (final r in _whoRead!)
+                          Padding(
+                            padding: EdgeInsets.only(bottom: 8.h),
+                            child: Row(children: [
+                              CircleAvatar(
+                                radius: 14.r,
+                                backgroundColor: t.soft(FxTokens.blue),
+                                child: Text(r.name.trim().isEmpty ? '?' : r.name.trim().split(RegExp(r'\s+')).last.characters.first.toUpperCase(),
+                                    style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w800, color: t.ink(FxTokens.blue))),
+                              ),
+                              SizedBox(width: 10.w),
+                              Expanded(child: Text(r.name, style: t.body.copyWith(fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                              Text(
+                                [
+                                  if (r.firstAt != null) DateFormat('HH:mm dd/MM').format(r.firstAt!),
+                                  if (r.views > 1) '${r.views} lượt',
+                                ].join(' · '),
+                                style: t.tiny.copyWith(fontFeatures: FxTokens.tabular),
+                              ),
+                            ]),
+                          ),
                       ],
                     ),
                   ),

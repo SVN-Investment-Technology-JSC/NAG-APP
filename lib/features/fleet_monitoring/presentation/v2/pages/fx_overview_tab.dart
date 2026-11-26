@@ -7,8 +7,10 @@ import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:nguyenanh/features/fleet_monitoring/data/models/fleet_models.dart';
 import 'package:nguyenanh/features/fleet_monitoring/data/services/fleet_monitoring_service.dart';
+import 'package:nguyenanh/features/fleet_monitoring/data/services/fleet_reads.dart';
 import 'package:nguyenanh/features/fleet_monitoring/presentation/fleet_utils.dart';
 import 'package:nguyenanh/core/ui_v2/fx_tokens.dart';
+import 'package:nguyenanh/features/fleet_monitoring/presentation/v2/widgets/fx_alert_day.dart';
 import 'package:nguyenanh/features/fleet_monitoring/presentation/v2/widgets/fx_event_sheet.dart';
 import 'package:nguyenanh/features/fleet_monitoring/presentation/v2/widgets/fx_trip_route_map.dart';
 import 'package:nguyenanh/core/ui_v2/fx_ui.dart';
@@ -41,6 +43,11 @@ class _FxOverviewTabState extends State<FxOverviewTab> with AutomaticKeepAliveCl
   int _alertPage = 0;
   int _vehPage = 0;
   Timer? _timer;
+  // Alerts card: open alerts now (default) or every alert of a chosen day
+  late final FleetAlertDay _day = FleetAlertDay(widget.perms)
+    ..addListener(() {
+      if (mounted) setState(() => _alertPage = 0);
+    });
 
   // Route of the selected vehicle's current trip (go / back lanes + abnormal points), as on the web trip map.
   String? _routeVid;
@@ -60,11 +67,18 @@ class _FxOverviewTabState extends State<FxOverviewTab> with AutomaticKeepAliveCl
     super.initState();
     _load();
     _timer = Timer.periodic(const Duration(seconds: 30), (_) => _load(quiet: true));
+    FleetReads.instance.addListener(_readsChanged);
+  }
+
+  void _readsChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    FleetReads.instance.removeListener(_readsChanged);
+    _day.dispose();
     super.dispose();
   }
 
@@ -78,6 +92,7 @@ class _FxOverviewTabState extends State<FxOverviewTab> with AutomaticKeepAliveCl
         _updatedAt = DateTime.now();
         _error = null;
       });
+      FleetReads.instance.lookup(d.alerts.map((a) => a.id));
     } catch (_) {
       if (mounted && !quiet) setState(() => _error = 'Không tải được dữ liệu giám sát xe');
     } finally {
@@ -208,7 +223,9 @@ class _FxOverviewTabState extends State<FxOverviewTab> with AutomaticKeepAliveCl
     final d = _data!;
     final rows = _filtered(_only);
     final pageRows = fxPage(rows, _vehPage, _vehiclesPerPage);
-    final alerts = fxPage(d.alerts, _alertPage, _alertsPerPage);
+    final live = _day.live;
+    final allAlerts = live ? d.alerts : _day.alerts;
+    final alerts = fxPage(allAlerts, _alertPage, _alertsPerPage);
 
     return RefreshIndicator(
       onRefresh: _load,
@@ -225,16 +242,27 @@ class _FxOverviewTabState extends State<FxOverviewTab> with AutomaticKeepAliveCl
               children: [
                 FxSectionHeader(
                   icon: Icons.notifications_active_outlined,
-                  title: 'Cảnh báo cần xử lý',
-                  subtitle: 'Tụt dầu 7 ngày chưa xử lý · bê tông cần kiểm tra hôm nay',
+                  title: live ? 'Cảnh báo cần xử lý' : 'Cảnh báo trong ngày',
+                  subtitle: _day.subtitle,
                   tone: FxTokens.red,
-                  trailing: FxPill(label: '${d.alerts.length}', tone: d.alerts.isEmpty ? FxTokens.emerald : FxTokens.red, solid: d.alerts.isNotEmpty),
+                  trailing: !live && _day.loading
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                      : FxPill(label: '${allAlerts.length}', tone: allAlerts.isEmpty ? FxTokens.emerald : FxTokens.red, solid: allAlerts.isNotEmpty),
                 ),
-                if (d.alerts.isEmpty)
-                  const FxEmpty(icon: Icons.verified_outlined, title: 'Không có cảnh báo', message: 'Mọi xe đang hoạt động bình thường.')
+                FxAlertDayBar(ctl: _day),
+                SizedBox(height: 10.h),
+                if (!live && _day.error != null) FxBanner(text: _day.error!, tone: FxTokens.red, icon: Icons.cloud_off_rounded),
+                if (!live && _day.loading && allAlerts.isEmpty)
+                  Padding(padding: EdgeInsets.symmetric(vertical: 24.h), child: const Center(child: CircularProgressIndicator()))
+                else if (allAlerts.isEmpty)
+                  FxEmpty(
+                    icon: Icons.verified_outlined,
+                    title: 'Không có cảnh báo',
+                    message: live ? 'Mọi xe đang hoạt động bình thường.' : 'Ngày này không có tụt dầu hay bê tông cần kiểm tra.',
+                  )
                 else ...[
                   for (final a in alerts) _alertTile(t, a),
-                  FxPager(page: _alertPage, total: d.alerts.length, size: _alertsPerPage, onChanged: (p) => setState(() => _alertPage = p)),
+                  FxPager(page: _alertPage, total: allAlerts.length, size: _alertsPerPage, onChanged: (p) => setState(() => _alertPage = p)),
                 ],
               ],
             ),
@@ -558,6 +586,9 @@ class _FxOverviewTabState extends State<FxOverviewTab> with AutomaticKeepAliveCl
       meta.add(fmtDur(a.durationS));
       if (a.discharge == true) meta.add('vòng tua cao');
     }
+    final read = FleetReads.instance.isRead(a.id);
+    final seen = FleetReads.instance.readers(a.id);
+    if (seen > 0) meta.add('$seen người đã xem');
     return Padding(
       padding: EdgeInsets.only(bottom: 8.h),
       child: Material(
@@ -570,7 +601,10 @@ class _FxOverviewTabState extends State<FxOverviewTab> with AutomaticKeepAliveCl
             eventId: a.id,
             category: a.category,
             cameraAllowed: widget.perms.concreteReview,
-            onChanged: () => _load(quiet: true),
+            onChanged: () {
+              _load(quiet: true);
+              _day.load();
+            },
           ),
           child: Container(
             decoration: BoxDecoration(
@@ -587,12 +621,20 @@ class _FxOverviewTabState extends State<FxOverviewTab> with AutomaticKeepAliveCl
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(children: [
+                        if (!read) ...[
+                          Container(width: 8, height: 8, decoration: const BoxDecoration(color: FxTokens.blue, shape: BoxShape.circle)),
+                          SizedBox(width: 6.w),
+                        ],
                         Flexible(child: Text(a.vehicleCode, style: t.h3, maxLines: 1, overflow: TextOverflow.ellipsis)),
                         SizedBox(width: 6.w),
                         FxPill(label: tone.label, tone: tone.color),
+                        if (a.reviewed) ...[SizedBox(width: 4.w), const FxReviewedPill()],
                       ]),
                       SizedBox(height: 3.h),
-                      Text(head, style: t.small.copyWith(color: t.text), maxLines: 2, overflow: TextOverflow.ellipsis),
+                      Text(head,
+                          style: t.small.copyWith(color: t.text, fontWeight: read ? FontWeight.w400 : FontWeight.w700),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis),
                       SizedBox(height: 2.h),
                       Text(meta.join(' · '), style: t.tiny.copyWith(fontFeatures: FxTokens.tabular)),
                     ],

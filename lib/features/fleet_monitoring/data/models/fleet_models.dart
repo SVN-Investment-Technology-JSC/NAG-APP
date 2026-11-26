@@ -574,6 +574,8 @@ class FleetAlert {
   final bool? discharge;
   final String? riskLevel;
   final String? riskReason;
+  /// Already handled (only events of a past day can be; the live overview lists only open ones).
+  final bool reviewed;
 
   FleetAlert({
     required this.id,
@@ -588,7 +590,25 @@ class FleetAlert {
     this.discharge,
     this.riskLevel,
     this.riskReason,
+    this.reviewed = false,
   });
+
+  /// Same shape as an overview alert, built from an event of the events list (alerts of a chosen day).
+  factory FleetAlert.fromEvent(FleetEvent e) => FleetAlert(
+        id: e.id,
+        category: e.category,
+        severity: e.severity,
+        title: e.title,
+        vehicleCode: e.vehicleCode,
+        startedAt: e.startedAt,
+        durationS: e.durationS,
+        deltaPct: _d(e.evidence['delta_pct']),
+        dropL: _d(e.evidence['drop_l']),
+        discharge: e.evidence['discharge_signature'] is bool ? e.evidence['discharge_signature'] as bool : null,
+        riskLevel: e.category == 'concrete' ? e.risk?.level : null,
+        riskReason: e.category == 'concrete' ? e.risk?.reason : null,
+        reviewed: e.status == 'reviewed',
+      );
 
   factory FleetAlert.fromJson(Map<String, dynamic> j) => FleetAlert(
         id: _s(j['id']) ?? '',

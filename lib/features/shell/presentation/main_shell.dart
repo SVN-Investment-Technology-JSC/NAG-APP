@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:nguyenanh/features/fleet_monitoring/data/services/fleet_reads.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -411,6 +412,7 @@ class _MainShellState extends State<MainShell> {
           _socketService.dispose();
           _notificationService.dispose();
           FleetPush.instance.unregister(); // this phone stops receiving fleet alerts
+          FleetReads.instance.clear();
         }
         children.add(newUi
             ? ProfilePageV2(onNavigateHome: profileHome, onNavigateTrips: profileTrips, onLogout: profileLogout)

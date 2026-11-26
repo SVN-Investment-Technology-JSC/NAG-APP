@@ -297,7 +297,7 @@ class _HomePageV2State extends State<HomePageV2> {
         child: Row(children: [
           FxIconBadge(icon: icon, tone: tone, size: 30),
           SizedBox(width: 12.w),
-          Text(label, style: t.h3),
+          Text(label.toUpperCase(), style: t.h3), // all items upper case, like the l10n ones
         ]),
       );
 

@@ -35,6 +35,41 @@ class FleetMonitoringService {
     return FleetOverview.fromJson(_map(_unwrap(r)));
   }
 
+  /// Alerts of one calendar day [day] (local time), same rules as the overview's alerts but including the ones
+  /// already handled: fuel drops "notable/strong", concrete stops the stop check marks "check" (old severity rule
+  /// while not scored yet). Each category is asked only when [fuel]/[concrete] is true (needs that page permission);
+  /// a category that fails is listed in [DayAlerts.failed] instead of failing the whole day.
+  Future<DayAlerts> dayAlerts(DateTime day, {required bool fuel, required bool concrete}) async {
+    final from = toUnixLocal(DateTime(day.year, day.month, day.day));
+    final to = toUnixLocal(DateTime(day.year, day.month, day.day, 23, 59, 59));
+    Future<List<FleetEvent>> all(String path) async {
+      final out = <FleetEvent>[];
+      for (var offset = 0; offset < 2000; offset += 500) {
+        final r = await ApiClient.dio.get(path,
+            queryParameters: {'from': from, 'to': to, 'limit': 500, 'offset': offset}, options: _slow);
+        final page = _items(_unwrap(r)).map(FleetEvent.fromJson).toList();
+        out.addAll(page);
+        if (page.length < 500) break;
+      }
+      return out;
+    }
+
+    final failed = <String>[];
+    final res = await Future.wait([
+      fuel ? all('/fleet-monitoring/fuel/events').catchError((_) { failed.add('fuel'); return <FleetEvent>[]; }) : Future.value(<FleetEvent>[]),
+      concrete ? all('/fleet-monitoring/concrete/events').catchError((_) { failed.add('concrete'); return <FleetEvent>[]; }) : Future.value(<FleetEvent>[]),
+    ]);
+    final alerts = <FleetAlert>[
+      for (final e in res[0])
+        if (e.type == 'fuel_drop' && (e.severity == 'notable' || e.severity == 'strong')) FleetAlert.fromEvent(e),
+      for (final e in res[1])
+        if (e.risk != null ? e.risk!.level == 'check' : (e.severity == 'suspect' || e.severity == 'review')) FleetAlert.fromEvent(e),
+    ]..sort((a, b) => b.startedAt.compareTo(a.startedAt));
+    return DayAlerts(alerts, failed);
+  }
+
+  static int toUnixLocal(DateTime d) => d.millisecondsSinceEpoch ~/ 1000;
+
   /* ── Fuel ─────────────────────────────────────────────────────────────── */
 
   Future<FleetSeries> fuelSeries(String vehicleId, int from, int to, {int maxPoints = 1500}) async {
@@ -126,4 +161,11 @@ class FleetMonitoringService {
     final base = AppEndpoints.apiBaseUrl.replaceAll(RegExp(r'/+$'), '');
     return '$base${path.startsWith('/') ? path : '/$path'}';
   }
+}
+
+/// Alerts of one day, newest first; [failed] = categories that could not be loaded ('fuel' / 'concrete').
+class DayAlerts {
+  final List<FleetAlert> alerts;
+  final List<String> failed;
+  const DayAlerts(this.alerts, this.failed);
 }

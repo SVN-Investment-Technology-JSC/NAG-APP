@@ -1294,8 +1294,10 @@ class _VehicleManagementPageState extends State<VehicleManagementPage> with Sing
           ),
           bottom: bottomTabBar,
           actions: [
-            NotificationBadge(notificationService: widget.notificationService),
-            SizedBox(width: 8.w),
+            if (NotificationSocketService.showOnScreen) ...[
+              NotificationBadge(notificationService: widget.notificationService),
+              SizedBox(width: 8.w),
+            ],
             FilledButton.tonal(
               onPressed: _pickDate,
               style: FilledButton.styleFrom(

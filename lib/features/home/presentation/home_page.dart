@@ -275,7 +275,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          NotificationBadge(notificationService: widget.notificationService),
+          if (NotificationSocketService.showOnScreen) NotificationBadge(notificationService: widget.notificationService),
           if (_canSyncSlots || _canHistory || _canViewIdleEngine || _fleetPerms.any)
             Padding(
               padding: EdgeInsets.only(right: 8.w),
