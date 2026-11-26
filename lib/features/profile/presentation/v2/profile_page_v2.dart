@@ -298,7 +298,8 @@ class _ProfilePageV2State extends State<ProfilePageV2> {
                         ),
                       ),
                     ),
-                    if (_canAIAssistant)
+                    // Tạm thời ẩn Bong bóng Trợ lý AI
+                    if (false && _canAIAssistant)
                       Consumer<ChatbotProvider>(
                         builder: (context, provider, child) {
                           return _SettingRow(

@@ -465,7 +465,8 @@ class _MainShellState extends State<MainShell> {
       },
     );
 
-    if (_canAIAssistant) {
+    // Tạm thời ẩn Bong bóng Trợ lý AI
+    if (false && _canAIAssistant) {
       return context.watch<UiVersionProvider>().isNewUi ? ChatbotBubbleV2(child: shell) : ChatbotBubble(child: shell);
     }
     return shell;

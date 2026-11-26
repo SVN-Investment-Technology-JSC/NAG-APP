@@ -240,7 +240,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
               ),
-              if (_canAIAssistant)
+              // Tạm thời ẩn Bong bóng Trợ lý AI
+              if (false && _canAIAssistant)
                 Consumer<ChatbotProvider>(
                   builder: (context, provider, child) {
                     return ListTile(

@@ -267,7 +267,8 @@ class _AlertsSheetState extends State<_AlertsSheet> {
               ),
             ]),
           ),
-          // push status
+          // push status (tạm thời ẩn)
+          if (false)
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
             child: Container(
